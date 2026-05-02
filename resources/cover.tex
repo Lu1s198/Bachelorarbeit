@@ -1,31 +1,50 @@
-%% Titelblatt
+%!TEX root = ../main.tex
 
 \begin{titlepage}
-    \centering
-    \vspace*{2cm}
-    
-    % Hochschul-Info
-    {\Large \textbf{Duale Hochschule Baden-Württemberg}} \\[0.5cm]
-    {\large Studienbereich Technik} \\[0.5cm]
-    {\large \course} \\[2cm]
-    
-    % Titelseite
-    \vspace*{2cm}
-    {\Huge \textbf{\doctitle}} \\[0.5cm]
-    {\Large \textit{\docsubtitle}} \\[3cm]
-    
-    % Autor und Details
-    \vspace*{2cm}
-    \begin{tabular}{l l}
-        \textbf{Autor:} & \authorname \\
-        \textbf{Matrikelnummer:} & \matnr \\[1cm]
-        \textbf{Betreuer:} & \supervisor \\
-        \textbf{Unternehmen:} & \company \\
-        \textbf{Adresse:} & \companyaddress \\[1cm]
-        \textbf{Bearbeitungszeitraum:} & \startdate{} - \dateend{} \\
-        \textbf{Abgabedatum:} & \submitdate \\
-    \end{tabular}
-    
-    \vfill
-    
+\thispagestyle{empty}
+%% DHBW_Logo
+\begin{tikzpicture}[remember picture, overlay]
+	\node[anchor=north,inner xsep=0pt, inner ysep=25pt] at (current page.north)
+	{\includegraphics[height=4cm]{resources/images/logo-dhbw}};
+\end{tikzpicture}
+
+%% Firmen Logo
+\ifDocType{T3\_3200}{%
+	\begin{tikzpicture}[remember picture, overlay]
+		\node[anchor=north west,inner xsep=50pt, inner ysep=25pt] at (current page.north west)
+		{\includegraphics[height=2cm]{resources/images/logo-company}};
+	\end{tikzpicture}
+}
+
+\enlargethispage{20mm}
+\begin{center}
+	\vspace{5cm}
+	\vspace*{0mm}	{\LARGE\textbf{\documentTitle}}\\
+	\vspace*{12mm}
+	\vspace*{12mm}	{\large\textbf{\documentTypePhrase}}\\
+
+	\ifDocType{T3\_3300}{
+		\vspace*{12mm}	{for the examination for}\\
+		\vspace*{3mm}	{\degree}\\
+	}
+
+	\vspace*{12mm}  {of \department}\\
+	\vspace*{3mm}  {at Baden-Wuerttemberg Cooperative State University (DHBW) \locationUniversity}\\
+	\vspace*{12mm}  {by}\\
+	\vspace*{3mm}  {\textbf{\documentAuthor}}\\
+	\vspace*{12mm}  {\releaseDate}\\
+\end{center}
+
+\vfill
+
+\vspace{1cm}
+\begin{center}
+\begin{tabular}{@{}l l@{}}
+    \textbf{Matriculation Number:} & \matriculationNumber \\
+	\textbf{Course:} & \course \\
+    \ifDocType{T3\_3300}{
+        \textbf{Reviewer at DHBW \locationUniversity:} & \evaluator \\
+    }{}
+\end{tabular}
+\end{center}
 \end{titlepage}

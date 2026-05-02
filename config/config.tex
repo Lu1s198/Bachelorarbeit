@@ -1,0 +1,134 @@
+%% Dokumentklasse DHBW Bachelor
+\documentclass[
+    12pt,              % Schriftgröße
+    a4paper,           % Papierformat
+    oneside,           % Einseitiger Druck
+    openany,           % Kapitel können auf jeder Seite beginnen
+    parskip=half,      % Absatzabstand
+    headings=normal    % Überschriftenformat
+]{scrbook}
+
+%% ============================================================================
+%% METADATEN - BITTE ANPASSEN
+%% ============================================================================
+
+% Dokumenttitel
+\newcommand{\doctitle}{KI-unterstützte Erstellung von ETL-Prozessen}
+\newcommand{\docsubtitle}{Eine experimentelle Evaluierung}
+
+% Autor
+\newcommand{\authorname}{Luis Geiger}
+\newcommand{\matnr}{9144849}
+\newcommand{\course}{Informatik}
+
+% Betreuer
+\newcommand{\supervisor}{Jens Vierling}
+\newcommand{\company}{Mercedes-Benz Tech Innovation GmbH}
+\newcommand{\companyaddress}{Gropiusplatz 10, 70563 Stuttgart}
+
+% Dauer
+\newcommand{\startdate}{14.06.2026}
+\newcommand{\dateend}{07.09.2026}
+\newcommand{\submitdate}{\today}
+
+%% ============================================================================
+%% PAKETE UND KONFIGURATION
+%% ============================================================================
+
+% Sprache und Encoding
+\usepackage[ngerman]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{lmodern}
+
+% Seiten und Ränder
+\usepackage[
+    left=2.5cm,
+    right=2.5cm,
+    top=2.5cm,
+    bottom=2.5cm,
+    headheight=1.5cm,
+    footskip=1.5cm
+]{geometry}
+
+% Zitationen und Bibliografie
+\usepackage[backend=biber, style=authoryear, sorting=nyt]{biblatex}
+\addbibresource{resources/bibliography.bib}
+
+% Grafiken und Tabellen
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{colortbl}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{multicol}
+
+% Listen und Nummerierung
+\usepackage{enumitem}
+\setlist[itemize]{leftmargin=2em}
+\setlist[enumerate]{leftmargin=2em}
+
+% Zeilenabstand
+\usepackage{setspace}
+\onehalfspacing
+
+% Kopf- und Fußzeilen
+\usepackage{scrlayer-scrpage}
+\pagestyle{scrheadings}
+\clearscrheadfoot
+
+% Code und Quelltext
+\usepackage{listings}
+\usepackage{verbatim}
+
+\lstset{
+    basicstyle=\small\ttfamily,
+    breaklines=true,
+    breakatwhitespace=true,
+    language=Java,
+    numbers=left,
+    numberstyle=\tiny,
+    stepnumber=1,
+    showstringspaces=false,
+    tabsize=4,
+    backgroundcolor=\color{gray!5},
+    frame=tb,
+    captionpos=b
+}
+
+% Mathematik
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{mathtools}
+
+% Links und Hyperlinks
+\usepackage[colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue]{hyperref}
+
+% Abkürzungen
+\usepackage[acronym,toc]{glossaries}
+\makeglossaries
+
+% Weitere nützliche Pakete
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage[justification=centering]{caption}
+\usepackage{subcaption}
+
+%% ============================================================================
+%% BEFEHLE
+%% ============================================================================
+
+% Blendet Todos aus/ein
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+
+% Abkürzung mit Kürzel
+\newcommand{\ac}[1]{\gls{#1}}
+
+%% PDFMetadaten
+\hypersetup{
+    pdftitle={\doctitle},
+    pdfauthor={\authorname},
+    pdfsubject={Bachelorarbeit},
+}

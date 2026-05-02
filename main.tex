@@ -1,0 +1,61 @@
+%!TEX root = ./main.tex
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+%% LaTeX-Vorlage für Bachelorarbeit an der DHBW
+%%
+%% Erstellung über Kommandozeile:
+%%   pdflatex main.tex
+%%   biber main
+%%   pdflatex main.tex
+%%   pdflatex main.tex
+%%
+%% Oder nutze einen LaTeX-Editor (TeXstudio, VS Code + LaTeX Workshop, etc.)
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%% Konfiguration einbinden
+\input{config/config}
+\input{config/header}
+
+%% Start des Dokuments
+\begin{document}
+
+    %% Titelblatt
+    \input{resources/cover}
+
+    %% Erklärung zur Urheberschaft
+    \clearpage
+    \pagestyle{empty}
+    \pagenumbering{Roman}
+    \input{resources/declaration}
+
+    %% Inhaltsverzeichnis
+    \clearpage
+    \pagestyle{scrheadings}
+    \begin{spacing}{1.2}
+        \begingroup
+            \setcounter{tocdepth}{2}
+            \tableofcontents
+        \endgroup
+    \end{spacing}
+
+    %% Abbildungs- und Tabellenverzeichnis
+    \clearpage
+    \listoffigures
+    \listoftables
+
+    %% Abkürzungsverzeichnis
+    \clearpage
+    \input{resources/acronyms}
+
+    %% Haupttext
+    \clearpage
+    \pagenumbering{arabic}
+    \input{content/chapters}
+
+    %% Literaturverzeichnis
+    \clearpage
+    \printbibliography
+
+\end{document}

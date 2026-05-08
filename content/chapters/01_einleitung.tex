@@ -3,20 +3,29 @@
 \chapter{Einleitung}
 \label{ch:einleitung}
 
+
 \section{Motivation und Problemstellung}
-\label{sec:motivation}
-% Beschreibe hier den Kontext: Bedeutung von Daten in Unternehmen,
-% Herausforderungen klassischer ETL-Prozesse, Aufkommen von LLMs.
+\label{subsec:motivation}
+
+Die Verfügbarkeit, Qualität und zeitnahe Bereitstellung von Daten sind zu einem zentralen Erfolgsfaktor für datengetriebene Organisationen geworden. Im Zentrum der dafür notwendigen Dateninfrastruktur stehen seit Jahrzehnten ETL-Prozesse (Extract, Transform, Load), die Daten aus heterogenen Quellsystemen extrahieren, in eine einheitliche Struktur überführen und in Zielsysteme wie Data Warehouses oder Analyseplattformen laden \autocite{khanOverviewETLTechniques2024,walhaDataIntegrationTraditional2024}. Trotz ihrer langen Etablierung gelten klassische ETL-Pipelines zunehmend als Engpass: Sie sind in der Regel regelbasiert, statisch modelliert und erfordern erheblichen manuellen Aufwand bei Entwurf, Anpassung und Wartung \autocite{mishraAutomatingDataIntegration2020,nagabhyruBridgingTraditionalETL2022}. Mit dem Wachstum von Datenvolumen, der Heterogenität der Quellen und steigenden Anforderungen an Aktualität geraten herkömmliche ETL-Architekturen an ihre Grenzen \autocite{walhaDataIntegrationTraditional2024,raviETLExtractTransform2025}.
+
+Parallel dazu haben sich in den letzten Jahren Large Language Models (LLMs) als leistungsfähige Werkzeuge etabliert, die nicht nur natürliche Sprache, sondern zunehmend auch strukturierte und semi-strukturierte Daten verarbeiten können \autocite{zhaoSurveyLargeLanguage2026}. Erste Arbeiten zeigen, dass LLMs im Kontext der Datenverarbeitung Aufgaben wie Datenbereinigung, Schema-Mapping, Transformationslogik oder Anomalieerkennung übernehmen oder zumindest unterstützen können \autocite{hassaniRoleChatGPTData2023,chakrabortyETLHowAI2025,khanLeveragingArtificialIntelligence2025}. Damit eröffnet sich die Perspektive, klassische ETL-Prozesse durch KI-gestützte Komponenten zu ergänzen oder partiell zu ersetzen, um manuellen Aufwand zu reduzieren und die Anpassungsfähigkeit der Pipelines zu erhöhen.
+
+Gleichzeitig ist die praktische Eignung von LLMs für ETL-Aufgaben bislang nur unzureichend systematisch untersucht. Während konzeptionelle Beiträge die potenziellen Vorteile beschreiben, fehlt es an empirischen Vergleichen, die unterschiedliche Modelle und Prompting-Strategien unter kontrollierten Bedingungen gegen klassische Verfahren stellen. Offen ist insbesondere, wie zuverlässig LLMs typische ETL-Teilaufgaben wie Datenbereinigung, Datentransformation und Duplikaterkennung bearbeiten, wie sich verschiedene Prompting-Ansätze auf die Ergebnisqualität auswirken und unter welchen Bedingungen ein Einsatz gegenüber etablierten regelbasierten Methoden überhaupt sinnvoll ist. Genau an dieser Lücke setzt die vorliegende Arbeit an.
 
 \section{Zielsetzung und Forschungsfragen}
-\label{sec:zielsetzung}
-% Formuliere das Ziel der Arbeit und 2-4 konkrete Forschungsfragen.
-% Beispiel:
-% \begin{itemize}
-%     \item FF1: Inwiefern können LLMs klassische ETL-Methoden ergänzen oder ersetzen?
-%     \item FF2: Welchen Einfluss haben unterschiedliche Prompting-Strategien auf die Ergebnisqualität?
-%     \item FF3: Welche Grenzen zeigen sich beim Einsatz von LLMs in ETL-Prozessen?
-% \end{itemize}
+\label{subsec:zielsetzung}
+
+Ziel dieser Arbeit ist eine experimentelle Evaluierung der Eignung von Large Language Models für die Unterstützung und Automatisierung ausgewählter ETL-Aufgaben. Im Zentrum steht der systematische Vergleich mehrerer aktueller LLMs sowie unterschiedlicher Prompting-Strategien anhand eines kontrolliert erstellten synthetischen Datensatzes, der typische Datenqualitätsprobleme abbildet. Die Ergebnisse werden mit einer klassisch implementierten ETL-Pipeline als Baseline verglichen, um Stärken, Schwächen und praktische Einsatzgrenzen KI-gestützter Ansätze fundiert einordnen zu können. Auf dieser Grundlage sollen Handlungsempfehlungen für den Einsatz von LLMs in realen ETL-Szenarien abgeleitet werden.
+
+Aus dieser Zielsetzung ergeben sich folgende Forschungsfragen:
+
+\begin{description}
+    \item[FF1:] Inwieweit eignen sich aktuelle Large Language Models für die Bearbeitung typischer ETL-Aufgaben -- konkret Datenbereinigung, Datentransformation und Duplikaterkennung -- im Vergleich zu einer klassischen, regelbasierten ETL-Pipeline?
+    \item[FF2:] Welchen Einfluss haben unterschiedliche Prompting-Strategien auf die Ergebnisqualität der untersuchten LLMs in den definierten ETL-Aufgaben?
+    \item[FF3:] Wie unterscheiden sich die ausgewählten Modelle hinsichtlich Genauigkeit, Vollständigkeit, Konsistenz und Effizienz bei der Bearbeitung der Aufgaben?
+    \item[FF4:] Unter welchen Bedingungen ist ein KI-gestützter, hybrider oder klassischer Ansatz für unterschiedliche ETL-Szenarien zu empfehlen?
+\end{description}
 
 \section{Methodisches Vorgehen}
 \label{sec:methodik}

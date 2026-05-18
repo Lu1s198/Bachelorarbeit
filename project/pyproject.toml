@@ -1,0 +1,72 @@
+[project]
+name = "ba-ki-etl"
+version = "0.1.0"
+description = "Bachelorarbeit: KI-unterstützte Erstellung von ETL-Prozessen — Eine experimentelle Analyse"
+requires-python = ">=3.12"
+readme = "README.md"
+
+# Gepinnte Versionen (~=) erlauben Patch-Updates, aber keine Breaking Changes.
+# Beim ersten `uv sync` entsteht uv.lock — die ist das eigentliche Reproduzierbarkeits-Artefakt.
+dependencies = [
+    # Daten & Generierung
+    "pandas~=2.2",
+    "polars~=1.12",
+    "pyarrow~=18.0",
+    "faker~=30.0",
+    "mimesis~=18.0",
+    "numpy~=2.1",
+    # LLM-Provider
+    "anthropic~=0.39",
+    "openai~=1.54",
+    "google-generativeai~=0.8",
+    "ollama~=0.4",
+    # Konfiguration & Validierung
+    "pydantic~=2.9",
+    "pydantic-settings~=2.6",
+    "python-dotenv~=1.0",
+    # CLI & Logging
+    "typer~=0.13",
+    "rich~=13.9",
+    "structlog~=24.4",
+    # Code-Quality-Metriken (für die Evaluation)
+    "radon~=6.0",
+    "ruff~=0.7",
+    # Auswertung
+    "matplotlib~=3.9",
+    "seaborn~=0.13",
+    "jupyter~=1.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest~=8.3",
+    "pytest-cov~=6.0",
+    "mypy~=1.13",
+    "pre-commit~=4.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/ba_ki_etl"]
+
+# ----- Tooling-Konfiguration -----
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "SIM", "RUF"]
+ignore = ["E501"]  # line-length übernimmt formatter
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --strict-markers"
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+ignore_missing_imports = true

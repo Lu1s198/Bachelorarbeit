@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# Umgebung & Geheimnisse
+.env
+.env.local
+*.key
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Daten — generierte Outputs nicht committen, aber Struktur erhalten
+data/synthetic/*
+!data/synthetic/.gitkeep
+data/results/*
+!data/results/.gitkeep
+# Ground-Truth gehört ins Repo (klein, reproduzierbar)
+
+# Notebooks: Outputs entfernen (siehe README)
+.ipynb_checkpoints/
+
+# Test- & Coverage-Artefakte
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# uv
+.uv-cache/

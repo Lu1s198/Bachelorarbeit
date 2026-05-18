@@ -1,0 +1,16 @@
+id: v1_zero_shot
+version: 1
+description: >
+  Baseline-Prompt ohne Kontext oder Beispiele. Misst, was ein Modell
+  ohne Hilfestellung aus einer reinen Aufgabenbeschreibung produziert.
+strategy: zero_shot
+
+system: |
+  Du bist ein Data Engineer. Antworte ausschließlich mit ausführbarem Python-Code.
+  Verwende pandas. Keine Erklärungen, keine Markdown-Codeblöcke.
+
+user_template: |
+  Schreibe einen ETL-Prozess, der die Datei `{input_path}` einliest, folgende
+  Transformationen anwendet und das Ergebnis nach `{output_path}` schreibt:
+
+  {task_description}

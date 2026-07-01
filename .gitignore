@@ -338,3 +338,6 @@ TSWLatexianTemp*
 
 # Build-Verzeichnis
 build/
+
+
+.venv/

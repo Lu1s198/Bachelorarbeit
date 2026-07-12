@@ -1,0 +1,282 @@
+[
+  {
+    "pdf_page": 6,
+    "thesis_page": "V",
+    "heading": "Abkürzungsverzeichnis",
+    "type": "Text",
+    "content": "AI ist englisch und KI deutsch",
+    "context": "AI Künstliche"
+  },
+  {
+    "pdf_page": 7,
+    "thesis_page": "1",
+    "heading": "Einleitung",
+    "type": "Text",
+    "content": "streich das \"erste\"",
+    "context": "dern zunehmend au n [37]. Erste Arbeit ben wie Datenberein nnung übernehmen sich die Perspektive rgänzen oder partie"
+  },
+  {
+    "pdf_page": 7,
+    "thesis_page": "1",
+    "heading": "Einleitung",
+    "type": "Text",
+    "content": "Lücke klingt etwas profan",
+    "context": "nsatz gegenüber eta dieser Lücke setzt d"
+  },
+  {
+    "pdf_page": 8,
+    "thesis_page": "2",
+    "heading": "1.2",
+    "type": "Text",
+    "content": "Vorab-Hinweis: wenn du sie nummerierst solltest du sie auch immer referenzieren sobald es um sie geht",
+    "context": "FF1: Inwiew cher E likater FF2: Welch"
+  },
+  {
+    "pdf_page": 9,
+    "thesis_page": "3",
+    "heading": "1.4",
+    "type": "Text",
+    "content": "wenn Abkürzung verwendet diese auch immer durchgehend anwenden",
+    "context": "aller Verfah els aufgrun können, wi tersuchung regelbasier Datensatz"
+  },
+  {
+    "pdf_page": 9,
+    "thesis_page": "3",
+    "heading": "1.4",
+    "type": "Text",
+    "content": "gilt für alle Abk.",
+    "context": "aller Verfah els aufgrun können, wi tersuchung regelbasier Datensatz"
+  },
+  {
+    "pdf_page": 12,
+    "thesis_page": "6",
+    "heading": "2.1.2",
+    "type": "Text",
+    "content": "solltest genauer definieren wahlweise vermutlich eher mit der folgenden Erklärung besser verknüpfen. Ist im Endeffekt abgehakt \"..anspruchsvoll.... Eine zentrale ...\"\n\nIch sehe manchmal generell in der Arbeit das Problem dass du Fakten schreibst aber der Bezug irgendwie fehlt, So Worte wie: somit, daher, auf Grund, in Verbindung, ausgehend .., ...",
+    "context": "seit Jahrzehnten eta d als anspruchsvoll cherung der Datenqu ammen, weisen sie mationsschritt erkan"
+  },
+  {
+    "pdf_page": 13,
+    "thesis_page": "7",
+    "heading": "2.2",
+    "type": "Text",
+    "content": "Warum bekommt nur Aktualität einen eigenen Absatz?!",
+    "context": "Die Aktualität erfass die Eindeutigkeit ver widersprüchlichen o men von Big Data ist und Vielfalt der Dat"
+  },
+  {
+    "pdf_page": 14,
+    "thesis_page": "8",
+    "heading": "2.3",
+    "type": "Text",
+    "content": "noch nie gehört in dem Zusammenhang",
+    "context": "LMs) sind Sprachmo ichen Textkorpora vo stehen und zu erzeu delle ist die Transfor erlaubt, Abhängigke"
+  },
+  {
+    "pdf_page": 16,
+    "thesis_page": "10",
+    "heading": "2.4",
+    "type": "Text",
+    "content": "",
+    "context": "e zugrunde liegenden n sie sich grundsät e Vereinheitlichung v arren Regeln nur sch j d h h bli h L"
+  },
+  {
+    "pdf_page": 16,
+    "thesis_page": "10",
+    "heading": "2.4",
+    "type": "Text",
+    "content": "...potentiell... nicht grundsätzlich dann brauchst deine Arbeit nicht mehr machen",
+    "context": "e zugrunde liegenden n sie sich grundsät e Vereinheitlichung v arren Regeln nur sch j d h h bli h L"
+  },
+  {
+    "pdf_page": 16,
+    "thesis_page": "10",
+    "heading": "2.4",
+    "type": "Text",
+    "content": "Limitation ist keine Schwäche, das sind zwei paar Schuh",
+    "context": "e Limitationen gegen zur Erzeugung plau aben, was bei der führen kann [11, 3 e der Menge an Date"
+  },
+  {
+    "pdf_page": 16,
+    "thesis_page": "10",
+    "heading": "2.4",
+    "type": "Highlight",
+    "content": "das suggeriert beim lesen dass es für die Arbeit von dir gilt, würde ich anders schreiben",
+    "context": "Verarbeitungsschritt überg Praktisch relevant sind fe besondere bei großen Dat die bereits beschriebene da wiederholte Ausführun i li f kö [11 3"
+  },
+  {
+    "pdf_page": 16,
+    "thesis_page": "10",
+    "heading": "2.4",
+    "type": "Text",
+    "content": "Ausgangspunkt ja aber es ist ja auch Inhalt zum Teil (nebst dem Vergleich zum klassischen) in deiner Ausarbeitung",
+    "context": "37]. Diese Spannung Ausgangspunkte de neering"
+  },
+  {
+    "pdf_page": 19,
+    "thesis_page": "13",
+    "heading": "3.2",
+    "type": "Highlight",
+    "content": "spannend wenn man das jedes mal machen müsste. Spielt in Stabilität mit rein und folgende der Anwendung von LLMs mit rein, also vsl. wichtig bei deinen Ergebnis",
+    "context": "für die vorliegende Arbeit in zweifacher Hinsicht relevant: Sie begründen einerseits die Verwendung eines synthetischen Datensatzes und mahnen andererseits zur em- pirischen Prüfung der tatsächlichen Verarbeitungsqualitä"
+  },
+  {
+    "pdf_page": 20,
+    "thesis_page": "14",
+    "heading": "3.4",
+    "type": "Text",
+    "content": "auch hier wieder, warum bekommt 1 und 2 keinen Absatz und 3. dann schon?",
+    "context": "Drittens fe Prompting DHBW"
+  },
+  {
+    "pdf_page": 22,
+    "thesis_page": "16",
+    "heading": "4.1",
+    "type": "Highlight",
+    "content": "klingt sehr allgemein hier, die kommen ja weiter unten, ggf. darauf verweisen dass du da noch drauf eingehst im folgenden",
+    "context": "d ETL-Aufgabe: Für jede Kombinati hrt und anhand einheitlicher Kriterie n Faktoren systematisch isolieren las entscheidung betrifft die Art und We i b d d A t tt di"
+  },
+  {
+    "pdf_page": 22,
+    "thesis_page": "16",
+    "heading": "4.1",
+    "type": "Highlight",
+    "content": "Begrifflichekeiten dann durchgehende auch verwenden, das hilft der lesbarkeit. Bisher kam dann nix mehr zu Soll Löugn und Ground Truth",
+    "context": "geführt, sein Ergebnis als tabellar- ekannte Soll-Lösung (Ground Truth) bilistischen Natur auch bei identis- kö i d di R"
+  },
+  {
+    "pdf_page": 22,
+    "thesis_page": "16",
+    "heading": "4.1",
+    "type": "Highlight",
+    "content": "Temperatur??? Nimmst du da was Vorweg?",
+    "context": "mehrfach ausgeführt, sodass die Streuung der Ergebnisse über die Wiederholungen hinweg quantifiziert werden kann. Steuerbare Einflussgrößen wie die Temperatur wer- den über alle Durchläufe konstant und auf einen niedrige"
+  },
+  {
+    "pdf_page": 22,
+    "thesis_page": "16",
+    "heading": "4.1",
+    "type": "Highlight",
+    "content": "ist der der Code dann aber nicht sowieso stabil? Oder wird er dann immer wieder neu erzeugt. Das wirft Fragen hier auf.",
+    "context": "er Datenmenge und umgeht damit die Begrenzung durch das ugt eine nachvollziehbare und wiederausführbare Artefaktbasis e unmittelbare Vergleichbarkeit mit der regelbasierten Pipeline ogrammatische Lösung auf Basis der Bib"
+  },
+  {
+    "pdf_page": 23,
+    "thesis_page": "17",
+    "heading": "4.2",
+    "type": "Text",
+    "content": "geh doch im folgenden auch auf die Kennzeichen ein also nutze Hx im Text so wie FFx auch\n...vielleicht kommt das aber auch noch, dann ist es ein Hinweis",
+    "context": "spiel aus Aufgaben 16]. Auswahl der"
+  },
+  {
+    "pdf_page": 23,
+    "thesis_page": "17",
+    "heading": "4.2",
+    "type": "Highlight",
+    "content": "Ich verliere etwas den Faden hier, willst du die Forschungsfragen beantworten und/oder die Hypothesen?",
+    "context": "Aus den Forschungsfragen und dem folgenden Hypothesen ableiten, di werden:"
+  },
+  {
+    "pdf_page": 23,
+    "thesis_page": "17",
+    "heading": "4.2",
+    "type": "Highlight",
+    "content": "bisher gings doch eher um KI vs klassisch, schau nochmal nach der overall Konsistenz",
+    "context": "n über alle Aufgaben hinw ützten, hybriden oder kl gabentyp, Qualitätsanfor"
+  },
+  {
+    "pdf_page": 23,
+    "thesis_page": "17",
+    "heading": "4.2",
+    "type": "Text",
+    "content": "",
+    "context": "11, 37]. Ansatz; die Vorteilha ehens ist vom Zusam ienzrahmen abhäng"
+  },
+  {
+    "pdf_page": 27,
+    "thesis_page": "21",
+    "heading": "4.5",
+    "type": "Text",
+    "content": "naja ein Prompt ist per se nicht wirklich reproduzierbar, so ein Modell lernt ja auch tlw. -> müsstest vielleicht genauer nochmal anschauen das Thema",
+    "context": "versioniert vorgeha d reproduzierbar ble"
+  },
+  {
+    "pdf_page": 27,
+    "thesis_page": "21",
+    "heading": "4.5",
+    "type": "Text",
+    "content": "immer die selben Quellen",
+    "context": "alten, sodass jede e eibt [6, 32]."
+  },
+  {
+    "pdf_page": 27,
+    "thesis_page": "21",
+    "heading": "4.5",
+    "type": "Highlight",
+    "content": "Verstehe ich nur tlw., was hat zur Folge",
+    "context": "schnitte beschreiben die vier herangezogenen Kriterien Genauigkeit, Vollständigkeit, Konsistenz und Effizienz. Die zur Beantwortung von FF3 erforderliche Stabilität der Ergebnisse wird nicht als separates Einzelkriterium"
+  },
+  {
+    "pdf_page": 29,
+    "thesis_page": "23",
+    "heading": "4.6",
+    "type": "Highlight",
+    "content": "...gegen..",
+    "context": "leich mit einer manuellen ETL-P bnisse der LLM-gestützten Verarbeitung einord ßstab eine klassische, regelbasiert implementie lb A f b f d lb D t"
+  },
+  {
+    "pdf_page": 29,
+    "thesis_page": "23",
+    "heading": "4.6",
+    "type": "Text",
+    "content": "Du nennst immer mal die Fragestellungen aber auch nicht alle. Hat das überhaupt Relevanz an dieser Stelle darauf einzugehen. Eigentlich gibst du doch nur Einblick in dein Konzept",
+    "context": "er KI-gestützten Ansä ung von FF1. sbasis ist, dass sie d gt: Identische Eingab ende Logik ist expliz"
+  },
+  {
+    "pdf_page": 29,
+    "thesis_page": "23",
+    "heading": "4.6",
+    "type": "Highlight",
+    "content": "..die..\nwas anderes gibt es nicht :-)",
+    "context": "bildet die regelbasi eine starke Refere Länder-Vereinheitlic die Grenzen rein re chen Evaluationskr f i V l i h"
+  },
+  {
+    "pdf_page": 29,
+    "thesis_page": "23",
+    "heading": "4.6",
+    "type": "Text",
+    "content": "",
+    "context": "p hrend gerade bei de und der Fuzzy-Dupli ierter Verfahren zeig aus Abschnitt 4.5 b klassischem und KI"
+  },
+  {
+    "pdf_page": 29,
+    "thesis_page": "23",
+    "heading": "4.6",
+    "type": "Text",
+    "content": "...auch die ist deterministisch",
+    "context": "p hrend gerade bei de und der Fuzzy-Dupli ierter Verfahren zeig aus Abschnitt 4.5 b klassischem und KI"
+  },
+  {
+    "pdf_page": 29,
+    "thesis_page": "23",
+    "heading": "4.6",
+    "type": "Text",
+    "content": "wo kommt das mit dem Hybrid jetzt her?",
+    "context": "rgehen möglich ist u en für hybride Archit"
+  },
+  {
+    "pdf_page": 29,
+    "thesis_page": "23",
+    "heading": "4.6",
+    "type": "Text",
+    "content": "",
+    "context": "chen Evalu fairer Vergl sich auf die turen ableit"
+  },
+  {
+    "pdf_page": 29,
+    "thesis_page": "23",
+    "heading": "4.6",
+    "type": "Text",
+    "content": "Fair ist richtig aber wirkt unpassend hier",
+    "context": "chen Evalu fairer Vergl sich auf die turen ableit"
+  }
+]

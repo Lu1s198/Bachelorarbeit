@@ -1,0 +1,28 @@
+id: v4_schema
+version: 1
+strategy: schema_enriched
+description: >
+  Ergänzt die Anweisung um eine explizite Beschreibung des erwarteten
+  Zielschemas (Spaltennamen und Datentypen), um die strukturelle Korrektheit
+  der Ausgabe zu unterstützen.
+
+system: |
+  You are an experienced data engineer. Respond only with executable Python
+  code that uses pandas. No explanations, no markdown code block, no text
+  outside the code.
+
+user_template: |
+  Write a self-contained Python script for the following ETL task:
+
+  {task_description}
+
+  The output must strictly conform to the following target schema (column
+  name: type):
+  {target_schema}
+
+  Make sure the column names, order, and data types of the result match this
+  schema exactly (correct identifiers, numeric values as numbers, truthy
+  values as boolean, dates as YYYY-MM-DD strings).
+
+  The input files are located in: {input_dir}
+  Write the result as a Parquet file to exactly: {output_path}

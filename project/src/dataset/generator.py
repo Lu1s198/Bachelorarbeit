@@ -20,7 +20,7 @@ import pandas as pd
 from faker import Faker
 
 from config import settings
-from dataset.schemas import CANONICAL_CATEGORIES, CANONICAL_COUNTRIES
+from dataset.schemas import CANONICAL_CATEGORIES, CANONICAL_COUNTRIES, COUNTRY_VARIANTS
 
 
 # ----- config -----
@@ -36,19 +36,7 @@ N_ORDERS = 2000                         # Orders
 
 def _create_dirty_country(clean_code: str, rng: random.Random) -> str:
     """Clean ISO-Code --> Dirty Country Name"""
-    mapping = {
-        "DE": ["DE", "Deutschland", "Germany", "deutschland", "GER", "Deutshcland"],
-        "AT": ["AT", "Österreich", "Austria", "OEsterreich", "AUT"],
-        "CH": ["CH", "Schweiz", "Switzerland", "schweiz", "SUI"],
-        "FR": ["FR", "Frankreich", "France", "FRA"],
-        "IT": ["IT", "Italien", "Italy", "ITA"],
-        "ES": ["ES", "Spanien", "Spain", "ESP"],
-        "NL": ["NL", "Niederlande", "Netherlands", "Holland"],
-        "BE": ["BE", "Belgien", "Belgium"],
-        "PL": ["PL", "Polen", "Poland"],
-        "GB": ["GB", "Großbritannien", "United Kingdom", "UK", "England"],
-    }
-    return rng.choice(mapping.get(clean_code, [clean_code]))
+    return rng.choice(COUNTRY_VARIANTS.get(clean_code, [clean_code]))
 
 
 def _create_dirty_date(clean_date: date, rng: random.Random) -> str:

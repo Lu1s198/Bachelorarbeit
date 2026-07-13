@@ -26,6 +26,11 @@ class Settings(BaseSettings):
     # Reproduzierbarkeit
     random_seed: int = 42
 
+    # Experiment-Parameter (Kapitel 4)
+    temperature: float = 0.0          # konstant niedrig gehalten (FF3)
+    max_output_tokens: int = 8000
+    n_repetitions: int = 3            # Wiederholungen je Konfiguration
+
     # Pfade
     data_dir: Path = PROJECT_ROOT / "data"
     synthetic_dir: Path = PROJECT_ROOT / "data" / "synthetic"

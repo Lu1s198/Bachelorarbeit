@@ -1,16 +1,22 @@
 id: v1_zero_shot
 version: 1
-description: >
-  Baseline-Prompt ohne Kontext oder Beispiele. Misst, was ein Modell
-  ohne Hilfestellung aus einer reinen Aufgabenbeschreibung produziert.
 strategy: zero_shot
+description: >
+  Baseline-Prompt ohne Kontext oder Beispiele. Misst, was ein Modell ohne
+  Hilfestellung aus einer reinen Aufgabenbeschreibung produziert.
 
 system: |
-  Du bist ein Data Engineer. Antworte ausschließlich mit ausführbarem Python-Code.
-  Verwende pandas. Keine Erklärungen, keine Markdown-Codeblöcke.
+  You are an experienced data engineer. Respond only with executable Python
+  code that uses pandas. No explanations, no markdown code block, no text
+  outside the code.
 
 user_template: |
-  Schreibe einen ETL-Prozess, der die Datei `{input_path}` einliest, folgende
-  Transformationen anwendet und das Ergebnis nach `{output_path}` schreibt:
+  Write a self-contained Python script for the following ETL task:
 
   {task_description}
+
+  The input files are located in: {input_dir}
+  Write the result as a Parquet file to exactly: {output_path}
+
+  The script must run without any further input and must produce the output
+  file at the specified path.

@@ -1,0 +1,21 @@
+id: v3_chain_of_thought
+version: 1
+strategy: chain_of_thought
+description: >
+  Leitet das Modell an, die Lösung in nachvollziehbaren Zwischenschritten zu
+  entwickeln. Da nur ausführbarer Code zurückkommen darf, werden die
+  Zwischenschritte als Python-Kommentare vor dem jeweiligen Code formuliert.
+
+system: |
+  You are an experienced data engineer. Respond only with executable Python
+  code (pandas). Record your reasoning as comments (with #) directly in the
+  code. No text outside the code, no markdown.
+
+user_template: |
+  Solve the following ETL task. Proceed step by step: first break the task
+  down into sub-steps (as comments), then implement each step in code.
+
+  {task_description}
+
+  The input files are located in: {input_dir}
+  Write the result as a Parquet file to exactly: {output_path}

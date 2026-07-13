@@ -31,6 +31,7 @@ class Task:
     input_files: list[str]              # relative to data/synthetic/
     expected_output: str                # relative to data/ground_truth/
     evaluation_focus: list[str]         # criterias
+    target_schema: str = ""             # column:type description for schema-enriched prompts
     notes: str = ""                     # notes
 
 
@@ -50,6 +51,10 @@ CLEANING_TASKS: list[Task] = [
         input_files=["customers_raw.csv"],
         expected_output="cleaning_easy_missing_and_whitespace.parquet",
         evaluation_focus=["accuracy", "completeness"],
+        target_schema=(
+            "customer_id: int, full_name: string (trimmed), email: string (trimmed), "
+            "country: string (trimmed; 'UNKNOWN' where missing), registered_at: string (unchanged)"
+        ),
     ),
     Task(
         id="cleaning_medium_date_formats",
@@ -65,6 +70,10 @@ CLEANING_TASKS: list[Task] = [
         input_files=["customers_raw.csv"],
         expected_output="cleaning_medium_date_formats.parquet",
         evaluation_focus=["accuracy", "consistency"],
+        target_schema=(
+            "customer_id: int, full_name: string, email: string, country: string, "
+            "registered_at: string (ISO date, format YYYY-MM-DD)"
+        ),
     ),
     Task(
         id="cleaning_hard_semantic_unification",
@@ -81,6 +90,10 @@ CLEANING_TASKS: list[Task] = [
         input_files=["customers_raw.csv"],
         expected_output="cleaning_hard_semantic_unification.parquet",
         evaluation_focus=["accuracy", "consistency"],
+        target_schema=(
+            "customer_id: int, full_name: string, email: string, "
+            "country: string (2-letter ISO-3166-1 alpha-2 code, or 'UNKNOWN'), registered_at: string"
+        ),
         notes="Hier ist semantisches Verständnis nötig — interessante Achse für LLMs.",
     ),
 ]
@@ -101,6 +114,10 @@ DEDUPLICATION_TASKS: list[Task] = [
         input_files=["customers_raw.csv"],
         expected_output="dedup_easy_exact_duplicates.parquet",
         evaluation_focus=["accuracy", "completeness"],
+        target_schema=(
+            "customer_id: int, full_name: string, email: string, country: string, "
+            "registered_at: string (same columns as input, one row per exact duplicate group)"
+        ),
     ),
     Task(
         id="dedup_medium_key_duplicates",
@@ -115,6 +132,10 @@ DEDUPLICATION_TASKS: list[Task] = [
         input_files=["customers_raw.csv"],
         expected_output="dedup_medium_key_duplicates.parquet",
         evaluation_focus=["accuracy"],
+        target_schema=(
+            "customer_id: int, full_name: string, email: string, country: string, "
+            "registered_at: string (same columns as input, one row per unique email)"
+        ),
     ),
     Task(
         id="dedup_hard_fuzzy_duplicates",
@@ -132,6 +153,10 @@ DEDUPLICATION_TASKS: list[Task] = [
         input_files=["customers_raw.csv"],
         expected_output="dedup_hard_fuzzy_duplicates.parquet",
         evaluation_focus=["accuracy", "consistency"],
+        target_schema=(
+            "customer_id: int, full_name: string, email: string, country: string, "
+            "registered_at: string (same columns as input, one row per real person)"
+        ),
         notes="Hauptmessung: Fuzzy-Matching-Strategie der LLMs.",
     ),
 ]
@@ -154,6 +179,10 @@ TRANSFORMATION_TASKS: list[Task] = [
         input_files=["products_raw.csv"],
         expected_output="transform_easy_type_conversion.parquet",
         evaluation_focus=["accuracy", "consistency"],
+        target_schema=(
+            "product_id: int, name: string, category: string, "
+            "price_eur: float (decimal point '.'), in_stock: bool"
+        ),
     ),
     Task(
         id="transform_medium_derived_columns",
@@ -169,6 +198,12 @@ TRANSFORMATION_TASKS: list[Task] = [
         input_files=["orders_raw.csv"],
         expected_output="transform_medium_derived_columns.parquet",
         evaluation_focus=["accuracy", "completeness"],
+        target_schema=(
+            "order_id: int, customer_id: int, product_id: int, quantity: int, "
+            "unit_price_eur: float, ordered_at: string (ISO date), "
+            "total_eur: float (= quantity * unit_price_eur), "
+            "order_year: int, order_month: int (1-12)"
+        ),
     ),
     Task(
         id="transform_hard_join_and_aggregate",
@@ -187,6 +222,11 @@ TRANSFORMATION_TASKS: list[Task] = [
         input_files=["orders_raw.csv", "customers_raw.csv", "products_raw.csv"],
         expected_output="transform_hard_join_and_aggregate.parquet",
         evaluation_focus=["accuracy", "completeness", "consistency", "efficiency"],
+        target_schema=(
+            "country_code: string (2-letter ISO code), category: string, "
+            "total_revenue_eur: float (rounded to 2 decimals), order_count: int "
+            "(one row per country/category combination, sorted descending by total_revenue_eur)"
+        ),
         notes="Königsdisziplin: 3-Tabellen-Join + Bereinigung + Aggregation.",
     ),
 ]

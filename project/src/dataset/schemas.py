@@ -51,3 +51,19 @@ class CleanOrder(BaseModel):
 
 CANONICAL_COUNTRIES = ["DE", "AT", "CH", "FR", "IT", "ES", "NL", "BE", "PL", "GB"]
 CANONICAL_CATEGORIES = ["Electronics", "Books", "Clothing", "Home", "Sports", "Toys"]
+
+# Varianten je ISO-Code für die kontrollierte Verfälschung der Länderangaben.
+# Einzige Quelle der Wahrheit: der Generator streut hieraus, die Referenzlösung
+# (dataset/reference.py) invertiert diese Tabelle, um die Soll-Lösung zu bilden.
+COUNTRY_VARIANTS: dict[str, list[str]] = {
+    "DE": ["DE", "Deutschland", "Germany", "deutschland", "GER", "Deutshcland"],
+    "AT": ["AT", "Österreich", "Austria", "OEsterreich", "AUT"],
+    "CH": ["CH", "Schweiz", "Switzerland", "schweiz", "SUI"],
+    "FR": ["FR", "Frankreich", "France", "FRA"],
+    "IT": ["IT", "Italien", "Italy", "ITA"],
+    "ES": ["ES", "Spanien", "Spain", "ESP"],
+    "NL": ["NL", "Niederlande", "Netherlands", "Holland"],
+    "BE": ["BE", "Belgien", "Belgium"],
+    "PL": ["PL", "Polen", "Poland"],
+    "GB": ["GB", "Großbritannien", "United Kingdom", "UK", "England"],
+}

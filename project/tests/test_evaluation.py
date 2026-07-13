@@ -2,7 +2,7 @@
 
 import pandas as pd
 
-from ba_ki_etl.evaluation import evaluate_correctness
+from evaluation import evaluate_correctness
 
 
 def test_perfect_match() -> None:

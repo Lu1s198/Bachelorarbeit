@@ -1,0 +1,31 @@
+id: v2_few_shot
+version: 1
+strategy: few_shot
+description: >
+  Ergänzt die Anweisung um ein beispielhaftes Ein-/Ausgabepaar (eine gelöste,
+  andersartige ETL-Aufgabe), an dem das Modell das gewünschte Verhalten und den
+  Stil des erwarteten Codes ableitet.
+
+system: |
+  You are an experienced data engineer. Respond only with executable Python
+  code that uses pandas. No explanations, no markdown code block, no text
+  outside the code.
+
+user_template: |
+  Example of a solved ETL task (for orientation only):
+
+  Task: Read `example.csv` from the directory /path/to/data, remove rows
+  with a missing `id` value, and write the result as Parquet to
+  /path/to/output.parquet.
+  Solution:
+  import pandas as pd
+  df = pd.read_csv("/path/to/data/example.csv")
+  df = df.dropna(subset=["id"])
+  df.to_parquet("/path/to/output.parquet", index=False)
+
+  Now solve the following task in the same style:
+
+  {task_description}
+
+  The input files are located in: {input_dir}
+  Write the result as a Parquet file to exactly: {output_path}

@@ -70,22 +70,26 @@ def parse_bool(value: object) -> bool:
 
 # ----- Referenzlösungen je Aufgabe -----
 
-def _cleaning_easy(raw_customers: pd.DataFrame) -> pd.DataFrame:
-    df = raw_customers.copy()
+def _strip_customer_text_fields(df: pd.DataFrame) -> pd.DataFrame:
+    cleaned = df.copy()
     for col in ("full_name", "email", "country"):
-        df[col] = df[col].str.strip()
+        cleaned[col] = cleaned[col].str.strip()
+    return cleaned
+
+def _cleaning_easy(raw_customers: pd.DataFrame) -> pd.DataFrame:
+    df = _strip_customer_text_fields(raw_customers)
     df["country"] = df["country"].fillna("UNKNOWN")
     return df
 
 
 def _cleaning_medium(raw_customers: pd.DataFrame) -> pd.DataFrame:
-    df = raw_customers.copy()
+    df = _strip_customer_text_fields(raw_customers)
     df["registered_at"] = df["registered_at"].map(parse_date_iso)
     return df
 
 
 def _cleaning_hard(raw_customers: pd.DataFrame) -> pd.DataFrame:
-    df = raw_customers.copy()
+    df = _strip_customer_text_fields(raw_customers)
     df["country"] = df["country"].map(country_to_iso)
     return df
 

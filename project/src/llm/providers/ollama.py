@@ -37,6 +37,18 @@ class OllamaProvider(LLMProvider):
         if temperature is not None:
             options["temperature"] = temperature
 
+        # Kontextfenster automatisch groß genug wählen (Default 4096 reicht nicht,
+        # wenn -- wie im Direkt-Modus -- die Rohdaten mit ins Prompt eingebettet
+        # werden). Grob: Eingabe- + Ausgabe-Tokens, auf 2er-Potenz aufgerundet.
+        approx_in = (len(prompt) + len(system or "")) // 4
+        ctx = 4096
+        while ctx < approx_in + max_tokens + 512:
+            ctx *= 2
+        # Cap bei 8192: größere KV-Caches sprengen auf 8-GB-GPUs das VRAM und
+        # fallen extrem langsam auf die CPU zurück. Im Direkt-Modus wird die
+        # Ausgabe dadurch ggf. abgeschnitten (schneller Fehlschlag statt Hänger).
+        options["num_ctx"] = min(ctx, 8192)
+
         start = time.perf_counter()
         response = self.client.chat(
             model=self._model_id, messages=messages, options=options

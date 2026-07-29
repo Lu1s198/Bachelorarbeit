@@ -50,7 +50,7 @@ def _fuzzy_key(name: object, email: object) -> str:
 
 
 def _cleaning_hard(raw_customers: pd.DataFrame) -> pd.DataFrame:
-    df = raw_customers.copy()
+    df = ref._strip_customer_text_fields(raw_customers)
     df["country"] = df["country"].map(_country_baseline)
     return df
 

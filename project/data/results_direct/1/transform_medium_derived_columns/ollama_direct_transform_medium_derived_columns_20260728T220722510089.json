@@ -1,0 +1,52 @@
+{
+  "timestamp": "2026-07-28T22:00:25.043109+00:00",
+  "provider": "ollama",
+  "mode": "direct",
+  "requested_model": "llama3.1",
+  "prompt_id": "direct_v1",
+  "prompt_strategy": "direct",
+  "task_id": "transform_medium_derived_columns",
+  "task_category": "transformation",
+  "task_difficulty": "medium",
+  "seed": 1,
+  "repetition": 1,
+  "temperature": 0.0,
+  "error": null,
+  "model": "llama3.1",
+  "prompt_tokens": 4098,
+  "completion_tokens": 4064,
+  "cost_usd": 0.0,
+  "llm_latency_seconds": 417.4614569000041,
+  "correctness": {
+    "schema_match": false,
+    "row_count_match": false,
+    "values_match": false,
+    "accuracy": 0.0,
+    "completeness": 0.0,
+    "consistency": 0.0,
+    "row_count_expected": 2000,
+    "row_count_actual": 202,
+    "missing_columns": [
+      "customer_id",
+      "order_id",
+      "order_month",
+      "order_year",
+      "ordered_at",
+      "product_id",
+      "quantity",
+      "total_eur",
+      "unit_price_eur"
+    ],
+    "extra_columns": [
+      "1",
+      "1798",
+      "2024-06-05",
+      "268.97",
+      "402",
+      "69"
+    ],
+    "comparable": false,
+    "notes": ""
+  },
+  "n_rows_returned": 202
+}

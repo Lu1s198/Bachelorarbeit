@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-07-28T22:07:22.718045+00:00",
+  "provider": "ollama",
+  "mode": "direct",
+  "requested_model": "llama3.1",
+  "prompt_id": "direct_v1",
+  "prompt_strategy": "direct",
+  "task_id": "transform_hard_join_and_aggregate",
+  "task_category": "transformation",
+  "task_difficulty": "hard",
+  "seed": 1,
+  "repetition": 1,
+  "temperature": 0.0,
+  "error": null,
+  "model": "llama3.1",
+  "prompt_tokens": 4098,
+  "completion_tokens": 3868,
+  "cost_usd": 0.0,
+  "llm_latency_seconds": 397.315088299998,
+  "correctness": {
+    "schema_match": false,
+    "row_count_match": false,
+    "values_match": false,
+    "accuracy": 0.0,
+    "completeness": 0.0,
+    "consistency": 0.0,
+    "row_count_expected": 60,
+    "row_count_actual": 192,
+    "missing_columns": [
+      "category",
+      "country_code",
+      "order_count",
+      "total_revenue_eur"
+    ],
+    "extra_columns": [
+      "country",
+      "email",
+      "first_name",
+      "last_name",
+      "name",
+      "timestamp"
+    ],
+    "comparable": false,
+    "notes": ""
+  },
+  "n_rows_returned": 192
+}

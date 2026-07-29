@@ -1,0 +1,47 @@
+{
+  "timestamp": "2026-07-28T21:47:18.315203+00:00",
+  "provider": "ollama",
+  "mode": "direct",
+  "requested_model": "llama3.1",
+  "prompt_id": "direct_v1",
+  "prompt_strategy": "direct",
+  "task_id": "dedup_medium_key_duplicates",
+  "task_category": "deduplication",
+  "task_difficulty": "medium",
+  "seed": 1,
+  "repetition": 1,
+  "temperature": 0.0,
+  "error": null,
+  "model": "llama3.1",
+  "prompt_tokens": 4098,
+  "completion_tokens": 3984,
+  "cost_usd": 0.0,
+  "llm_latency_seconds": 342.4394647999943,
+  "correctness": {
+    "schema_match": false,
+    "row_count_match": false,
+    "values_match": false,
+    "accuracy": 0.0,
+    "completeness": 0.0,
+    "consistency": 0.0,
+    "row_count_expected": 520,
+    "row_count_actual": 157,
+    "missing_columns": [
+      "country",
+      "customer_id",
+      "email",
+      "full_name",
+      "registered_at"
+    ],
+    "extra_columns": [
+      "1637884800",
+      "36",
+      "BE",
+      "Leonid Schaaf",
+      "kbuchholz@example.net"
+    ],
+    "comparable": false,
+    "notes": ""
+  },
+  "n_rows_returned": 157
+}

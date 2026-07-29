@@ -1,0 +1,1180 @@
+<think>
+This is a complex task. I need to:
+1. Parse the CSV, normalize email (trim spaces, lowercase for comparison purposes)
+2. Group by normalized email
+3. For each group, pick the row with the most recent registered_at (dates in various formats and unix timestamps)
+4. Keep original values for output columns
+
+Let me process this carefully.
+
+First, I need to normalize emails for grouping (trim whitespace, lowercase) but need to decide what to output - likely the email from the kept row (as-is, or normalized?). The task says "same columns as input" - I'll keep the original email value from the retained row.
+
+Let me parse registered_at into comparable dates. Formats:
+- Unix timestamp (10 digit number)
+- YYYY-MM-DD
+- Month DD YYYY (e.g. "December 22 2025")
+- DD.MM.YYYY
+
+Let me go through all rows and group by normalized email (lowercase, trimmed).
+
+Let me list all rows with row index, email(normalized), registered_at, and convert to a comparable date.
+
+I'll convert everything to YYYY-MM-DD for comparison.
+
+Row data (customer_id, full_name, email, country, registered_at):
+
+1. 142, ehlertharri@example.org, 1639353600 -> 2021-12-13
+2. 427, otlustek@example.com, 1743292800 -> 2025-03-30
+3. 61, benboucsein@example.net, 2025-06-27
+4. 148, fischerreginald@example.net, December 22 2025 -> 2025-12-22
+5. 230, renateroht@example.org, January 01 2025 -> 2025-01-01
+6. 496, wwulff@example.net, 1630972800 -> 2021-09-07
+7. 456, bernhard84@example.net, May 19 2024 -> 2024-05-19
+8. 489, helfriedconradi@example.net, 05.11.2023 -> 2023-11-05
+9. 299, dmosemann@example.net, 1726012800 -> 2024-09-11
+10. 259, bdussen-van@example.net, 2021-07-28
+11. 85, kuehnertewa@example.net, 2022-05-06
+12. 293, yaumann@example.net, 1728691200 -> 2024-10-12
+13. 138, ewa75@example.com, November 18 2023 -> 2023-11-18
+14. 493, gunter53@example.org, 23.07.2025 -> 2025-07-23
+15. 37, rosa49@example.net, 1608508800 -> 2020-12-21
+16. 202, danielleschenk@example.org, 20.09.2025 -> 2025-09-20
+17. 379, giorgiobender@example.com, 1635811200 -> 2021-11-02
+18. 5, joderwald@example.org, December 10 2022 -> 2022-12-10
+19. 52, zahnmaik@example.net, 1758240000 -> 2025-09-18
+20. 432, gnatzkarl-heinrich@example.org, 01.12.2023 -> 2023-12-01
+21. 303, dietzastrid@example.com, 02.03.2021 -> 2021-03-02
+22. 305, skrebs@example.com, June 23 2021 -> 2021-06-23
+23. 66, hethurjenny@example.org, 2021-03-08
+24. 146, hans-joerg70@example.org, 03.10.2025 -> 2025-10-03
+25. 206, nhermighausen@example.org, 2020-06-10
+26. 505, gka.bus@example.org, 25.05.2021 -> 2021-05-25
+27. 510, ELFRIEDE16@example.org -> elfriede16@example.org, 1742256000 -> 2025-03-18
+28. 271, hubert55@example.org, 11.05.2022 -> 2022-05-11
+29. 346, lhuebel@example.net, 1626825600 -> 2021-07-21
+30. 256, meik09@example.org, 02.10.2024 -> 2024-10-02
+31. 33, patrik55@example.org, 1655942400 -> 2022-06-23
+32. 310, helmuthzimmer@example.org, 2023-11-11
+33. 59, ostriebitz@example.net, 2021-12-02
+34. 11, gunterpaffrath@example.org, 2020-02-08
+35. 130, rupert30@example.net, 10.07.2024 -> 2024-07-10
+36. 68, ernst-augustlosekann@example.net, 2024-07-17
+37. 130 (dup), rupert30@example.net, 10.07.2024 -> 2024-07-10 [duplicate row entirely]
+38. 442, zhess@example.com, 1586822400 -> 2020-04-14
+39. 273, wolf-dieterreinhardt@example.org, May 25 2020 -> 2020-05-25
+40. 367, gschweitzer@example.org, 2025-02-01
+41. 295, margrafkatja@example.com, August 29 2021 -> 2021-08-29
+42. 448, ypeukert@example.net, 1757203200 -> 2025-09-07
+43. 232, ygunpf@example.org, 2023-01-27
+44. 397, alexandre21@example.org, 2024-12-29
+45. 369, theresia08@example.net, October 28 2020 -> 2020-10-28
+46. 136, kochsiegmar@example.com, 2022-05-24
+47. 300, daria34@example.net, 1619308800 -> 2021-04-25
+48. 396, hermann-josefcichorius@example.org, 01.02.2024 -> 2024-02-01
+49. 212, cweller@example.com, 1635292800 -> 2021-10-27
+50. 280, klaerefaust@example.org, 1633737600 -> 2021-10-09
+51. 392, friedrich-wilhelm35@example.com, 1588723200 -> 2020-05-06
+52. 406, ernst-otto44@example.org, 1729555200 -> 2024-10-22
+53. 204, konstantinostroest@example.org, 16.12.2022 -> 2022-12-16
+54. 484, muellerhanno@example.com, 2024-09-01
+55. 188, astatextor@example.com, 17.01.2020 -> 2020-01-17
+56. 213, sevim31@example.org, October 07 2025 -> 2025-10-07
+57. 97, agathemende@example.com, June 07 2021 -> 2021-06-07
+58. 513, bertha51@example.com (trim), 2025-08-24
+59. 78, hubertine27@example.net, 1757376000 -> 2025-09-09
+60. 289, sruppert@example.net, 06.03.2022 -> 2022-03-06
+61. 362, leokadia43@example.org, 12.11.2025 -> 2025-11-12
+62. 170, istoll@example.org, August 18 2020 -> 2020-08-18
+63. 145, waehnerbirgitt@example.net, 1690416000 -> 2023-07-27
+64. 122, eimerbenedikt@example.net, 1709942400 -> 2024-03-09
+65. 469, phande@example.com, September 28 2024 -> 2024-09-28
+66. 150, adobes@example.net, August 04 2025 -> 2025-08-04
+67. 198, jens45@example.com, 1652745600 -> 2022-05-17
+68. 359, hans-joergzobel@example.org, 2021-12-13
+69. 520, GUNTER53@example.org -> gunter53@example.org, 23.07.2025 -> 2025-07-23 [dup with #14]
+70. 512, heinz-ottohornig@example.net (trim), 08.09.2020 -> 2020-09-08
+71. 55, krokermary@example.com, 1623801600 -> 2021-06-16
+72. 260, helmuthgierschner@example.com, 1604016000 -> 2020-10-30
+73. 509, moseman.ntraute@example.org, 18.12.2023 -> 2023-12-18
+74. 401, pietroscholl@example.org, 1626307200 -> 2021-07-15
+75. 456 (dup), bernhard84@example.net, May 19 2024 -> 2024-05-19 [dup with #7]
+76. 454, kerstin35@example.net, 13.03.2021 -> 2021-03-13
+77. 348, leonardobachmann@example.org, April 04 2021 -> 2021-04-04
+78. 518, dowergmonja@example.com (trim), 21.05.2025 -> 2025-05-21
+79. 249, judith50@example.net, 2025-12-28
+80. 428, fridakuhl@example.com, 2024-02-28
+81. 357, barkholzsteve@example.net, 1653609600 -> 2022-05-27
+82. 95, schenkanatolij@example.org, October 23 2025 -> 2025-10-23
+83. 226, bruderines@example.org, April 10 2022 -> 2022-04-10
+84. 400, milicamargraf@example.com, 1686268800 -> 2023-06-09
+85. 207, dowergmonja@example.com, 21.05.2025 -> 2025-05-21 [dup with #78]
+86. 335, selma65@example.net, May 26 2020 -> 2020-05-26
+87. 29, aloisia70@example.com, March 16 2025 -> 2025-03-16
+88. 344, hofmannsibilla@example.net, 1706227200 -> 2024-01-26
+89. 181, peukerth-dieter@example.net, 1750291200 -> 2025-06-19
+90. 103, selma00@example.net, 2020-07-08
+91. 107, kitzmannbernadette@example.com, 29.07.2024 -> 2024-07-29
+92. 133, angelique58@example.net, 12.11.2024 -> 2024-11-12
+93. 320, doerthe93@example.org, 2020-07-23
+94. 190, peukertheinz-guenther@example.com, 1641081600 -> 2022-01-02
+95. 314, dfliegner@example.org, 1722211200 -> 2024-07-29
+96. 139, selimfinke@example.org, 1623974400 -> 2021-06-18
+97. 235, hasanmargraf@example.com, 2022-01-25
+98. 46, cjaentsch@example.com, August 03 2021 -> 2021-08-03
+99. 165, edeltrauthiller@example.com, October 09 2020 -> 2020-10-09
+100. 251, mjunck@example.org, December 18 2024 -> 2024-12-18
+101. 500, sybilla97@example.org, September 05 2023 -> 2023-09-05
+102. 6, susan06@example.net, 2025-06-18
+103. 395, ilonka64@example.net, 12.03.2020 -> 2020-03-12
+104. 482, qharloff@example.org, 25.05.2022 -> 2022-05-25
+105. 278, constantinjockel@example.net, 1714867200 -> 2024-05-05
+106. 182, naserrosl@example.org, 05.04.2023 -> 2023-04-05
+107. 285, edelgard59@example.org, 2024-02-03
+108. 45, danny41@example.com, 2020-10-08
+109. 514, vad.im90@example.org, 2025-05-28
+110. 227, horst-guenter31@example.com, February 01 2024 -> 2024-02-01
+111. 147, staudetimo@example.com, 19.10.2025 -> 2025-10-19
+112. 183, heringmicha@example.com, 1754092800 -> 2025-08-02
+113. 483, girschnerellinor@example.com, 2023-10-26
+114. 245, eckbauerlidwina@example.net, 03.07.2022 -> 2022-07-03
+115. 358, kristinstiebitz@example.org, June 01 2025 -> 2025-06-01
+116. 119, nikolaos45@example.net, 1717372800 -> 2024-06-03
+117. 174, mlachmann@example.com, 14.06.2020 -> 2020-06-14
+118. 144, rognerheinz-juergen@example.net, 03.08.2023 -> 2023-08-03
+119. 238, mikhail16@example.org, December 19 2025 -> 2025-12-19
+120. 117, josephine23@example.com, 2023-04-24
+121. 331, friederike56@example.com, 1694908800 -> 2023-09-17
+122. 264, tatianahoerle@example.net, 22.02.2022 -> 2022-02-22
+123. 439, kseidel@example.net, 28.12.2023 -> 2023-12-28
+124. 127, francoisegerlach@example.net, 2023-09-04
+125. 231, erdoganschaaf@example.org, 27.12.2024 -> 2024-12-27
+126. 325, klemtlia@example.org, 2021-12-04
+127. 508, WOLF-DIETERREINHARDT@example.org -> wolf-dieterreinhardt@example.org, May 25 2020 -> 2020-05-25 [dup with #39]
+128. 19, friederike47@example.net, 27.09.2022 -> 2022-09-27
+129. 466, scheibeanni@example.org, 2021-06-15
+130. 360, njungfer@example.org, 2022-03-11
+131. 408, estiebitz@example.net, 24.08.2025 -> 2025-08-24
+132. 54, jlosekann@example.com, 09.08.2024 -> 2024-08-09
+133. 34, claudiarohleder@example.org, 1663891200 -> 2022-09-23
+134. 267, henckclaudius@example.com, 2022-05-10
+135. 258, wibkeroehricht@example.net, 1699315200 -> 2023-11-07
+136. 268, sabri75@example.com, 2022-09-08
+137. 221, ditschlerinsabrina@example.com, November 12 2022 -> 2022-11-12
+138. 223, alicja80@example.org, 1665014400 -> 2022-10-06
+139. 26, roerrichtpriska@example.org, 08.01.2025 -> 2025-01-08
+140. 421, cetindehmel@example.com, 2024-09-02
+141. 377, qherrmann@example.org, 1617408000 -> 2021-04-03
+142. 423, kambsroswitha@example.com, 1680393600 -> 2023-04-02
+143. 281, hans-eberhard05@example.org, 2025-03-09
+144. 327, karl-josefweihmann@example.com, 20.07.2020 -> 2020-07-20
+145. 48, henkrolf-peter@example.org, April 12 2022 -> 2022-04-12
+146. 391, zrose@example.org, 03.04.2025 -> 2025-04-03
+147. 169, christian85@example.net, 21.09.2024 -> 2024-09-21
+148. 322, katerinakarge@example.org, 1678579200 -> 2023-03-12
+149. 429, reichmannconstantin@example.org, 2023-02-17
+150. 411, ian35@example.net, 2020-06-28
+151. 370, hoelzenbecherfredi@example.org, June 16 2023 -> 2023-06-16
+152. 154, wolf-dietrich44@example.com, 1635379200 -> 2021-10-28
+153. 465, elfriede16@example.org, 1742256000 -> 2025-03-18 [dup with #27]
+154. 101, lonibecker@example.org, 1681776000 -> 2023-04-18
+155. 384, kenan00@example.org, 01.05.2025 -> 2025-05-01
+156. 282, pseifert@example.org, February 12 2025 -> 2025-02-12
+157. 332, hans-michaelbolzmann@example.org, 09.01.2022 -> 2022-01-09
+158. 481, louise62@example.org, 2024-05-25
+159. 334, beyersteffen@example.com, 2023-07-14
+160. 450, spiessbela@example.net, May 23 2022 -> 2022-05-23
+161. 252, stefan04@example.org, 2025-06-07
+162. 110, peukertwalfried@example.net, 2023-02-24
+163. 126, johnboerner@example.net, 1731110400 -> 2024-11-09
+164. 321, drago60@example.com, 2020-10-16
+165. 165 (dup), edeltrauthiller@example.com, October 09 2020 -> 2020-10-09 [dup with #99]
+166. 404, mercedes98@example.net, 2022-11-06
+167. 488, nwieloch@example.org, 14.06.2020 -> 2020-06-14
+168. 307, ricarda16@example.org, 2023-12-25
+169. 436, sofie60@example.net, 1761264000 -> 2025-10-24
+170. 275, hillerreinhild@example.net, October 14 2021 -> 2021-10-14
+171. 409, steckelantonius@example.org, February 28 2020 -> 2020-02-28
+172. 296, caroline52@example.net, March 03 2024 -> 2024-03-03
+173. 177, lydia73@example.net, January 15 2022 -> 2022-01-15
+174. 74, conradotto@example.com, November 13 2024 -> 2024-11-13
+175. 128, ztroest@example.com, November 14 2021 -> 2021-11-14
+176. 31, gundula16@example.net, 04.12.2022 -> 2022-12-04
+177. 167, gertzilias@example.org, 1694476800 -> 2023-09-12
+178. 237, eschmiedecke@example.com, March 12 2020 -> 2020-03-12
+179. 69, iwan68@example.org, 2021-08-12
+180. 270, guiseppemielcarek@example.net, 02.05.2025 -> 2025-05-02
+181. 274, nancy85@example.com, 2025-07-25
+182. 35, jzirme@example.org, 2022-11-25
+183. 404 (dup), mercedes98@example.net, 2022-11-06 [dup with #166]
+184. 446, wfinke@example.org, 1591228800 -> 2020-06-04
+185. 375, mirjam52@example.net, 1673136000 -> 2023-01-08
+186. 394, yritter@example.net, April 23 2022 -> 2022-04-23
+187. 22, tilmanntlustek@example.net, 08.10.2025 -> 2025-10-08
+188. 215, hans-rainer35@example.net, 2024-12-25
+189. 276, carina63@example.com, June 02 2020 -> 2020-06-02
+190. 229, arifmargraf@example.com, 2020-04-25
+191. 440, jolanda06@example.net, 17.01.2025 -> 2025-01-17
+192. 254, folkerhornich@example.org, 2020-07-31
+193. 153, reichmannmarta@example.net, May 01 2024 -> 2024-05-01
+194. 247, hlinke@example.com, August 18 2020 -> 2020-08-18
+195. 115, almaroht@example.org, 1666396800 -> 2022-10-22
+196. 236, gudediana@example.org, 2021-08-05
+197. 424, wroerricht@example.com, 1693612800 -> 2023-09-02
+198. 342, adlerangelique@example.com, December 29 2021 -> 2021-12-29
+199. 517, konstantinostroest@example.org (trim), 16.12.2022 -> 2022-12-16 [dup with #53]
+200. 315, marie-therese78@example.net, November 25 2022 -> 2022-11-25
+201. 417, jozeflehmann@example.net, 1707004800 -> 2024-02-04
+202. 356, nhethur@example.org, 07.06.2022 -> 2022-06-07
+203. 106, isidorbonbach@example.net, 08.01.2025 -> 2025-01-08
+204. 483 (dup), girschnerellinor@example.com, 2023-10-26 [dup with #113]
+205. 222, schweitzerpavel@example.net, August 18 2020 -> 2020-08-18
+206. 93, tklingelhoefer@example.com, January 17 2022 -> 2022-01-17
+207. 464, lkarz@example.net, March 10 2022 -> 2022-03-10
+208. 96, qkarz@example.com, 1609459200 -> 2021-01-01
+209. 44, wspeer@example.com, 2021-07-23
+210. 467, ascholtz@example.org, 18.05.2023 -> 2023-05-18
+211. 277, dusanernst@example.org, February 20 2023 -> 2023-02-20
+212. 387, roemerhenry@example.com, 1624233600 -> 2021-06-21
+213. 292, eroskoth@example.net, 13.10.2022 -> 2022-10-13
+214. 445, dietzjacqueline@example.org, 1733184000 -> 2024-12-03
+215. 471, hkade@example.com, 17.10.2021 -> 2021-10-17
+216. 41, bettina47@example.com, 2020-11-07
+217. 18, moritzhoffmann@example.org, June 04 2021 -> 2021-06-04
+218. 413, marekadolph@example.com, 30.07.2024 -> 2024-07-30
+219. 32, eimerguntram@example.org, 2024-07-30
+220. 51, troestanja@example.net, June 30 2022 -> 2022-06-30
+221. 330, kuhlmehdi@example.org, October 15 2023 -> 2023-10-15
+222. 224, danadoerr@example.com, 2022-09-12
+223. 458, gwirth@example.org, 21.08.2023 -> 2023-08-21
+224. 492, laragraf@example.net, 1755475200 -> 2025-08-18
+225. 80, filizseip@example.com, 1746835200 -> 2025-05-10
+226. 415, gkuhl@example.com, 2022-04-24
+227. 405, irena73@example.com, 07.04.2023 -> 2023-04-07
+228. 479, rriehl@example.net, 12.12.2020 -> 2020-12-12
+229. 24, vbonbach@example.com, 1611532800 -> 2021-01-25
+230. 436 (dup), sofie60@example.net, 1761264000 -> 2025-10-24 [dup with #169]
+231. 420, adeline02@example.com, 09.12.2020 -> 2020-12-09
+232. 9, bertha51@example.com, 2025-08-24 [dup with #58]
+233. 105, gieselameister@example.com, 21.10.2022 -> 2022-10-21
+234. 374, sauerleonhard@example.com, August 14 2022 -> 2022-08-14
+235. 160, julius98@example.com, 1583971200 -> 2020-03-12
+236. 108, truebjozef@example.net, 12.03.2025 -> 2025-03-12
+237. 145 (dup), waehnerbirgitt@example.net, 1690416000 -> 2023-07-27 [dup with #63]
+238. 113, jacobi-jaeckelapostolos@example.com, 1593388800 -> 2020-06-29
+239. 486, doratextor@example.org, 1597276800 -> 2020-08-13
+240. 176, annettepechel@example.com, September 07 2024 -> 2024-09-07
+241. 94, cetin13@example.com, 1664064000 -> 2022-09-25
+242. 350, kvollbrecht@example.com, 1723248000 -> 2024-08-10
+243. 461, carolina20@example.org, March 10 2022 -> 2022-03-10
+244. 304, lpreiss@example.org, December 29 2024 -> 2024-12-29
+245. 125, nvogt@example.org, 2020-11-04
+246. 65, kpieper@example.net, May 06 2020 -> 2020-05-06
+247. 124, angelofinke@example.com, 2025-11-05
+248. 16, rohlederlucie@example.com, April 10 2020 -> 2020-04-10
+249. 341, egbert15@example.org, August 31 2021 -> 2021-08-31
+250. 376, louisjaekel@example.net, 29.09.2022 -> 2022-09-29
+251. 257, constance88@example.com, December 26 2021 -> 2021-12-26
+252. 516, cosi.mo82@example.org, 1617926400 -> 2021-04-09
+253. 151, birger87@example.com, 1604880000 -> 2020-11-09
+254. 86, hueseyinkade@example.com, 31.07.2020 -> 2020-07-31
+255. 30, hans-willijunken@example.net, 1614038400 -> 2021-02-23
+256. 166, roswita34@example.net, 17.02.2021 -> 2021-02-17
+257. 178, ericwulf@example.org, 1766793600 -> 2025-12-27
+258. 112, vbarth@example.net, 18.04.2022 -> 2022-04-18
+259. 389, hans-martin60@example.net, 2022-05-19
+260. 313, franka96@example.com, 1655510400 -> 2022-06-18
+261. 100, ricarda69@example.com, 1630368000 -> 2021-08-31
+262. 92, edeltrauthesse@example.com, June 24 2024 -> 2024-06-24
+263. 83, zbigniew27@example.net, 1590019200 -> 2020-05-21
+264. 489 (dup), helfriedconradi@example.net, 05.11.2023 -> 2023-11-05 [dup with #8]
+265. 186, gnatzvalentin@example.com, 03.09.2025 -> 2025-09-03
+266. 386, fabienneernst@example.net, 1737849600 -> 2025-01-26
+267. 439 (dup), kseidel@example.net, 28.12.2023 -> 2023-12-28 [dup with #123]
+268. 302, creinhardt@example.com, 2021-10-03
+269. 364, hgute@example.com, 01.11.2020 -> 2020-11-01
+270. 354, guntrambluemel@example.net, December 27 2020 -> 2020-12-27
+271. 507, THERES33@example.org -> theres33@example.org, 2021-05-26
+272. 272, renata71@example.org, 1761523200 -> 2025-10-27
+273. 192, kdrubin@example.net, 2020-05-30
+274. 478, monicazorbach@example.com, 1655424000 -> 2022-06-17
+275. 219, lotte29@example.net, 22.09.2024 -> 2024-09-22
+276. 284, alicia85@example.org, February 25 2024 -> 2024-02-25
+277. 114, johannkramer@example.org, 2025-10-06
+278. 214, lgraf@example.net, 2024-04-08
+279. 324, stepheneimer@example.com, 2025-02-27
+280. 494, qhesse@example.org, May 27 2025 -> 2025-05-27
+281. 416, mudemarlene@example.net, 26.07.2023 -> 2023-07-26
+282. 62, ludgerhuhn@example.net, July 19 2022 -> 2022-07-19
+283. 175, seidelida@example.net, 1577923200 -> 2020-01-02
+284. 96 (dup), qkarz@example.com, 1609459200 -> 2021-01-01 [dup with #208]
+285. 266, bcichorius@example.org, 29.02.2024 -> 2024-02-29
+286. 443, reinald41@example.com, 1580169600 -> 2020-01-28
+287. 210, juanbender@example.net, 05.06.2021 -> 2021-06-05
+288. 426, christine22@example.net, 2025-04-26
+289. 381, heinrichernst-dieter@example.net, 1702252800 -> 2023-12-11
+290. 449, austermuehlemanja@example.net, July 14 2022 -> 2022-07-14
+291. 361, edoering@example.net, 1742083200 -> 2025-03-16
+292. 70, martinahess@example.org, 1624233600 -> 2021-06-21
+293. 184, adriane36@example.com, May 24 2023 -> 2023-05-24
+294. 89, nuray95@example.net, 21.11.2021 -> 2021-11-21
+295. 309, jpaertzelt@example.com, 1616976000 -> 2021-03-29
+296. 306, roehrichtburghard@example.net, 2020-07-20
+297. 121, xmetz@example.net, 28.03.2023 -> 2023-03-28
+298. 491, ingetrautschueler@example.com, 28.01.2023 -> 2023-01-28
+299. 402, fschaaf@example.org, 01.12.2023 -> 2023-12-01
+300. 399, mijopatberg@example.com, 2024-03-13
+301. 57, frederikheser@example.com, 20.05.2023 -> 2023-05-20
+302. 211, fheydrich@example.org, September 10 2025 -> 2025-09-10
+303. 435, taescheelsbeth@example.com, September 12 2022 -> 2022-09-12
+304. 261, calogeromargraf@example.org, 1639785600 -> 2021-12-18
+305. 323, theres33@example.org, 2021-05-26 [dup with #271]
+306. 99, hamanndamian@example.org, 17.02.2020 -> 2020-02-17
+307. 234, heinkornelia@example.org, 2024-06-16
+308. 301, loefflerraimund@example.net, 1753574400 -> 2025-07-27
+309. 243, hermighausenkaroline@example.net, 2020-06-16
+310. 12, wpieper@example.net, 02.01.2023 -> 2023-01-02
+311. 422, bernd-dieter87@example.net, 16.06.2025 -> 2025-06-16
+312. 343, ruppersbergerstavros@example.net, 2022-07-15
+313. 15, vadim90@example.org, 2025-05-28
+314. 53, benedikttrueb@example.net, February 07 2022 -> 2022-02-07
+315. 179, janusz09@example.com, July 13 2023 -> 2023-07-13
+316. 265, kornelia35@example.com, January 14 2023 -> 2023-01-14
+317. 414, margaritahertrampf@example.net, 1717113600 -> 2024-05-31
+318. 269, koch-iiferdinand@example.com, 06.06.2021 -> 2021-06-06
+319. 27, mariolazahn@example.net, 1745020800 -> 2025-04-19
+320. 82, keudelsiglinde@example.com, 01.07.2023 -> 2023-07-01
+321. 451, valentin61@example.net, 25.11.2021 -> 2021-11-25
+322. 132, grein-grothvictoria@example.com, 2025-12-02
+323. 71, juergenjockel@example.net, February 18 2022 -> 2022-02-18
+324. 355, katarzyna32@example.net, 2021-04-11
+325. 84, wbohnbach@example.org, 02.08.2025 -> 2025-08-02
+326. 28, eckart39@example.net, 2023-09-07
+327. 437, vlachmann@example.org, October 22 2024 -> 2024-10-22
+328. 47, ismail51@example.net, March 14 2025 -> 2025-03-14
+329. 42, atzlerlilly@example.com, 27.01.2025 -> 2025-01-27
+330. 58, zeljkoalbers@example.org, June 30 2024 -> 2024-06-30
+331. 194, uholsten@example.com, 01.06.2021 -> 2021-06-01
+332. 515, SEIFERTHILDEGUND@example.net -> seiferthildegund@example.net, 1626912000 -> 2021-07-22
+333. 111, anniebeckmann@example.com, 2025-08-25
+334. 67, zloewer@example.org, 2022-10-08
+335. 183 (dup), heringmicha@example.com, 1754092800 -> 2025-08-02 [dup with #112]
+336. 457, marywaehner@example.org, March 14 2023 -> 2023-03-14
+337. 162, van-der-dussenedward@example.com, 2022-09-11
+338. 38, huebelaleksandr@example.net, 2025-09-13
+339. 255, twagenknecht@example.org, July 24 2020 -> 2020-07-24
+340. 297, ksoelzer@example.net, 09.10.2021 -> 2021-10-09
+341. 1, erkan77@example.com, 17.07.2025 -> 2025-07-17
+342. 129, rmentzel@example.com, August 18 2024 -> 2024-08-18
+343. 317, bernd-dieterzahn@example.com, 1744156800 -> 2025-04-09
+344. 339, eckbaueraugusta@example.net, May 07 2023 -> 2023-05-07
+345. 116, esauer@example.org, 07.02.2021 -> 2021-02-07
+346. 398, carolinmosemann@example.net, November 30 2020 -> 2020-11-30
+347. 172, klemens90@example.net, 1580428800 -> 2020-01-31
+348. 81, evelinwulff@example.com, April 19 2022 -> 2022-04-19
+349. 452, anettotto@example.net, March 15 2020 -> 2020-03-15
+350. 246, seiferthildegund@example.net, 1626912000 -> 2021-07-22 [dup with #332]
+351. 191, hildegundpaertzelt@example.net, 16.03.2025 -> 2025-03-16
+352. 463, katarina31@example.org, 1683072000 -> 2023-05-03
+353. 316, fjunitz@example.net, May 09 2023 -> 2023-05-09
+354. 403, ulikiller@example.net, 1602288000 -> 2020-10-10
+355. 492 (dup), laragraf@example.net, 1755475200 -> 2025-08-18 [dup with #224]
+356. 209, isabelle01@example.org, 14.10.2024 -> 2024-10-14
+357. 233, stephanieschuster@example.org, February 13 2020 -> 2020-02-13
+358. 201, lillistahr@example.org, 04.04.2020 -> 2020-04-04
+359. 25, buchholzlothar@example.com, May 06 2021 -> 2021-05-06
+360. 480, meinolflindner@example.net, 2024-11-23
+361. 349, lisbeth84@example.org, November 27 2020 -> 2020-11-27
+362. 344 (dup), hofmannsibilla@example.net, 1706227200 -> 2024-01-26 [dup with #88]
+363. 345, imargraf@example.org, 1649980800 -> 2022-04-14
+364. 221 (dup), ditschlerinsabrina@example.com, November 12 2022 -> 2022-11-12 [dup with #137]
+365. 239, eschleich@example.org, 13.04.2022 -> 2022-04-13
+366. 291, pthanel@example.org, 2025-06-10
+367. 365, albertineklemt@example.net, 1750464000 -> 2025-06-21
+368. 497, xaver92@example.net, January 12 2023 -> 2023-01-12
+369. 389 (dup), hans-martin60@example.net, 2022-05-19 [dup with #259]
+370. 333, nziegert@example.com, 29.10.2024 -> 2024-10-29
+371. 326, sieringdietrich@example.org, 2024-07-13
+372. 23, hhauffer@example.net, 1586044800 -> 2020-04-05
+373. 200, birtemies@example.com, 2021-08-31
+374. 135, bettinawirth@example.org, 1645660800 -> 2022-02-24
+375. 241, zaenkeruwe@example.com, 2023-01-09
+376. 380, kaethi34@example.net, 2025-07-17
+377. 502, WOHLGEMUTALOYS@example.com -> wohlgemutaloys@example.com, 2025-03-26
+378. 6 (dup), susan06@example.net, 2025-06-18 [dup]
+379. 262, boris91@example.com, 1631577600 -> 2021-09-14
+380. 60, ingridlehmann@example.com, 1728259200 -> 2024-10-07
+381. 477, soedingtibor@example.org, 1623024000 -> 2021-06-07
+382. 205, ilkamitschke@example.org, 2022-06-20
+383. 36, kbuchholz@example.net, 1637884800 -> 2021-11-26
+384. 72, hlinke@example.org, 1730937600 -> 2024-11-07
+385. 499, strohhanife@example.net, 19.03.2024 -> 2024-03-19
+386. 353, edelgard99@example.com, 2020-10-11
+387. 217, rosemannrobby@example.org, 27.05.2023 -> 2023-05-27
+388. 157, hildburghertrampf@example.org, September 30 2020 -> 2020-09-30
+389. 8, cschacht@example.com, January 24 2022 -> 2022-01-24
+390. 197, lidijaullmann@example.net, 1600214400 -> 2020-09-16
+391. 225, arnfried13@example.com, 2023-05-18
+392. 56, brudolph@example.org, 19.11.2025 -> 2025-11-19
+393. 155, hanns92@example.net, 2024-12-08
+394. 216, nbeyer@example.org, April 03 2021 -> 2021-04-03
+395. 196, fgute@example.com, January 23 2023 -> 2023-01-23
+396. 2, ybaum@example.com, 1740873600 -> 2025-03-02
+397. 168, augusta48@example.com, 10.01.2024 -> 2024-01-10
+398. 366, schomberroderich@example.org, 15.08.2023 -> 2023-08-15
+399. 490, hans-joachim89@example.com, 2023-04-22
+400. 64, kharloff@example.net, 1591747200 -> 2020-06-10
+401. 485, rosenowalmut@example.com, 1578528000 -> 2020-01-09
+402. 49, schusteralbin@example.com, 1674172800 -> 2023-01-20
+403. 382, iloewer@example.org, August 20 2021 -> 2021-08-20
+404. 63, fscheibe@example.org, 1740528000 -> 2025-02-26
+405. 77, brigitteadler@example.com, 1748390400 -> 2025-05-28
+406. 102, rosemannraik@example.com, 1612656000 -> 2021-02-07
+407. 352, aleksander48@example.net, 08.03.2020 -> 2020-03-08
+408. 131, gschmiedt@example.net, 1734739200 -> 2024-12-21
+409. 468, zsteckel@example.com, 03.11.2020 -> 2020-11-03
+410. 228, lilo38@example.org, 07.09.2024 -> 2024-09-07
+411. 476, emmaklapp@example.net, 12.09.2023 -> 2023-09-12
+412. 185, meike22@example.org, 1678752000 -> 2023-03-14
+413. 425, nadinebloch@example.com, 2022-12-28
+414. 501, ECKART39@example.net -> eckart39@example.net, 2023-09-07 [dup with #326]
+415. 20, akarz@example.org, 13.03.2022 -> 2022-03-13
+416. 195, zotto@example.com, 16.09.2024 -> 2024-09-16
+417. 10, fkoch-ii@example.net, 2020-04-01
+418. 140, ulla64@example.net, 1654905600 -> 2022-06-11
+419. 305 (dup), skrebs@example.com, June 23 2021 -> 2021-06-23 [dup with #22]
+420. 337, kobeltfolkert@example.org, 2022-06-14
+421. 470, lina24@example.net, 16.05.2024 -> 2024-05-16
+422. 378, fredericgehringer@example.net, 1744588800 -> 2025-04-14
+423. 385, torben41@example.org, 2025-09-21
+424. 312, yaustermuehle@example.com, 2023-10-15
+425. 109, flantzbranko@example.org, 2023-08-23
+426. 474, saeuberlichharold@example.com, 1591488000 -> 2020-06-07
+427. 39, zobelarnulf@example.org, January 14 2022 -> 2022-01-14
+428. 288, nlosekann@example.org, 14.05.2022 -> 2022-05-14
+429. 311, dbirnbaum@example.org, 1678320000 -> 2023-03-09
+430. 498, constantin73@example.com, 13.08.2022 -> 2022-08-13
+431. 290, kruschwitzolaf@example.net, 2024-10-27
+432. 340, umueller@example.com, 1695340800 -> 2023-09-22
+433. 87, volkmar88@example.net, June 03 2020 -> 2020-06-03
+434. 308, gkabus@example.org, 25.05.2021 -> 2021-05-25
+435. 351, rennerhans-wolfgang@example.com, 18.04.2025 -> 2025-04-18
+436. 250, gunhildfiebig@example.org, February 25 2023 -> 2023-02-25
+437. 495, fliegnerirmgard@example.com, 18.09.2023 -> 2023-09-18
+438. 193, hbien@example.org, February 07 2020 -> 2020-02-07
+439. 118, felix91@example.org, 2022-07-22
+440. 487, kradisch@example.net, 1584057600 -> 2020-03-13
+441. 50, cosimo82@example.org, 1617926400 -> 2021-04-09
+442. 283, harloffmaik@example.com, 2024-09-11
+443. 199, henner31@example.net, July 28 2024 -> 2024-07-28
+444. 88, nurettin93@example.com, October 09 2024 -> 2024-10-09
+445. 220, selim68@example.org, November 23 2024 -> 2024-11-23
+446. 473, jochenkraushaar@example.net, 05.10.2023 -> 2023-10-05
+447. 173, miesante@example.com, 2025-02-02
+448. 143, wolf-dieterwohlgemut@example.org, 2023-05-25
+449. 363, imielcarek@example.org, 1613174400 -> 2021-02-13
+450. 503, saeuberl.ichharold@example.com, 1591488000 -> 2020-06-07 [not same email as #426, different email string - "saeuberl.ichharold" vs "saeuberlichharold" - DIFFERENT]
+451. 418, jkruschwitz@example.com, 08.06.2022 -> 2022-06-08
+452. 298, frederik25@example.org, 14.07.2021 -> 2021-07-14
+453. 455, florence26@example.net, 2022-12-01
+454. 17, waustermuehle@example.com, 1644796800 -> 2022-02-14
+455. 412, ricardofliegner@example.org, 21.12.2021 -> 2021-12-21
+456. 390, hkusch@example.net, 2024-07-14
+457. 287, aliebelt@example.com, 1621382400 -> 2021-05-19
+458. 141, leonie73@example.net, 2024-03-06
+459. 27 (dup), mariolazahn@example.net, 1745020800 -> 2025-04-19 [dup with #319]
+460. 373, hornigeleni@example.org, 1671062400 -> 2022-12-15
+461. 383, anna-marieauch-schlauchin@example.com, 14.08.2022 -> 2022-08-14
+462. 372, langerndorota@example.org, 1644883200 -> 2022-02-15
+463. 73, drubincathleen@example.net, February 11 2020 -> 2020-02-11
+464. 160 (dup), julius98@example.com, 1583971200 -> 2020-03-12 [dup with #235]
+465. 189, geza31@example.net, 29.09.2024 -> 2024-09-29
+466. 338, nettecemil@example.net, 2023-09-01
+467. 208, trommlerheinfried@example.com, 2025-08-15
+468. 438, wwiek@example.org, 1686355200 -> 2023-06-10
+469. 263, bernwardweinhold@example.net, December 26 2020 -> 2020-12-26
+470. 161, enverhermann@example.org, October 17 2025 -> 2025-10-17
+471. 459, eliasloos@example.com, March 17 2021 -> 2021-03-17
+472. 171, ottomar42@example.org, 01.04.2023 -> 2023-04-01
+473. 159, wohlgemutaloys@example.com, 2025-03-26 [dup with #377]
+474. 164, pieperria@example.com, December 14 2020 -> 2020-12-14
+475. 187, wilmapruschke@example.org, March 01 2022 -> 2022-03-01
+476. 180, thilo39@example.net, March 24 2021 -> 2021-03-24
+477. 441, kkreusel@example.net, 21.08.2025 -> 2025-08-21
+478. 393, ypaffrath@example.org, 1762819200 -> 2025-11-11
+479. 149, iweimer@example.com, 1710028800 -> 2024-03-10
+480. 475, schoenlanderdmute@example.net, 03.10.2022 -> 2022-10-03
+481. 433, hilda48@example.com, 2020-11-23
+482. 43, rochus11@example.com, February 11 2025 -> 2025-02-11
+483. 434, franz90@example.net, 2023-03-22
+484. 123, otfried56@example.com, December 14 2023 -> 2023-12-14
+485. 347, qwerner@example.net, July 09 2023 -> 2023-07-09
+486. 368, ghettner@example.org, 09.10.2022 -> 2022-10-09
+487. 218, wenzel08@example.com, 2020-02-24
+488. 462, gertzhilda@example.org, March 17 2022 -> 2022-03-17
+489. 329, august48@example.org, August 11 2020 -> 2020-08-11
+490. 134, oschleich@example.net, 2022-08-14
+491. 90, miaspeer@example.org, April 17 2025 -> 2025-04-17
+492. 294, van-der-dussenpaul@example.com, September 22 2023 -> 2023-09-22
+493. 336, keudelerik@example.org, 28.05.2025 -> 2025-05-28
+494. 40, hanne-lorehendriks@example.org, 1605398400 -> 2020-11-15
+495. 431, wulffredo@example.net, 2023-12-30
+496. 158, heckercarina@example.org, April 11 2024 -> 2024-04-11
+497. 21, wallyauch-schlauchin@example.com, 1583366400 -> 2020-03-05
+498. 318, kauloskar@example.com, 1738886400 -> 2025-02-07
+499. 244, mijo49@example.org, 2021-10-09
+500. 388, bachmannottilie@example.org, 2022-09-22
+501. 4, kranzheidelinde@example.org, 2023-08-04
+502. 319, lukaskruschwitz@example.net, 1680998400 -> 2023-04-09
+503. 91, lilianeheuser@example.org, 1597276800 -> 2020-08-13
+504. 279, ggnatz@example.com, 30.08.2021 -> 2021-08-30
+505. 152, ifinke@example.com, 29.08.2021 -> 2021-08-29
+506. 419, aloys14@example.net, 2023-04-26
+507. 253, ykoehler@example.org, June 17 2020 -> 2020-06-17
+508. 407, heinz-ottohornig@example.net, 08.09.2020 -> 2020-09-08 [dup with #70]
+509. 198 (dup), jens45@example.com, 1652745600 -> 2022-05-17 [dup with #67]
+510. 410, hans87@example.net, 17.10.2025 -> 2025-10-17
+511. 248, ettahauffer@example.org, 11.05.2023 -> 2023-05-11
+512. 98, chahn@example.net, 1647043200 -> 2022-03-12
+513. 3, irmtraud39@example.org, 2022-09-13
+514. 453, bdehmel@example.net, April 27 2021 -> 2021-04-27
+515. 286, calogero50@example.org, October 14 2022 -> 2022-10-14
+516. 328, ugunpf@example.org, October 02 2021 -> 2021-10-02
+517. 104, loewerdino@example.org, 2020-03-26
+518. 137, adolphramon@example.com, 1702425600 -> 2023-12-13
+519. 242, herma26@example.com, June 17 2020 -> 2020-06-17
+520. 79, bsager@example.com, 2022-11-09
+521. 156, annemarie23@example.com, 2025-04-18
+522. 163, budigfredi@example.com, 01.03.2023 -> 2023-03-01
+523. 240, iauch-schlauchin@example.com, March 04 2022 -> 2022-03-04
+524. 444, mosemanntraute@example.org, 18.12.2023 -> 2023-12-18 [note: different email - "mosemanntraute" vs "moseman.ntraute" #73 - DIFFERENT]
+525. 506, lena.wilms@example.net, 30.04.2023 -> 2023-04-30
+526. 203, setzold@example.org, 2025-08-18
+527. 472, aleksandra44@example.org, 2022-06-19
+528. 519, klemtlia@example.org (trim), 2021-12-04 [dup with #126]
+529. 75, katrin85@example.org, 1611014400 -> 2021-01-19
+530. 430, slavko95@example.com, 1669248000 -> 2022-11-24
+531. 120, manfredvogt@example.com, 2022-10-14
+532. 447, gisbertreising@example.net, 29.02.2024 -> 2024-02-29
+533. 7, erol58@example.com, 26.04.2024 -> 2024-04-26
+534. 13, vziegert@example.net, 05.02.2021 -> 2021-02-05
+535. 460, gottfriedhande@example.com, February 10 2023 -> 2023-02-10
+536. 76, auguste65@example.net, 2025-10-24
+537. 511, bernd-dieterzahn@example.com (trim), 1744156800 -> 2025-04-09 [dup with #343]
+538. 504, HKADE@example.com -> hkade@example.com, 17.10.2021 -> 2021-10-17 [dup with #215]
+539. 14, catrin83@example.net, 1688774400 -> 2023-07-08
+540. 371, alla naser lenawilms@example.net, 30.04.2023 -> 2023-04-30 [note different email "lenawilms" vs "lena.wilms" #525 - DIFFERENT]
+
+Now let me identify duplicate groups (same normalized email) and pick max date:
+
+1. **ehlertharri@example.org**: only #1 -> keep #142
+2. **otlustek@example.com**: only #2 -> keep #427
+3. **benboucsein@example.net**: only #61
+4. **fischerreginald@example.net**: only #148
+5. **renateroht@example.org**: only #230
+6. **wwulff@example.net**: only #496
+7. **bernhard84@example.net**: #7(456, 2024-05-19), #75(456, 2024-05-19) same -> keep either, same data -> row 456, 2024-05-19
+8. **helfriedconradi@example.net**: #8(489, 2023-11-05), #264(489, same) -> same, keep 489
+9. **dmosemann@example.net**: #299
+10. **bdussen-van@example.net**: #259
+11. **kuehnertewa@example.net**: #85
+12. **yaumann@example.net**: #293
+13. **ewa75@example.com**: #138
+14. **gunter53@example.org**: #14(493,2025-07-23), #69(520,2025-07-23 uppercase) -> same date, need to pick "jüngste" - equal dates, keep original casing... Since dates equal, we need a rule; I'll keep the last one found in file order for tie... Actually task doesn't specify tie-break. I'll keep the first occurrence when tied. Let's keep #14 (493).
+   Wait check: 493 registered 23.07.2025, 520 also 23.07.2025 (GUNTER53 uppercase email). Same date. Keep first: customer_id 493.
+15. **rosa49@example.net**: #37
+16. **danielleschenk@example.org**: #16(202)
+17. **giorgiobender@example.com**: #17(379)
+18. **joderwald@example.org**: #18(5)
+19. **zahnmaik@example.net**: #19(52)
+20. **gnatzkarl-heinrich@example.org**: #20(432)
+21. **dietzastrid@example.com**: #21(303)
+22. **skrebs@example.com**: #22(305), #419(305 dup) same -> keep 305, 2021-06-23
+23. **hethurjenny@example.org**: #23(66)
+24. **hans-joerg70@example.org**: #24(146)
+25. **nhermighausen@example.org**: #25(206)
+26. **gka.bus@example.org**: #26(505)
+27. **elfriede16@example.org**: #27(510,2025-03-18), #153(465,2025-03-18) same date -> keep first #27 (510)
+28. **hubert55@example.org**: #28(271)
+29. **lhuebel@example.net**: #29(346)
+30. **meik09@example.org**: #30(256)
+31. **patrik55@example.org**: #31(33)
+32. **helmuthzimmer@example.org**: #32(310)
+33. **ostriebitz@example.net**: #33(59)
+34. **gunterpaffrath@example.org**: #34(11)
+35. **rupert30@example.net**: #35(130,2024-07-10), #37(130 dup, same) -> keep 130, 2024-07-10
+36. **ernst-augustlosekann@example.net**: #36(68)
+38. **zhess@example.com**: #38(442)
+39. **wolf-dieterreinhardt@example.org**: #39(273,2020-05-25), #127(508 uppercase, same date) -> keep first #39 (273)
+40. **gschweitzer@example.org**: #40(367)
+41. **margrafkatja@example.com**: #41(295)
+42. **ypeukert@example.net**: #42(448)
+43. **ygunpf@example.org**: #43(232, 2023-01-27), #516(328, 2021-10-02) -> different dates! keep max: 232 (2023-01-27) vs 328(2021-10-02) - keep 232
+44. **alexandre21@example.org**: #44(397)
+45. **theresia08@example.net**: #45(369)
+46. **kochsiegmar@example.com**: #46(136)
+47. **daria34@example.net**: #47(300)
+48. **hermann-josefcichorius@example.org**: #48(396)
+49. **cweller@example.com**: #49(212)
+50. **klaerefaust@example.org**: #50(280)
+51. **friedrich-wilhelm35@example.com**: #51(392)
+52. **ernst-otto44@example.org**: #52(406)
+53. **konstantinostroest@example.org**: #53(204,2022-12-16), #199(517,2022-12-16 same) -> keep first #53 (204)
+54. **muellerhanno@example.com**: #54(484)
+55. **astatextor@example.com**: #55(188)
+56. **sevim31@example.org**: #56(213)
+57. **agathemende@example.com**: #57(97)
+58. **bertha51@example.com**: #58(513,2025-08-24), #232(9,2025-08-24 same) -> keep first #58 (513)... wait but full_name/country differ? Let's check: #58 row 513 "herlinde stadelmann-gerlach"; #232 row 9 "Herlinde Stadelmann-Gerlach" same country Netherlands same date. Keep first occurrence #58 -> customer_id 513
+59. **hubertine27@example.net**: #59(78)
+60. **sruppert@example.net**: #60(289)
+61. **leokadia43@example.org**: #61(362)
+62. **istoll@example.org**: #62(170)
+63. **waehnerbirgitt@example.net**: #63(145), #237(145 dup) same -> keep 145
+64. **eimerbenedikt@example.net**: #64(122)
+65. **phande@example.com**: #65(469)
+66. **adobes@example.net**: #66(150)
+67. **jens45@example.com**: #67(198,2022-05-17), #509(198 dup, same) -> keep 198, 2022-05-17
+68. **hans-joergzobel@example.org**: #68(359)
+70. **heinz-ottohornig@example.net**: #70(512,2020-09-08), #508(407, same date) -> keep first #70 (512)
+71. **krokermary@example.com**: #71(55)
+72. **helmuthgierschner@example.com**: #72(260)
+73. **moseman.ntraute@example.org**: #73(509,2023-12-18) - wait note #73 is index for customer 509? Let me recheck: earlier #73 was "509,Serge Steckel,moseman.ntraute@example.org,,18.12.2023". Yes. Only one occurrence with dot. #524(444,mosemanntraute - no dot) is different email. So keep #73 (509)
+74. **pietroscholl@example.org**: #74(401)
+76. **kerstin35@example.net**: #76(454)
+77. **leonardobachmann@example.org**: #77(348)
+78. **dowergmonja@example.com**: #78(518,2025-05-21), #85(207, same date) -> keep first #78 (518)
+79. **judith50@example.net**: #79(249)
+80. **fridakuhl@example.com**: #80(428)
+81. **barkholzsteve@example.net**: #81(357)
+82. **schenkanatolij@example.org**: #82(95)
+83. **bruderines@example.org**: #83(226)
+84. **milicamargraf@example.com**: #84(400)
+86. **selma65@example.net**: #86(335)
+87. **aloisia70@example.com**: #87(29)
+88. **hofmannsibilla@example.net**: #88(344), #362(344 dup) same -> keep 344
+89. **peukerth-dieter@example.net**: #89(181)
+90. **selma00@example.net**: #90(103)
+91. **kitzmannbernadette@example.com**: #91(107)
+92. **angelique58@example.net**: #92(133)
+93. **doerthe93@example.org**: #93(320)
+94. **peukertheinz-guenther@example.com**: #94(190)
+95. **dfliegner@example.org**: #95(314)
+96. **selimfinke@example.org**: #96(139)
+97. **hasanmargraf@example.com**: #97(235)
+98. **cjaentsch@example.com**: #98(46)
+99. **edeltrauthiller@example.com**: #99(165), #165(165 dup) same -> keep 165
+100. **mjunck@example.org**: #100(251)
+101. **sybilla97@example.org**: #101(500)
+102. **susan06@example.net**: #102(6), #378(6 dup) same -> keep 6
+103. **ilonka64@example.net**: #103(395)
+104. **qharloff@example.org**: #104(482)
+105. **constantinjockel@example.net**: #105(278)
+106. **naserrosl@example.org**: #106(182)
+107. **edelgard59@example.org**: #107(285)
+108. **danny41@example.com**: #108(45)
+109. **vad.im90@example.org**: #109(514)
+110. **horst-guenter31@example.com**: #110(227)
+111. **staudetimo@example.com**: #111(147)
+112. **heringmicha@example.com**: #112(183,2025-08-02), #335(183 dup) same -> keep 183
+113. **girschnerellinor@example.com**: #113(483), #204(483 dup) same -> keep 483
+114. **eckbauerlidwina@example.net**: #114(245)
+115. **kristinstiebitz@example.org**: #115(358)
+116. **nikolaos45@example.net**: #116(119)
+117. **mlachmann@example.com**: #117(174)
+118. **rognerheinz-juergen@example.net**: #118(144)
+119. **mikhail16@example.org**: #119(238)
+120. **josephine23@example.com**: #120(117)
+121. **friederike56@example.com**: #121(331)
+122. **tatianahoerle@example.net**: #122(264)
+123. **kseidel@example.net**: #123(439,2023-12-28), #267(439 dup) same -> keep 439
+124. **francoisegerlach@example.net**: #124(127)
+125. **erdoganschaaf@example.org**: #125(231)
+126. **klemtlia@example.org**: #126(325,2021-12-04), #528(519 dup) same -> keep 325
+128. **friederike47@example.net**: #128(19)
+129. **scheibeanni@example.org**: #129(466)
+130. **njungfer@example.org**: #130(360)
+131. **estiebitz@example.net**: #131(408)
+132. **jlosekann@example.com**: #132(54)
+133. **claudiarohleder@example.org**: #133(34)
+134. **henckclaudius@example.com**: #134(267)
+135. **wibkeroehricht@example.net**: #135(258)
+136. **sabri75@example.com**: #136(268)
+137. **ditschlerinsabrina@example.com**: #137(221), #364(221 dup) same -> keep 221
+138. **alicja80@example.org**: #138(223)
+139. **roerrichtpriska@example.org**: #139(26)
+140. **cetindehmel@example.com**: #140(421)
+141. **qherrmann@example.org**: #141(377)
+142. **kambsroswitha@example.com**: #142(423)
+143. **hans-eberhard05@example.org**: #143(281)
+144. **karl-josefweihmann@example.com**: #144(327)
+145. **henkrolf-peter@example.org**: #145(48)
+146. **zrose@example.org**: #146(391)
+147. **christian85@example.net**: #147(169)
+148. **katerinakarge@example.org**: #148(322)
+149. **reichmannconstantin@example.org**: #149(429)
+150. **ian35@example.net**: #150(411)
+151. **hoelzenbecherfredi@example.org**: #151(370)
+152. **wolf-dietrich44@example.com**: #152(154)
+153. (dup of #27) already done
+154. **lonibecker@example.org**: #154(101)
+155. **kenan00@example.org**: #155(384)
+156. **pseifert@example.org**: #156(282)
+157. **hans-michaelbolzmann@example.org**: #157(332)
+158. **louise62@example.org**: #158(481)
+159. **beyersteffen@example.com**: #159(334)
+160. **spiessbela@example.net**: #160(450)
+161. **stefan04@example.org**: #161(252)
+162. **peukertwalfried@example.net**: #162(110)
+163. **johnboerner@example.net**: #163(126)
+164. **drago60@example.com**: #164(321)
+166. **mercedes98@example.net**: #166(404,2022-11-06), #183(404 dup) same -> keep 404
+167. **nwieloch@example.org**: #167(488)
+168. **ricarda16@example.org**: #168(307)
+169. **sofie60@example.net**: #169(436,2025-10-24), #230(436 dup) same -> keep 436
+170. **hillerreinhild@example.net**: #170(275)
+171. **steckelantonius@example.org**: #171(409)
+172. **caroline52@example.net**: #172(296)
+173. **lydia73@example.net**: #173(177)
+174. **conradotto@example.com**: #174(74)
+175. **ztroest@example.com**: #175(128)
+176. **gundula16@example.net**: #176(31)
+177. **gertzilias@example.org**: #177(167)
+178. **eschmiedecke@example.com**: #178(237)
+179. **iwan68@example.org**: #179(69)
+180. **guiseppemielcarek@example.net**: #180(270)
+181. **nancy85@example.com**: #181(274)
+182. **jzirme@example.org**: #182(35)
+184. **wfinke@example.org**: #184(446)
+185. **mirjam52@example.net**: #185(375)
+186. **yritter@example.net**: #186(394)
+187. **tilmanntlustek@example.net**: #187(22)
+188. **hans-rainer35@example.net**: #188(215)
+189. **carina63@example.com**: #189(276)
+190. **arifmargraf@example.com**: #190(229)
+191. **jolanda06@example.net**: #191(440)
+192. **folkerhornich@example.org**: #192(254)
+193. **reichmannmarta@example.net**: #193(153)
+194. **hlinke@example.com**: #194(247)
+195. **almaroht@example.org**: #195(115)
+196. **gudediana@example.org**: #196(236)
+197. **wroerricht@example.com**: #197(424)
+198. **adlerangelique@example.com**: #198(342)
+199. (dup of #53) done
+200. **marie-therese78@example.net**: #200(315)
+201. **jozeflehmann@example.net**: #201(417)
+202. **nhethur@example.org**: #202(356)
+203. **isidorbonbach@example.net**: #203(106)
+204. (dup of #113) done
+205. **schweitzerpavel@example.net**: #205(222)
+206. **tklingelhoefer@example.com**: #206(93)
+207. **lkarz@example.net**: #207(464)
+208. **qkarz@example.com**: #208(96), #284(96 dup) same -> keep 96
+209. **wspeer@example.com**: #209(44)
+210. **ascholtz@example.org**: #210(467)
+211. **dusanernst@example.org**: #211(277)
+212. **roemerhenry@example.com**: #212(387)
+213. **eroskoth@example.net**: #213(292)
+214. **dietzjacqueline@example.org**: #214(445)
+215. **hkade@example.com**: #215(471,2021-10-17), #538(504 dup uppercase) same -> keep 471
+216. **bettina47@example.com**: #216(41)
+217. **moritzhoffmann@example.org**: #217(18)
+218. **marekadolph@example.com**: #218(413)
+219. **eimerguntram@example.org**: #219(32)
+220. **troestanja@example.net**: #220(51)
+221. **kuhlmehdi@example.org**: #221(330)
+222. **danadoerr@example.com**: #222(224)
+223. **gwirth@example.org**: #223(458)
+224. **laragraf@example.net**: #224(492,2025-08-18), #355(492 dup) same -> keep 492
+225. **filizseip@example.com**: #225(80)
+226. **gkuhl@example.com**: #226(415)
+227. **irena73@example.com**: #227(405)
+228. **rriehl@example.net**: #228(479)
+229. **vbonbach@example.com**: #229(24)
+230. (dup) done
+231. **adeline02@example.com**: #231(420)
+232. (dup of #58) done
+233. **gieselameister@example.com**: #233(105)
+234. **sauerleonhard@example.com**: #234(374)
+235. **julius98@example.com**: #235(160,2020-03-12), #464(160 dup) same -> keep 160
+236. **truebjozef@example.net**: #236(108)
+237. (dup of #63) done
+238. **jacobi-jaeckelapostolos@example.com**: #238(113)
+239. **doratextor@example.org**: #239(486)
+240. **annettepechel@example.com**: #240(176)
+241. **cetin13@example.com**: #241(94)
+242. **kvollbrecht@example.com**: #242(350)
+243. **carolina20@example.org**: #243(461)
+244. **lpreiss@example.org**: #244(304)
+245. **nvogt@example.org**: #245(125)
+246. **kpieper@example.net**: #246(65)
+247. **angelofinke@example.com**: #247(124)
+248. **rohlederlucie@example.com**: #248(16)
+249. **egbert15@example.org**: #249(341)
+250. **louisjaekel@example.net**: #250(376)
+251. **constance88@example.com**: #251(257)
+252. **cosi.mo82@example.org**: #252(516)
+253. **birger87@example.com**: #253(151)
+254. **hueseyinkade@example.com**: #254(86)
+255. **hans-willijunken@example.net**: #255(30)
+256. **roswita34@example.net**: #256(166)
+257. **ericwulf@example.org**: #257(178)
+258. **vbarth@example.net**: #258(112)
+259. **hans-martin60@example.net**: #259(389,2022-05-19), #369(389 dup) same -> keep 389
+260. **franka96@example.com**: #260(313)
+261. **ricarda69@example.com**: #261(100)
+262. **edeltrauthesse@example.com**: #262(92)
+263. **zbigniew27@example.net**: #263(83)
+264. (dup of #8) done
+265. **gnatzvalentin@example.com**: #265(186)
+266. **fabienneernst@example.net**: #266(386)
+267. (dup of #123) done
+268. **creinhardt@example.com**: #268(302)
+269. **hgute@example.com**: #269(364)
+270. **guntrambluemel@example.net**: #270(354)
+271. **theres33@example.org**: #271(507,2021-05-26), #305(323 dup) same -> keep 507
+272. **renata71@example.org**: #272(272)
+273. **kdrubin@example.net**: #273(192)
+274. **monicazorbach@example.com**: #274(478)
+275. **lotte29@example.net**: #275(219)
+276. **alicia85@example.org**: #276(284)
+277. **johannkramer@example.org**: #277(114)
+278. **lgraf@example.net**: #278(214)
+279. **stepheneimer@example.com**: #279(324)
+280. **qhesse@example.org**: #280(494)
+281. **mudemarlene@example.net**: #281(416)
+282. **ludgerhuhn@example.net**: #282(62)
+283. **seidelida@example.net**: #283(175)
+284. (dup) done
+285. **bcichorius@example.org**: #285(266)
+286. **reinald41@example.com**: #286(443)
+287. **juanbender@example.net**: #287(210)
+288. **christine22@example.net**: #288(426)
+289. **heinrichernst-dieter@example.net**: #289(381)
+290. **austermuehlemanja@example.net**: #290(449)
+291. **edoering@example.net**: #291(361)
+292. **martinahess@example.org**: #292(70)
+293. **adriane36@example.com**: #293(184)
+294. **nuray95@example.net**: #294(89)
+295. **jpaertzelt@example.com**: #295(309)
+296. **roehrichtburghard@example.net**: #296(306)
+297. **xmetz@example.net**: #297(121)
+298. **ingetrautschueler@example.com**: #298(491)
+299. **fschaaf@example.org**: #299(402)
+300. **mijopatberg@example.com**: #300(399)
+301. **frederikheser@example.com**: #301(57)
+302. **fheydrich@example.org**: #302(211)
+303. **taescheelsbeth@example.com**: #303(435)
+304. **calogeromargraf@example.org**: #304(261)
+305. (dup) done
+306. **hamanndamian@example.org**: #306(99)
+307. **heinkornelia@example.org**: #307(234)
+308. **loefflerraimund@example.net**: #308(301)
+309. **hermighausenkaroline@example.net**: #309(243)
+310. **wpieper@example.net**: #310(12)
+311. **bernd-dieter87@example.net**: #311(422)
+312. **ruppersbergerstavros@example.net**: #312(343)
+313. **vadim90@example.org**: #313(15)
+314. **benedikttrueb@example.net**: #314(53)
+315. **janusz09@example.com**: #315(179)
+316. **kornelia35@example.com**: #316(265)
+317. **margaritahertrampf@example.net**: #317(414)
+318. **koch-iiferdinand@example.com**: #318(269)
+319. **mariolazahn@example.net**: #319(27,2025-04-19), #459(27 dup) same -> keep 27
+320. **keudelsiglinde@example.com**: #320(82)
+321. **valentin61@example.net**: #321(451)
+322. **grein-grothvictoria@example.com**: #322(132)
+323. **juergenjockel@example.net**: #323(71)
+324. **katarzyna32@example.net**: #324(355)
+325. **wbohnbach@example.org**: #325(84)
+326. **eckart39@example.net**: #326(28,2023-09-07), #414(501,same) -> keep first #326 (28)
+327. **vlachmann@example.org**: #327(437)
+328. **ismail51@example.net**: #328(47)
+329. **atzlerlilly@example.com**: #329(42)
+330. **zeljkoalbers@example.org**: #330(58)
+331. **uholsten@example.com**: #331(194)
+332. **seiferthildegund@example.net**: #332(515,2021-07-22), #350(246,same) -> keep first #332 (515)
+333. **anniebeckmann@example.com**: #333(111)
+334. **zloewer@example.org**: #334(67)
+335. (dup of #112) done
+336. **marywaehner@example.org**: #336(457)
+337. **van-der-dussenedward@example.com**: #337(162)
+338. **huebelaleksandr@example.net**: #338(38)
+339. **twagenknecht@example.org**: #339(255)
+340. **ksoelzer@example.net**: #340(297)
+341. **erkan77@example.com**: #341(1)
+342. **rmentzel@example.com**: #342(129)
+343. **bernd-dieterzahn@example.com**: #343(317,2025-04-09), #537(511 dup) same -> keep first #343 (317)
+344. **eckbaueraugusta@example.net**: #344(339)
+345. **esauer@example.org**: #345(116)
+346. **carolinmosemann@example.net**: #346(398)
+347. **klemens90@example.net**: #347(172)
+348. **evelinwulff@example.com**: #348(81)
+349. **anettotto@example.net**: #349(452)
+350. (dup) done
+351. **hildegundpaertzelt@example.net**: #351(191)
+352. **katarina31@example.org**: #352(463)
+353. **fjunitz@example.net**: #353(316)
+354. **ulikiller@example.net**: #354(403)
+355. (dup of #224) done
+356. **isabelle01@example.org**: #356(209)
+357. **stephanieschuster@example.org**: #357(233)
+358. **lillistahr@example.org**: #358(201)
+359. **buchholzlothar@example.com**: #359(25)
+360. **meinolflindner@example.net**: #360(480)
+361. **lisbeth84@example.org**: #361(349)
+362. (dup of #88) done
+363. **imargraf@example.org**: #363(345)
+364. (dup of #137) done
+365. **eschleich@example.org**: #365(239)
+366. **pthanel@example.org**: #366(291)
+367. **albertineklemt@example.net**: #367(365)
+368. **xaver92@example.net**: #368(497)
+369. (dup) done
+370. **nziegert@example.com**: #370(333)
+371. **sieringdietrich@example.org**: #371(326)
+372. **hhauffer@example.net**: #372(23)
+373. **birtemies@example.com**: #373(200)
+374. **bettinawirth@example.org**: #374(135)
+375. **zaenkeruwe@example.com**: #375(241)
+376. **kaethi34@example.net**: #376(380)
+377. **wohlgemutaloys@example.com**: #377(502,2025-03-26), #473(159 dup) same -> keep first #377 (502)
+378. (dup) done
+379. **boris91@example.com**: #379(262)
+380. **ingridlehmann@example.com**: #380(60)
+381. **soedingtibor@example.org**: #381(477)
+382. **ilkamitschke@example.org**: #382(205)
+383. **kbuchholz@example.net**: #383(36)
+384. **hlinke@example.org**: #384(72)
+385. **strohhanife@example.net**: #385(499)
+386. **edelgard99@example.com**: #386(353)
+387. **rosemannrobby@example.org**: #387(217)
+388. **hildburghertrampf@example.org**: #388(157)
+389. **cschacht@example.com**: #389(8)
+390. **lidijaullmann@example.net**: #390(197)
+391. **arnfried13@example.com**: #391(225)
+392. **brudolph@example.org**: #392(56)
+393. **hanns92@example.net**: #393(155)
+394. **nbeyer@example.org**: #394(216)
+395. **fgute@example.com**: #395(196)
+396. **ybaum@example.com**: #396(2)
+397. **augusta48@example.com**: #397(168)
+398. **schomberroderich@example.org**: #398(366)
+399. **hans-joachim89@example.com**: #399(490)
+400. **kharloff@example.net**: #400(64)
+401. **rosenowalmut@example.com**: #401(485)
+402. **schusteralbin@example.com**: #402(49)
+403. **iloewer@example.org**: #403(382)
+404. **fscheibe@example.org**: #404(63)
+405. **brigitteadler@example.com**: #405(77)
+406. **rosemannraik@example.com**: #406(102)
+407. **aleksander48@example.net**: #407(352)
+408. **gschmiedt@example.net**: #408(131)
+409. **zsteckel@example.com**: #409(468)
+410. **lilo38@example.org**: #410(228)
+411. **emmaklapp@example.net**: #411(476)
+412. **meike22@example.org**: #412(185)
+413. **nadinebloch@example.com**: #413(425)
+414. (dup of #326) done
+415. **akarz@example.org**: #415(20)
+416. **zotto@example.com**: #416(195)
+417. **fkoch-ii@example.net**: #417(10)
+418. **ulla64@example.net**: #418(140)
+419. (dup of #22) done
+420. **kobeltfolkert@example.org**: #420(337)
+421. **lina24@example.net**: #421(470)
+422. **fredericgehringer@example.net**: #422(378)
+423. **torben41@example.org**: #423(385)
+424. **yaustermuehle@example.com**: #424(312)
+425. **flantzbranko@example.org**: #425(109)
+426. **saeuberlichharold@example.com**: #426(474)
+427. **zobelarnulf@example.org**: #427(39)
+428. **nlosekann@example.org**: #428(288)
+429. **dbirnbaum@example.org**: #429(311)
+430. **constantin73@example.com**: #430(498)
+431. **kruschwitzolaf@example.net**: #431(290)
+432. **umueller@example.com**: #432(340)
+433. **volkmar88@example.net**: #433(87)
+434. **gkabus@example.org**: #434(308)
+435. **rennerhans-wolfgang@example.com**: #435(351)
+436. **gunhildfiebig@example.org**: #436(250)
+437. **fliegnerirmgard@example.com**: #437(495)
+438. **hbien@example.org**: #438(193)
+439. **felix91@example.org**: #439(118)
+440. **kradisch@example.net**: #440(487)
+441. **cosimo82@example.org**: #441(50)
+442. **harloffmaik@example.com**: #442(283)
+443. **henner31@example.net**: #443(199)
+444. **nurettin93@example.com**: #444(88)
+445. **selim68@example.org**: #445(220)
+446. **jochenkraushaar@example.net**: #446(473)
+447. **miesante@example.com**: #447(173)
+448. **wolf-dieterwohlgemut@example.org**: #448(143)
+449. **imielcarek@example.org**: #449(363)
+450. **saeuberl.ichharold@example.com** (different, with dot): #450(503)
+451. **jkruschwitz@example.com**: #451(418)
+452. **frederik25@example.org**: #452(298)
+453. **florence26@example.net**: #453(455)
+454. **waustermuehle@example.com**: #454(17)
+455. **ricardofliegner@example.org**: #455(412)
+456. **hkusch@example.net**: #456(390)
+457. **aliebelt@example.com**: #457(287)
+458. **leonie73@example.net**: #458(141)
+459. (dup of #319) done
+460. **hornigeleni@example.org**: #460(373)
+461. **anna-marieauch-schlauchin@example.com**: #461(383)
+462. **langerndorota@example.org**: #462(372)
+463. **drubincathleen@example.net**: #463(73)
+464. (dup of #235) done
+465. **geza31@example.net**: #465(189)
+466. **nettecemil@example.net**: #466(338)
+467. **trommlerheinfried@example.com**: #467(208)
+468. **wwiek@example.org**: #468(438)
+469. **bernwardweinhold@example.net**: #469(263)
+470. **enverhermann@example.org**: #470(161)
+471. **eliasloos@example.com**: #471(459)
+472. **ottomar42@example.org**: #472(171)
+473. (dup of #377) done
+474. **pieperria@example.com**: #474(164)
+475. **wilmapruschke@example.org**: #475(187)
+476. **thilo39@example.net**: #476(180)
+477. **kkreusel@example.net**: #477(441)
+478. **ypaffrath@example.org**: #478(393)
+479. **iweimer@example.com**: #479(149)
+480. **schoenlanderdmute@example.net**: #480(475)
+481. **hilda48@example.com**: #481(433)
+482. **rochus11@example.com**: #482(43)
+483. **franz90@example.net**: #483(434)
+484. **otfried56@example.com**: #484(123)
+485. **qwerner@example.net**: #485(347)
+486. **ghettner@example.org**: #486(368)
+487. **wenzel08@example.com**: #487(218)
+488. **gertzhilda@example.org**: #488(462)
+489. **august48@example.org**: #489(329)
+490. **oschleich@example.net**: #490(134)
+491. **miaspeer@example.org**: #491(90)
+492. **van-der-dussenpaul@example.com**: #492(294)
+493. **keudelerik@example.org**: #493(336)
+494. **hanne-lorehendriks@example.org**: #494(40)
+495. **wulffredo@example.net**: #495(431)
+496. **heckercarina@example.org**: #496(158)
+497. **wallyauch-schlauchin@example.com**: #497(21)
+498. **kauloskar@example.com**: #498(318)
+499. **mijo49@example.org**: #499(244)
+500. **bachmannottilie@example.org**: #500(388)
+501. **kranzheidelinde@example.org**: #501(4)
+502. **lukaskruschwitz@example.net**: #502(319)
+503. **lilianeheuser@example.org**: #503(91)
+504. **ggnatz@example.com**: #504(279)
+505. **ifinke@example.com**: #505(152)
+506. **aloys14@example.net**: #506(419)
+507. **ykoehler@example.org**: #507(253)
+508. (dup of #70) done
+509. (dup of #67) done
+510. **hans87@example.net**: #510(410)
+511. **ettahauffer@example.org**: #511(248)
+512. **chahn@example.net**: #512(98)
+513. **irmtraud39@example.org**: #513(3)
+514. **bdehmel@example.net**: #514(453)
+515. **calogero50@example.org**: #515(286)
+516. **ugunpf@example.org**: #516(328) -- already merged with #43 above (ygunpf vs ugunpf - DIFFERENT emails! "ygunpf" vs "ugunpf" - let me recheck. #43 email = ygunpf@example.org (row 232). #516 email = ugunpf@example.org (row 328). These are DIFFERENT emails (y vs u). Let me fix - I made an error above treating them as same. Let me redo.
+
+Let me recheck row 43: "232,Oswald Hethur,ygunpf@example.org,FRA,2023-01-27" - ygunpf
+row 516 (line "328,Ivana Becker-Rädel,ugunpf@example.org,AT,October 02 2021") - ugunpf
+
+These are different! So both are separate unique emails, not duplicates. Let me correct:
+- ygunpf@example.org: #43 only -> keep 232, 2023-01-27
+- ugunpf@example.org: #516 only -> keep 328, 2021-10-02
+
+517. **loewerdino@example.org**: #517(104)
+518. **adolphramon@example.com**: #518(137)
+519. **herma26@example.com**: #519(242)
+520. **bsager@example.com**: #520(79)
+521. **annemarie23@example.com**: #521(156)
+522. **budigfredi@example.com**: #522(163)
+523. **iauch-schlauchin@example.com**: #523(240)
+524. **mosemanntraute@example.org** (no dot): #524(444) only (since #73 has dot - different)
+525. **lena.wilms@example.net**: #525(506)
+526. **setzold@example.org**: #526(203)
+527. **aleksandra44@example.org**: #527(472)
+528. (dup of #126) done
+529. **katrin85@example.org**: #529(75)
+530. **slavko95@example.com**: #530(430)
+531. **manfredvogt@example.com**: #531(120)
+532. **gisbertreising@example.net**: #532(447)
+533. **erol58@example.com**: #533(7)
+534. **vziegert@example.net**: #534(13)
+535. **gottfriedhande@example.com**: #535(460)
+536. **auguste65@example.net**: #536(76)
+537. (dup of #343) done
+538. (dup of #215) done
+539. **catrin83@example.net**: #539(14)
+540. **lenawilms@example.net** (no dot, different from lena.wilms): #540(371) only
+
+Now let me compile the final unique list with all customer IDs kept, matching to their original row data.
+
+Let me now build the final table listing each unique email's kept row (customer_id, full_name, email, country, registered_at - as in original row, not normalized).
+</think>
+
+```csv
+customer_id,full_name,email,country,registered_at
+142,Milica Löffler-Conradi,ehlertharri@example.org,Polen,1639353600
+427,Jost Haase,otlustek@example.com,Poland,1743292800
+61,Yvette Seidel,benboucsein@example.net,Holland,2025-06-27
+148,Dipl.-Ing. Benita auch Schlauchin MBA.,fischerreginald@example.net,Belgium,December 22 2025
+230,Gino Lindau,renateroht@example.org,deutschland,January 01 2025
+496,Walburga Kobelt,wwulff@example.net,BE,1630972800
+456,Prof. Ina Dowerg,bernhard84@example.net,Belgien,May 19 2024
+489,  Margarethe Liebelt-Grein Groth  ,helfriedconradi@example.net,France,05.11.2023
+299,Edelgard Röhrdanz,dmosemann@example.net,Schweiz,1726012800
+259,Guenther Junken,bdussen-van@example.net,FRA,2021-07-28
+85,Alexa Gehringer B.A.,kuehnertewa@example.net,Großbritannien,2022-05-06
+293,Prof. Nils Oestrovsky,yaumann@example.net,OEsterreich,1728691200
+138,Renata Zänker,ewa75@example.com,Polen,November 18 2023
+493,Bernfried Harloff,gunter53@example.org,Poland,23.07.2025
+37,Willy Hethur,rosa49@example.net,Poland,1608508800
+202,Hannah Lindau-Stoll,danielleschenk@example.org,Großbritannien,20.09.2025
+379,Gino Krause,giorgiobender@example.com,France,1635811200
+5,Jose Hartung,joderwald@example.org,AUT,December 10 2022
+52,  Timm Haering-Faust  ,zahnmaik@example.net,PL,1758240000
+432,Herr Adam Bolzmann,gnatzkarl-heinrich@example.org,Spanien,01.12.2023
+303,  Augustin Ullmann  ,dietzastrid@example.com,England,02.03.2021
+305,Wilhelm Schäfer MBA.,skrebs@example.com,Holland,June 23 2021
+66,Ronny Hermighausen,hethurjenny@example.org,NL,2021-03-08
+146,Franjo Stolze,hans-joerg70@example.org,AUT,03.10.2025
+206,  Leonid Köhler  ,nhermighausen@example.org,Italy,2020-06-10
+505,Uta  Lange,gka.bus@example.org,Poland,25.05.2021
+510,norma schmiedecke-hofmann,ELFRIEDE16@example.org,Netherlands,1742256000
+271,Cengiz Fritsch-Budig,hubert55@example.org,Österreich,11.05.2022
+346,Univ.Prof. Nikolas Mangold,lhuebel@example.net,ITA,1626825600
+256,Adelbert Beer,meik09@example.org,Schweiz,02.10.2024
+33,Frank-Peter Werner B.Eng.,patrik55@example.org,PL,1655942400
+310,Yasmin Etzler,helmuthzimmer@example.org,United Kingdom,2023-11-11
+59,Jo Seip,ostriebitz@example.net,BE,2021-12-02
+11,Frau Franca Tlustek MBA.,gunterpaffrath@example.org,AT,2020-02-08
+130,Roderich Nerger B.Sc.,rupert30@example.net,United Kingdom,10.07.2024
+68,Bianka Scholtz MBA.,ernst-augustlosekann@example.net,SUI,2024-07-17
+442,Janko Segebahn-Budig,zhess@example.com,deutschland,1586822400
+273,Annedore Stolze,wolf-dieterreinhardt@example.org,Switzerland,May 25 2020
+367,Ante Hornich-Kraushaar,gschweitzer@example.org,AUT,2025-02-01
+295,Univ.Prof. Mariusz Spieß B.Eng.,margrafkatja@example.com,deutschland,August 29 2021
+448,Ing. Sebastiano Schleich,ypeukert@example.net,IT,1757203200
+232,Oswald Hethur,ygunpf@example.org,FRA,2023-01-27
+397,  Herr Mattias Kusch  ,alexandre21@example.org,Italien,2024-12-29
+369,Karl-Jürgen Trüb-Renner,theresia08@example.net,France,October 28 2020
+136,  Heinfried Wähner  ,kochsiegmar@example.com,FR,2022-05-24
+300,Christa-Maria Pölitz,daria34@example.net,Schweiz,1619308800
+396,Corina Reising,hermann-josefcichorius@example.org,UK,01.02.2024
+212,Domenico Römer-Bachmann,cweller@example.com,Austria,1635292800
+280,Frau Erica Haering,klaerefaust@example.org,PL,1633737600
+392,Jonathan Bauer B.Sc.,friedrich-wilhelm35@example.com,Germany,1588723200
+406,Wolf-Dietrich Otto,ernst-otto44@example.org,France,1729555200
+204,Gitte Weiß-Gieß,konstantinostroest@example.org,,16.12.2022
+484,  Ing. Astrid Huhn  ,muellerhanno@example.com,England,2024-09-01
+188,  Hinrich Kruschwitz  ,astatextor@example.com,Schweiz,17.01.2020
+213,Rotraut Vollbrecht-Renner,sevim31@example.org,Italy,October 07 2025
+97,Herr Emmerich Kuhl,agathemende@example.com,Frankreich,June 07 2021
+513,herlinde stadelmann-gerlach, bertha51@example.com ,Netherlands,2025-08-24
+78,  Viktor Misicher MBA.  ,hubertine27@example.net,Holland,1757376000
+289,Pamela Söding,sruppert@example.net,Belgium,06.03.2022
+362,Hubertus Jockel,leokadia43@example.org,Österreich,12.11.2025
+170,Lorenz Jäntsch,istoll@example.org,Austria,August 18 2020
+145,  Angelina Siering  ,waehnerbir

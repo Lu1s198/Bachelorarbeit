@@ -1,0 +1,126 @@
+```csv
+customer_id,full_name,email,country,registered_at
+142,Milica Löffler-Conradi,ehlertharri@example.org,Polen,2021-12-13
+427,Jost Haase,otlustek@example.com,Poland,2025-03-30
+61,Yvette Seidel,benboucsein@example.net,Holland,2025-06-27
+148,Dipl.-Ing. Benita auch Schlauchin MBA.,fischerreginald@example.net,Belgium,2025-12-22
+230,Gino Lindau,renateroht@example.org,deutschland,2025-01-01
+496,Walburga Kobelt,wwulff@example.net,BE,2021-09-07
+456,Prof. Ina Dowerg,bernhard84@example.net,Belgien,2024-05-19
+489,  Margarethe Liebelt-Grein Groth  ,helfriedconradi@example.net,France,2023-11-05
+299,Edelgard Röhrdanz,dmosemann@example.net,Schweiz,2024-09-11
+259,Guenther Junken,bdussen-van@example.net,FRA,2021-07-28
+85,Alexa Gehringer B.A.,kuehnertewa@example.net,Großbritannien,2022-05-06
+293,Prof. Nils Oestrovsky,yaumann@example.net,OEsterreich,2024-10-12
+138,Renata Zänker,ewa75@example.com,Polen,2023-11-18
+493,Bernfried Harloff,gunter53@example.org,Poland,2025-07-23
+37,Willy Hethur,rosa49@example.net,Poland,2020-12-21
+202,Hannah Lindau-Stoll,danielleschenk@example.org,Großbritannien,2025-09-20
+379,Gino Krause,giorgiobender@example.com,France,2021-11-02
+5,Jose Hartung,joderwald@example.org,AUT,2022-12-10
+52,  Timm Haering-Faust  ,zahnmaik@example.net,PL,2025-09-19
+432,Herr Adam Bolzmann,gnatzkarl-heinrich@example.org,Spanien,2023-12-01
+303,  Augustin Ullmann  ,dietzastrid@example.com,England,2021-03-02
+305,Wilhelm Schäfer MBA.,skrebs@example.com,Holland,2021-06-23
+66,Ronny Hermighausen,hethurjenny@example.org,NL,2021-03-08
+146,Franjo Stolze,hans-joerg70@example.org,AUT,2025-10-03
+206,  Leonid Köhler  ,nhermighausen@example.org,Italy,2020-06-10
+505,Uta  Lange,gka.bus@example.org,Poland,2021-05-25
+510,norma schmiedecke-hofmann,ELFRIEDE16@example.org,Netherlands,2025-03-18
+271,Cengiz Fritsch-Budig,hubert55@example.org,Österreich,2022-05-11
+346,Univ.Prof. Nikolas Mangold,lhuebel@example.net,ITA,2021-07-21
+256,Adelbert Beer,meik09@example.org,Schweiz,2024-10-02
+33,Frank-Peter Werner B.Eng.,patrik55@example.org,PL,2022-06-23
+310,Yasmin Etzler,helmuthzimmer@example.org,United Kingdom,2023-11-11
+59,Jo Seip,ostriebitz@example.net,BE,2021-12-02
+11,Frau Franca Tlustek MBA.,gunterpaffrath@example.org,AT,2020-02-08
+130,Roderich Nerger B.Sc.,rupert30@example.net,United Kingdom,2024-07-10
+68,Bianka Scholtz MBA.,ernst-augustlosekann@example.net,SUI,2024-07-17
+130,Roderich Nerger B.Sc.,rupert30@example.net,United Kingdom,2024-07-10
+442,Janko Segebahn-Budig,zhess@example.com,deutschland,2020-04-14
+273,Annedore Stolze,wolf-dieterreinhardt@example.org,Switzerland,2020-05-25
+367,Ante Hornich-Kraushaar,gschweitzer@example.org,AUT,2025-02-01
+295,Univ.Prof. Mariusz Spieß B.Eng.,margrafkatja@example.com,deutschland,2021-08-29
+448,Ing. Sebastiano Schleich,ypeukert@example.net,IT,2025-09-07
+232,Oswald Hethur,ygunpf@example.org,FRA,2023-01-27
+397,  Herr Mattias Kusch  ,alexandre21@example.org,Italien,2024-12-29
+369,Karl-Jürgen Trüb-Renner,theresia08@example.net,France,2020-10-28
+136,  Heinfried Wähner  ,kochsiegmar@example.com,FR,2022-05-24
+300,Christa-Maria Pölitz,daria34@example.net,Schweiz,2021-04-25
+396,Corina Reising,hermann-josefcichorius@example.org,UK,2024-02-01
+212,Domenico Römer-Bachmann,cweller@example.com,Austria,2021-10-27
+280,Frau Erica Haering,klaerefaust@example.org,PL,2021-10-09
+392,Jonathan Bauer B.Sc.,friedrich-wilhelm35@example.com,Germany,2020-05-06
+406,Wolf-Dietrich Otto,ernst-otto44@example.org,France,2024-10-22
+204,Gitte Weiß-Gieß,konstantinostroest@example.org,,2022-12-16
+484,  Ing. Astrid Huhn  ,muellerhanno@example.com,England,2024-09-01
+188,  Hinrich Kruschwitz  ,astatextor@example.com,Schweiz,2020-01-17
+213,Rotraut Vollbrecht-Renner,sevim31@example.org,Italy,2025-10-07
+97,Herr Emmerich Kuhl,agathemende@example.com,Frankreich,2021-06-07
+513,herlinde stadelmann-gerlach, bertha51@example.com ,Netherlands,2025-08-24
+78,  Viktor Misicher MBA.  ,hubertine27@example.net,Holland,2025-09-09
+289,Pamela Söding,sruppert@example.net,Belgium,2022-03-06
+362,Hubertus Jockel,leokadia43@example.org,Österreich,2025-11-12
+170,Lorenz Jäntsch,istoll@example.org,Austria,2020-08-18
+145,  Angelina Siering  ,waehnerbirgitt@example.net,AUT,2023-07-27
+122,Victor Sager,eimerbenedikt@example.net,Netherlands,2024-03-09
+469,Univ.Prof. Tülay Gehringer,phande@example.com,,2024-09-28
+150,Richard Werner B.Eng.,adobes@example.net,Italy,2025-08-04
+198,Gerlind Fechner,jens45@example.com,FR,2022-05-17
+359,  Dipl.-Ing. Gislinde Klapp  ,hans-joergzobel@example.org,Netherlands,2021-12-13
+520,BERNFRIED HARLOFF,GUNTER53@example.org,Poland,2025-07-23
+512,GOTTHILF SCHOMBER, heinz-ottohornig@example.net ,FR,2020-09-08
+55,Sigrun Renner MBA.,krokermary@example.com,Frankreich,2021-06-16
+260,Rainer Gorlitz,helmuthgierschner@example.com,Italy,2020-10-30
+509,Serge  Steckel,moseman.ntraute@example.org,,2023-12-18
+401,Hannelore Rosemann,pietroscholl@example.org,Poland,2021-07-15
+456,Prof. Ina Dowerg,bernhard84@example.net,Belgien,2024-05-19
+454,Beatrix Köster,kerstin35@example.net,Italy,2021-03-13
+348,Ivonne Weller-Schuchhardt,leonardobachmann@example.org,Spanien,2021-04-04
+518,CATHARINA EIGENWILLIG, dowergmonja@example.com ,SUI,2025-05-21
+249,Denise Scholtz-Flantz,judith50@example.net,Niederlande,2025-12-28
+428,Dr. Georgios Geißler,fridakuhl@example.com,schweiz,2024-02-28
+357,Herr Stanislav Schenk B.Eng.,barkholzsteve@example.net,ESP,2022-05-27
+95,Frau Waltraud Gotthard B.Sc.,schenkanatolij@example.org,Poland,2025-10-23
+226,  Lena Zimmer  ,bruderines@example.org,Belgium,2022-04-10
+400,Ildiko Säuberlich,milicamargraf@example.com,AT,2023-06-09
+207,Catharina Eigenwillig,dowergmonja@example.com,SUI,2025-05-21
+335,Stefano Heinz-Täsche,selma65@example.net,Österreich,2020-05-26
+29,Ismet Döhn MBA.,aloisia70@example.com,NL,2025-03-16
+344,  Madeleine Benthin-Steckel  ,hofmannsibilla@example.net,Italy,2024-01-26
+181,  Götz Steinberg  ,peukerth-dieter@example.net,France,2025-06-19
+103,Herwig Siering,selma00@example.net,Belgium,2020-07-08
+107,Ing. Heinz Schleich,kitzmannbernadette@example.com,DE,2024-07-29
+133,Jurij Dussen van,angelique58@example.net,Belgien,2024-11-12
+320,Herr Hans-Ludwig Siering,doerthe93@example.org,OEsterreich,2020-07-23
+190,Dr. Hans-H. Sauer,peukertheinz-guenther@example.com,SUI,2022-01-02
+314,Herr Ioannis Girschner,dfliegner@example.org,,2024-07-29
+139,Immo Klapp,selimfinke@example.org,Großbritannien,2021-06-18
+235,Herr Wilfried Rädel,hasanmargraf@example.com,France,2022-01-25
+46,Veronica Heidrich,cjaentsch@example.com,,2021-08-03
+165,Ulrike Zobel,edeltrauthiller@example.com,ITA,2020-10-09
+251,Prof. Gertraut Peukert,mjunck@example.org,GER,2024-12-18
+500,Dipl.-Ing. Hildegart Wende,sybilla97@example.org,BE,2023-09-05
+6,Univ.Prof. Emanuel Wesack MBA.,susan06@example.net,Belgium,2025-06-18
+395,Elias Gude,ilonka64@example.net,ES,2020-03-12
+482,Frau Rita Schwital MBA.,qharloff@example.org,Italy,2022-05-25
+278,Britta Fröhlich,constantinjockel@example.net,ES,2024-05-05
+182,Ing. Nuray Tröst B.Sc.,naserrosl@example.org,,2023-04-05
+285,Jens-Peter Juncken,edelgard59@example.org,Austria,2024-02-03
+45,Gerhart Gumprich B.A.,danny41@example.com,,2020-10-08
+514,Ing.  Herlinde  Kensy  B.Sc.,vad.im90@example.org,Niederlande,2025-05-28
+227,  Frau Bianka Holzapfel  ,horst-guenter31@example.com,Schweiz,2024-02-01
+147,Sven Krebs,staudetimo@example.com,deutschland,2025-10-19
+183,Dipl.-Ing. Orhan Heidrich,heringmicha@example.com,Netherlands,2025-08-02
+483,Folkert Zahn,girschnerellinor@example.com,Niederlande,2023-10-26
+245,Gregor Dussen van,eckbauerlidwina@example.net,BE,2022-07-03
+358,Dipl.-Ing. Ilonka Börner B.A.,kristinstiebitz@example.org,Belgien,2025-06-01
+119,Herta Huhn,nikolaos45@example.net,,2024-06-03
+174,Ing. Valentine Koch II,mlachmann@example.com,Spanien,2020-06-14
+144,  Herr Balthasar Loos  ,rognerheinz-juergen@example.net,deutschland,2023-08-03
+238,Frau Uta Döhn MBA.,mikhail16@example.org,England,2025-12-19
+117,Karolin Römer B.Sc.,josephine23@example.com,Spain,2023-04-24
+331,Univ.Prof. Ester Fechner MBA.,friederike56@example.com,FR,2023-09-17
+264,Willy Zimmer,tatianahoerle@example.net,ES,2022-02-22
+439,Claas Hörle,kseidel@example.net,Frankreich,2023-12-28
+127,Stanislaus Briemer,francoisegerlach@example.

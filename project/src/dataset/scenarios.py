@@ -45,7 +45,7 @@ CLEANING_TASKS: list[Task] = [
         description=(
             "Lies die Datei `customers_raw.csv` ein. Entferne führende und "
             "nachfolgende Leerzeichen aus allen Textspalten. Ersetze fehlende "
-            "Werte in der Spalte `country_code` durch 'UNKNOWN'. Schreibe das "
+            "Werte in der Spalte `country` durch 'UNKNOWN'. Schreibe das "
             "Ergebnis als Parquet-Datei `cleaned_customers.parquet`."
         ),
         input_files=["customers_raw.csv"],

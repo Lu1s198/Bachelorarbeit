@@ -1,0 +1,43 @@
+{
+  "timestamp": "2026-07-28T15:55:22.858168+00:00",
+  "provider": "google",
+  "mode": "direct",
+  "requested_model": "gemini-3.6-flash",
+  "prompt_id": "direct_v1",
+  "prompt_strategy": "direct",
+  "task_id": "cleaning_hard_semantic_unification",
+  "task_category": "cleaning",
+  "task_difficulty": "hard",
+  "seed": 1,
+  "repetition": 1,
+  "temperature": 0.0,
+  "error": null,
+  "model": "gemini-3.6-flash",
+  "prompt_tokens": 18310,
+  "completion_tokens": 15996,
+  "cost_usd": 0.147435,
+  "llm_latency_seconds": 56.85063320000336,
+  "correctness": {
+    "schema_match": false,
+    "row_count_match": false,
+    "values_match": false,
+    "accuracy": 0.0,
+    "completeness": 0.0,
+    "consistency": 0.0,
+    "row_count_expected": 540,
+    "row_count_actual": 16,
+    "missing_columns": [
+      "country",
+      "customer_id",
+      "email",
+      "full_name",
+      "registered_at"
+    ],
+    "extra_columns": [
+      ".10.2024 -> UNKNOWN"
+    ],
+    "comparable": false,
+    "notes": ""
+  },
+  "n_rows_returned": 16
+}

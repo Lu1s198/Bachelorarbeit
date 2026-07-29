@@ -1,0 +1,17 @@
+{
+  "timestamp": "2026-07-28T15:59:56.355420+00:00",
+  "provider": "anthropic",
+  "mode": "direct",
+  "requested_model": "claude-sonnet-5",
+  "prompt_id": "direct_v1",
+  "prompt_strategy": "direct",
+  "task_id": "cleaning_hard_semantic_unification",
+  "task_category": "cleaning",
+  "task_difficulty": "hard",
+  "seed": 1,
+  "repetition": 1,
+  "temperature": 0.0,
+  "error": "ValueError: Streaming is required for operations that may take longer than 10 minutes. See https://github.com/anthropics/anthropic-sdk-python#long-requests for more details",
+  "traceback": "Traceback (most recent call last):\n  File \"C:\\Users\\geige\\Desktop\\DHBW\\Bachelorarbeit\\project\\src\\experiments\\direct_runner.py\", line 145, in run_direct_task\n    resp = provider.generate(user, system=SYSTEM, temperature=0.0, max_tokens=max_tokens)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\geige\\Desktop\\DHBW\\Bachelorarbeit\\project\\src\\llm\\providers\\claude.py\", line 48, in generate\n    response = self.client.messages.create(**kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\geige\\Desktop\\DHBW\\Bachelorarbeit\\project\\.venv\\Lib\\site-packages\\anthropic\\_utils\\_utils.py\", line 294, in wrapper\n    return func(*args, **kwargs)\n           ^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\geige\\Desktop\\DHBW\\Bachelorarbeit\\project\\.venv\\Lib\\site-packages\\anthropic\\resources\\messages\\messages.py\", line 1031, in create\n    timeout = self._client._calculate_nonstreaming_timeout(\n              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\geige\\Desktop\\DHBW\\Bachelorarbeit\\project\\.venv\\Lib\\site-packages\\anthropic\\_base_client.py\", line 775, in _calculate_nonstreaming_timeout\n    raise ValueError(\nValueError: Streaming is required for operations that may take longer than 10 minutes. See https://github.com/anthropics/anthropic-sdk-python#long-requests for more details\n",
+  "correctness": null
+}

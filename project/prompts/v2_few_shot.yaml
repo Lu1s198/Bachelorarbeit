@@ -2,9 +2,12 @@ id: v2_few_shot
 version: 1
 strategy: few_shot
 description: >
-  Ergänzt die Anweisung um ein beispielhaftes Ein-/Ausgabepaar (eine gelöste,
-  andersartige ETL-Aufgabe), an dem das Modell das gewünschte Verhalten und den
-  Stil des erwarteten Codes ableitet.
+  Ergänzt die Anweisung um ein vollständig ausformuliertes Ein-/Ausgabepaar (eine
+  gelöste, andersartige ETL-Aufgabe auf einer Mitarbeitertabelle), an dem das
+  Modell das gewünschte Verhalten und den Stil des erwarteten Codes ableitet. Das
+  Beispiel ist bewusst keine der neun evaluierten Aufgaben, damit es keine
+  Musterlösung vorwegnimmt; die zugehörigen Daten liegen als prompts/examples/
+  employees_raw.csv vor.
 
 system: |
   You are an experienced data engineer. Respond only with executable Python
@@ -12,16 +15,54 @@ system: |
   outside the code.
 
 user_template: |
-  Example of a solved ETL task (for orientation only):
+  Here is one fully solved ETL task as an example of the expected style. It is a
+  different task from the one you must solve; use it only to understand the
+  format and quality of the expected solution.
 
-  Task: Read `example.csv` from the directory /path/to/data, remove rows
-  with a missing `id` value, and write the result as Parquet to
-  /path/to/output.parquet.
+  --- EXAMPLE START ---
+  Task: A file `employees_raw.csv` contains an employee table with the columns
+  `employee_id`, `full_name`, `department`, `annual_salary_eur` and `active`.
+  The data has the following issues:
+    - `full_name` and `department` contain leading/trailing whitespace,
+    - some `department` values are missing (empty),
+    - `annual_salary_eur` is stored as text with currency decoration
+      (e.g. "55000", "€60000", "52000 EUR"),
+    - `active` is stored as the German text "ja"/"nein".
+  Clean the table: trim whitespace in text columns, replace missing departments
+  with 'UNKNOWN', convert `annual_salary_eur` to a float, and convert `active`
+  to a boolean. Write the result as Parquet to `employees_clean.parquet`.
+
+  Input (employees_raw.csv):
+  employee_id,full_name,department,annual_salary_eur,active
+  1,  Anna Schmidt ,Sales,55000,ja
+  2,Ben Krüger,,48500,nein
+  3, Carla Neumann ,Engineering,€60000,ja
+  4,David Fischer,Marketing,52000 EUR,ja
+  5,  Eva Wagner,Engineering,61000,nein
+
   Solution:
   import pandas as pd
-  df = pd.read_csv("/path/to/data/example.csv")
-  df = df.dropna(subset=["id"])
-  df.to_parquet("/path/to/output.parquet", index=False)
+
+  df = pd.read_csv("employees_raw.csv")
+
+  for column in ["full_name", "department"]:
+      df[column] = df[column].str.strip()
+
+  df["department"] = df["department"].fillna("UNKNOWN").replace("", "UNKNOWN")
+
+  df["annual_salary_eur"] = (
+      df["annual_salary_eur"]
+      .astype(str)
+      .str.replace("€", "", regex=False)
+      .str.replace("EUR", "", regex=False)
+      .str.strip()
+      .astype(float)
+  )
+
+  df["active"] = df["active"].str.strip().eq("ja")
+
+  df.to_parquet("employees_clean.parquet", index=False)
+  --- EXAMPLE END ---
 
   Now solve the following task in the same style:
 
@@ -29,3 +70,6 @@ user_template: |
 
   The input files are located in: {input_dir}
   Write the result as a Parquet file to exactly: {output_path}
+
+  The script must run without any further input and must produce the output
+  file at the specified path.

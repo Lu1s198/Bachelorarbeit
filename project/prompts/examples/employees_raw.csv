@@ -1,0 +1,6 @@
+employee_id,full_name,department,annual_salary_eur,active
+1,  Anna Schmidt ,Sales,55000,ja
+2,Ben Krüger,,48500,nein
+3, Carla Neumann ,Engineering,€60000,ja
+4,David Fischer,Marketing,52000 EUR,ja
+5,  Eva Wagner,Engineering,61000,nein

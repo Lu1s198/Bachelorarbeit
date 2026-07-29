@@ -9,6 +9,7 @@ eigenes, unveränderliches JSON abgelegt.
 from __future__ import annotations
 
 import json
+import time
 import traceback
 from dataclasses import asdict
 from datetime import datetime, timezone
@@ -20,9 +21,45 @@ from config import settings
 from dataset.scenarios import Task, get_task
 from evaluation import evaluate_correctness
 from experiments.code_execution import extract_code, run_generated_code
+from llm.base import LLMProvider, LLMResponse
 from llm.factory import get_provider
 from llm.pricing import estimate_cost_usd
 from llm.prompt import load_prompt
+
+# Marker für transiente (wiederholbare) Anbieterfehler -- providerübergreifend
+# an Status-Code bzw. Fehlertext erkannt (503/429 usw. bei Gemini, Anthropic,
+# OpenAI; Verbindungsfehler bei Ollama).
+_TRANSIENT_MARKERS = (
+    "503", "502", "504", "500", "429", "529", "unavailable", "overloaded",
+    "rate limit", "ratelimit", "resourceexhausted", "deadlineexceeded",
+    "timeout", "timed out", "temporarily", "connection", "econnreset",
+)
+
+
+def _is_transient(exc: Exception) -> bool:
+    code = getattr(exc, "status_code", None) or getattr(exc, "code", None)
+    if code in (429, 500, 502, 503, 504, 529):
+        return True
+    msg = str(exc).lower()
+    return any(m in msg for m in _TRANSIENT_MARKERS)
+
+
+def _generate_with_retry(
+    provider: LLMProvider, prompt: str, *, attempts: int = 3,
+    base_delay: float = 2.0, **kwargs,
+) -> LLMResponse:
+    """Ruft provider.generate() mit exponentiellem Backoff bei transienten Fehlern."""
+    for attempt in range(1, attempts + 1):
+        try:
+            return provider.generate(prompt, **kwargs)
+        except Exception as exc:  # noqa: BLE001 - bewusst breit; Klassifikation folgt
+            if attempt < attempts and _is_transient(exc):
+                delay = base_delay * 2 ** (attempt - 1)
+                print(f"   transienter Fehler ({type(exc).__name__}), "
+                      f"Retry {attempt}/{attempts - 1} in {delay:.0f}s ...", flush=True)
+                time.sleep(delay)
+                continue
+            raise
 
 
 def _ground_truth_path(task: Task, seed: int) -> Path:
@@ -72,8 +109,8 @@ def run_single(
     }
 
     try:
-        response = provider.generate(
-            user_prompt, system=prompt.system, temperature=temperature,
+        response = _generate_with_retry(
+            provider, user_prompt, system=prompt.system, temperature=temperature,
             max_tokens=settings.max_output_tokens,
         )
         code = extract_code(response.text)

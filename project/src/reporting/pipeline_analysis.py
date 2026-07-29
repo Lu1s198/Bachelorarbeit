@@ -50,8 +50,13 @@ def load_pipeline(seed: int = 1) -> pd.DataFrame:
                 order=order.get(s["step"], 99), status=s["status"],
                 accuracy=s.get("accuracy"), attempts=s.get("attempts"),
                 error=s.get("error"),
+                cost_usd=s.get("cost_usd", 0.0) or 0.0,
+                prompt_tokens=s.get("prompt_tokens", 0) or 0,
+                completion_tokens=s.get("completion_tokens", 0) or 0,
+                row_actual=s.get("row_actual"), row_expected=s.get("row_expected"),
+                model=d.get("requested_model"),
             ))
-    return pd.DataFrame(rows)
+    return pd.DataFrame(rows).sort_values(["provider", "order"])
 
 
 def pipeline_heatmap(seed: int = 1, save: bool = True):
@@ -109,6 +114,174 @@ def pipeline_heatmap(seed: int = 1, save: bool = True):
     if save:
         save_fig(fig, "pipeline_verlauf")
     return fig, df
+
+
+def step_accuracy(seed: int = 1, save: bool = True):
+    """Genauigkeitsverlauf entlang der Kette: eine Linie je Modell über die neun
+    Schritte. Abgebrochene/blockierte Schritte enden als Lücke, sodass sichtbar
+    wird, wie weit ein Modell kommt."""
+    df = load_pipeline(seed)
+    steps = list(PIPELINE)
+    x = np.arange(len(steps))
+    fig, ax = plt.subplots(figsize=(11, 4.8))
+    for i, prov in enumerate([p for p in MODEL_ORDER if p in set(df.provider)]):
+        sub = df[df.provider == prov].set_index("step")
+        vals = [sub.loc[s.name, "accuracy"] if s.name in sub.index else np.nan
+                for s in steps]
+        vals = [v if v is not None else np.nan for v in vals]
+        ax.plot(x, vals, "o-", lw=2, ms=6, color=f"C{i}", label=PROVIDER_LABEL[prov])
+        # Abbruchstelle markieren
+        for j, s in enumerate(steps):
+            if s.name in sub.index and sub.loc[s.name, "status"] in STATUS_COLOR:
+                ax.plot(j, 0, "x", ms=11, mew=2.5, color=f"C{i}")
+    ax.set_xticks(x)
+    ax.set_xticklabels([s.label for s in steps], rotation=30, ha="right", fontsize=8)
+    ax.set_ylim(-0.05, 1.1)
+    ax.set_ylabel("abgeglichene Genauigkeit")
+    ax.set_title("Verkettete Pipeline – Genauigkeit entlang der Schrittfolge "
+                 "(x = Abbruch, Lücke = blockiert)")
+    ax.legend(fontsize=9)
+    ax.grid(ls=":", alpha=0.5)
+    fig.tight_layout()
+    if save:
+        save_fig(fig, "pipeline_genauigkeit")
+    return fig, df
+
+
+def effort(seed: int = 1, save: bool = True):
+    """Aufwand der Pipeline: Kosten je Schritt (gestapelt je Modell) und Versuche."""
+    df = load_pipeline(seed)
+    provs = [p for p in MODEL_ORDER if p in set(df.provider)]
+    labels = [PROVIDER_LABEL[p] for p in provs]
+    steps = list(PIPELINE)
+
+    fig, axes = plt.subplots(1, 2, figsize=(14, 4.6))
+    bottom = np.zeros(len(provs))
+    for k, s in enumerate(steps):
+        vals = [float(df[(df.provider == p) & (df.step == s.name)]["cost_usd"].sum())
+                for p in provs]
+        axes[0].bar(labels, vals, 0.55, bottom=bottom,
+                    color=plt.cm.viridis(k / max(len(steps) - 1, 1)), label=s.label)
+        bottom += np.array(vals)
+    for i, v in enumerate(bottom):
+        axes[0].text(i, v, f"${v:.3f}", ha="center", va="bottom", fontsize=8)
+    axes[0].set_ylabel("Kosten ($)")
+    axes[0].set_title("Kosten der Pipeline je Modell (gestapelt nach Schritt)")
+    axes[0].legend(fontsize=6.5, ncol=1, loc="upper left", bbox_to_anchor=(1.0, 1.0))
+    axes[0].grid(axis="y", ls=":", alpha=0.5)
+
+    att = df.pivot_table(index="step", columns="provider", values="attempts",
+                         aggfunc="max").reindex([s.name for s in steps])
+    att = att[[p for p in provs if p in att.columns]]
+    im = axes[1].imshow(att.values.astype(float), cmap="OrRd", vmin=0, vmax=3,
+                        aspect="auto")
+    axes[1].set_xticks(range(att.shape[1]))
+    axes[1].set_xticklabels([PROVIDER_LABEL[c] for c in att.columns])
+    axes[1].set_yticks(range(att.shape[0]))
+    axes[1].set_yticklabels([s.label for s in steps], fontsize=8)
+    for r in range(att.shape[0]):
+        for c in range(att.shape[1]):
+            v = att.values[r, c]
+            if not np.isnan(v):
+                axes[1].text(c, r, f"{int(v)}", ha="center", va="center", fontsize=9)
+    axes[1].set_title("Benötigte Versuche je Schritt (max. 3)")
+    fig.colorbar(im, ax=axes[1], fraction=0.03, pad=0.02)
+    fig.tight_layout()
+    if save:
+        save_fig(fig, "pipeline_aufwand")
+    return fig, df
+
+
+# Zuordnung Pipeline-Schritt -> unabhängige Aufgabe der Matrix-Läufe
+STEP_TO_TASK = {
+    "cleaning_easy": "cleaning_easy_missing_and_whitespace",
+    "cleaning_medium": "cleaning_medium_date_formats",
+    "cleaning_hard": "cleaning_hard_semantic_unification",
+    "dedup_easy": "dedup_easy_exact_duplicates",
+    "dedup_medium": "dedup_medium_key_duplicates",
+    "dedup_hard": "dedup_hard_fuzzy_duplicates",
+    "products": "transform_easy_type_conversion",
+    "orders": "transform_medium_derived_columns",
+    "final": "transform_hard_join_and_aggregate",
+}
+
+
+def pipeline_vs_matrix(runs: pd.DataFrame, seed: int = 1, save: bool = True):
+    """Kette gegen Einzelläufe: Genauigkeit der Pipeline je Schritt gegenüber der
+    besten klassischen Prompt-Strategie derselben Aufgabe auf den Rohdaten.
+
+    Der Unterschied ist inhaltlich bedeutsam: In der Kette arbeitet ein Schritt auf
+    bereits bereinigten Daten, in der Matrix immer auf den Rohdaten."""
+    from reporting.compare import codegen_matrix
+
+    df = load_pipeline(seed)
+    cg = codegen_matrix(runs)
+    steps = list(PIPELINE)
+    rows = []
+    for s in steps:
+        task = STEP_TO_TASK[s.name]
+        pipe = df[df.step == s.name]
+        pipe_val = pipe.accuracy.astype(float).mean() if not pipe.empty else np.nan
+        matrix_val = (cg.loc[task].mean() if task in cg.index else np.nan)
+        rows.append({"Schritt": s.label, "Pipeline (Ø Modelle)": pipe_val,
+                     "Einzellauf (beste Strategie, Ø Modelle)": matrix_val})
+    T = pd.DataFrame(rows).set_index("Schritt")
+    T["Differenz"] = T.iloc[:, 0] - T.iloc[:, 1]
+
+    x = np.arange(len(T))
+    w = 0.38
+    fig, ax = plt.subplots(figsize=(11.5, 4.8))
+    ax.bar(x - w / 2, T.iloc[:, 0], w, color="#4e79a7", label="verkettete Pipeline")
+    ax.bar(x + w / 2, T.iloc[:, 1], w, color="#f28e2b",
+           label="unabhängige Einzelläufe (beste Strategie)")
+    ax.set_xticks(x)
+    ax.set_xticklabels(T.index, rotation=30, ha="right", fontsize=8)
+    ax.set_ylim(0, 1.1)
+    ax.set_ylabel("abgeglichene Genauigkeit")
+    ax.set_title("Verkettete Pipeline gegen unabhängige Einzelläufe "
+                 "(Mittel über die Modelle)")
+    ax.legend(fontsize=9)
+    ax.grid(axis="y", ls=":", alpha=0.5)
+    fig.tight_layout()
+    if save:
+        save_fig(fig, "pipeline_vs_einzellauf")
+    return fig, T
+
+
+def final_step_diagnosis(seed: int = 1) -> pd.DataFrame:
+    """Spaltenweise Diagnose des Endschritts (Join & Aggregation).
+
+    Der Endschritt fällt bei mehreren Modellen auf oder nahe 0, obwohl Zeilenzahl und
+    Schema stimmen. Die Tabelle zeigt je Modell, welcher Anteil der Zellen je Spalte
+    mit der verketteten Referenz übereinstimmt -- so wird sichtbar, ob die
+    Gruppierung insgesamt danebenliegt oder nur einzelne Kennzahlen abweichen."""
+    from experiments.pipeline_runner import build_chain_reference
+    from reporting.analysis import _cellwise_eq
+
+    exp = build_chain_reference(seed)["final"]
+    keys = ["country_code", "category"]
+    rows = []
+    for prov in MODEL_ORDER:
+        p = PIPELINE_RESULTS / str(seed) / prov / "final" / "output.parquet"
+        if not p.exists():
+            continue
+        act = pd.read_parquet(p)
+        rec = {"Modell": PROVIDER_LABEL[prov], "Zeilen Ist": len(act),
+               "Zeilen Soll": len(exp)}
+        if not set(exp.columns).issubset(act.columns):
+            rec["Hinweis"] = f"fehlende Spalten: {set(exp.columns) - set(act.columns)}"
+            rows.append(rec)
+            continue
+        e, a = exp.copy(), act[list(exp.columns)].copy()
+        for k in keys:
+            e[k], a[k] = e[k].astype(str), a[k].astype(str)
+        m = e.merge(a, on=keys, how="inner", suffixes=("_soll", "_ist"))
+        rec["Schluessel-Treffer"] = f"{len(m)}/{len(exp)}"
+        for c in [c for c in exp.columns if c not in keys]:
+            eq = _cellwise_eq(m[f"{c}_soll"], m[f"{c}_ist"]) if len(m) else np.array([])
+            rec[f"{c} korrekt"] = round(float(eq.mean()) * 100, 1) if len(m) else 0.0
+        rows.append(rec)
+    return pd.DataFrame(rows).set_index("Modell")
 
 
 def pipeline_summary(seed: int = 1) -> pd.DataFrame:

@@ -1,6 +1,6 @@
 import os
-import numpy as np
 import pandas as pd
+import numpy as np
 
 customers_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/openai/dedup_hard/output.parquet"
 products_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/openai/products/output.parquet"
@@ -11,46 +11,73 @@ customers = pd.read_parquet(customers_path)
 products = pd.read_parquet(products_path)
 orders = pd.read_parquet(orders_path)
 
-for frame, column in (
-    (customers, "customer_id"),
-    (products, "product_id"),
-    (orders, "customer_id"),
-    (orders, "product_id"),
-):
-    frame[column] = frame[column].astype("string").str.strip()
+def normalize_key(series):
+    return series.astype("string").str.strip()
 
-customers = customers[["customer_id", "country"]].copy()
-customers = customers.rename(columns={"country": "country_code"})
+customers = customers.copy()
+products = products.copy()
+orders = orders.copy()
 
-products = products[["product_id", "category"]].copy()
+customers["customer_id"] = normalize_key(customers["customer_id"])
+products["product_id"] = normalize_key(products["product_id"])
+orders["customer_id"] = normalize_key(orders["customer_id"])
+orders["product_id"] = normalize_key(orders["product_id"])
+
+customers["country_code"] = customers["country"].astype("string").str.strip().str.upper()
+products["category"] = products["category"].astype("string").str.strip()
+
+customers = customers.loc[
+    customers["customer_id"].notna()
+    & customers["customer_id"].ne("")
+    & customers["country_code"].notna()
+    & customers["country_code"].str.fullmatch(r"[A-Z]{2}", na=False)
+].copy()
+
+products = products.loc[
+    products["product_id"].notna()
+    & products["product_id"].ne("")
+    & products["category"].notna()
+    & products["category"].ne("")
+].copy()
+
+orders = orders.loc[
+    orders["customer_id"].notna()
+    & orders["customer_id"].ne("")
+    & orders["product_id"].notna()
+    & orders["product_id"].ne("")
+].copy()
 
 merged = orders.merge(
-    customers,
+    customers[["customer_id", "country_code"]],
     on="customer_id",
     how="inner",
-    validate="many_to_one",
 )
 
 merged = merged.merge(
-    products,
+    products[["product_id", "category"]],
     on="product_id",
     how="inner",
-    validate="many_to_one",
 )
 
 merged["quantity"] = pd.to_numeric(merged["quantity"], errors="coerce")
 merged["unit_price_eur"] = pd.to_numeric(merged["unit_price_eur"], errors="coerce")
-merged["total_revenue_eur"] = merged["quantity"] * merged["unit_price_eur"]
+merged["revenue"] = merged["quantity"] * merged["unit_price_eur"]
 
-grouped = (
-    merged.groupby(["country_code", "category"], dropna=False, as_index=False)
+result = (
+    merged.groupby(["country_code", "category"], as_index=False, dropna=True)
     .agg(
-        total_revenue_eur=("total_revenue_eur", "sum"),
-        order_count=("customer_id", "size"),
+        total_revenue_eur=("revenue", "sum"),
+        order_count=("revenue", "size"),
     )
-    .sort_values("total_revenue_eur", ascending=False, kind="stable")
+    .sort_values(
+        ["total_revenue_eur", "country_code", "category"],
+        ascending=[False, True, True],
+        kind="mergesort",
+    )
     .reset_index(drop=True)
 )
 
+result["order_count"] = result["order_count"].astype("int64")
+
 os.makedirs(os.path.dirname(output_path), exist_ok=True)
-grouped.to_parquet(output_path, index=False)
+result.to_parquet(output_path, index=False)

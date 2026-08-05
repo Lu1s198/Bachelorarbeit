@@ -1,504 +1,304 @@
 import os
 import re
 import unicodedata
-import pandas as pd
 import numpy as np
+import pandas as pd
 
 input_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/openai/cleaning_medium/output.parquet"
 output_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/openai/cleaning_hard/output.parquet"
 
 data = """
 AF|AFG|Afghanistan
-AL|ALB|Albania
-DZ|DZA|Algeria
-AS|ASM|American Samoa
+AL|ALB|Albania|Albanien
+DZ|DZA|Algeria|Algerien
 AD|AND|Andorra
 AO|AGO|Angola
-AI|AIA|Anguilla
-AQ|ATA|Antarctica
-AG|ATG|Antigua and Barbuda
-AR|ARG|Argentina
-AM|ARM|Armenia
-AW|ABW|Aruba
-AU|AUS|Australia
-AT|AUT|Austria
-AZ|AZE|Azerbaijan
-BS|BHS|Bahamas
-BH|BHR|Bahrain
-BD|BGD|Bangladesh
+AG|ATG|Antigua and Barbuda|Antigua und Barbuda
+AR|ARG|Argentina|Argentinien
+AM|ARM|Armenia|Armenien
+AU|AUS|Australia|Australien
+AT|AUT|Austria|Oesterreich|Österreich
+AZ|AZE|Azerbaijan|Aserbaidschan
+BS|BHS|Bahamas|The Bahamas
+BH|BHR|Bahrain|Bahrain
+BD|BGD|Bangladesh|Bangladesch
 BB|BRB|Barbados
-BY|BLR|Belarus
-BE|BEL|Belgium
+BY|BLR|Belarus|Weissrussland|Weißrussland
+BE|BEL|Belgium|Belgien
 BZ|BLZ|Belize
 BJ|BEN|Benin
-BM|BMU|Bermuda
-BT|BTN|Bhutan
-BO|BOL|Bolivia
-BQ|BES|Bonaire Sint Eustatius and Saba
-BA|BIH|Bosnia and Herzegovina
+BT|BTN|Bhutan|Bhutan
+BO|BOL|Bolivia|Bolivien
+BA|BIH|Bosnia and Herzegovina|Bosnia Herzegovina|Bosnien und Herzegowina|Bosnien-Herzegowina
 BW|BWA|Botswana
-BV|BVT|Bouvet Island
-BR|BRA|Brazil
-IO|IOT|British Indian Ocean Territory
-BN|BRN|Brunei
-BG|BGR|Bulgaria
+BR|BRA|Brazil|Brasilien
+BN|BRN|Brunei|Brunei Darussalam
+BG|BGR|Bulgaria|Bulgarien
 BF|BFA|Burkina Faso
 BI|BDI|Burundi
-CV|CPV|Cabo Verde
-KH|KHM|Cambodia
-CM|CMR|Cameroon
-CA|CAN|Canada
-KY|CYM|Cayman Islands
-CF|CAF|Central African Republic
-TD|TCD|Chad
+CV|CPV|Cabo Verde|Cape Verde|Kap Verde
+KH|KHM|Cambodia|Kambodscha
+CM|CMR|Cameroon|Kamerun
+CA|CAN|Canada|Kanada
+CF|CAF|Central African Republic|Central African Rep|Zentralafrikanische Republik
+TD|TCD|Chad|Tschad
 CL|CHL|Chile
-CN|CHN|China
-CX|CXR|Christmas Island
-CC|CCK|Cocos Islands
-CO|COL|Colombia
-KM|COM|Comoros
-CG|COG|Republic of the Congo
-CD|COD|Democratic Republic of the Congo
-CK|COK|Cook Islands
+CN|CHN|China|People's Republic of China|Volksrepublik China
+CO|COL|Colombia|Kolumbien
+KM|COM|Comoros|Komoren
+CD|COD|Democratic Republic of the Congo|DR Congo|DRC|Congo Kinshasa|Demokratische Republik Kongo|Kongo Kinshasa
+CG|COG|Republic of the Congo|Congo Brazzaville|Republik Kongo|Kongo Brazzaville
 CR|CRI|Costa Rica
-CI|CIV|Cote d Ivoire
-HR|HRV|Croatia
-CU|CUB|Cuba
-CW|CUW|Curacao
-CY|CYP|Cyprus
-CZ|CZE|Czechia
-DK|DNK|Denmark
-DJ|DJI|Djibouti
+CI|CIV|Cote d Ivoire|Côte d'Ivoire|Ivory Coast|Elfenbeinkueste|Elfenbeinküste
+HR|HRV|Croatia|Kroatien
+CU|CUB|Cuba|Kuba
+CY|CYP|Cyprus|Zypern
+CZ|CZE|Czechia|Czech Republic|Tschechien|Tschechische Republik
+DK|DNK|Denmark|Daenemark|Dänemark
+DJ|DJI|Djibouti|Dschibuti
 DM|DMA|Dominica
-DO|DOM|Dominican Republic
+DO|DOM|Dominican Republic|Dominikanische Republik
 EC|ECU|Ecuador
-EG|EGY|Egypt
+EG|EGY|Egypt|Aegypten|Ägypten
 SV|SLV|El Salvador
-GQ|GNQ|Equatorial Guinea
+GQ|GNQ|Equatorial Guinea|Aequatorialguinea|Äquatorialguinea
 ER|ERI|Eritrea
-EE|EST|Estonia
-SZ|SWZ|Eswatini
-ET|ETH|Ethiopia
-FK|FLK|Falkland Islands
-FO|FRO|Faroe Islands
-FJ|FJI|Fiji
-FI|FIN|Finland
-FR|FRA|France
-GF|GUF|French Guiana
-PF|PYF|French Polynesia
-TF|ATF|French Southern Territories
+EE|EST|Estonia|Estland
+SZ|SWZ|Eswatini|Swaziland
+ET|ETH|Ethiopia|Aethiopien|Äthiopien
+FJ|FJI|Fiji|Fidschi
+FI|FIN|Finland|Finnland
+FR|FRA|France|Frankreich
 GA|GAB|Gabon
-GM|GMB|Gambia
-GE|GEO|Georgia
-DE|DEU|Germany
+GM|GMB|Gambia|The Gambia
+GE|GEO|Georgia|Georgien
+DE|DEU|Germany|Deutschland|German|Germania|Bundesrepublik Deutschland|BRD
 GH|GHA|Ghana
-GI|GIB|Gibraltar
-GR|GRC|Greece
-GL|GRL|Greenland
+GR|GRC|Greece|Griechenland
 GD|GRD|Grenada
-GP|GLP|Guadeloupe
-GU|GUM|Guam
 GT|GTM|Guatemala
-GG|GGY|Guernsey
 GN|GIN|Guinea
-GW|GNB|Guinea Bissau
+GW|GNB|Guinea Bissau|Guinea-Bissau
 GY|GUY|Guyana
-HT|HTI|Haiti
-HM|HMD|Heard Island and McDonald Islands
-VA|VAT|Holy See
+HT|HTI|Haiti|Haiti
 HN|HND|Honduras
-HK|HKG|Hong Kong
-HU|HUN|Hungary
-IS|ISL|Iceland
-IN|IND|India
-ID|IDN|Indonesia
-IR|IRN|Iran
-IQ|IRQ|Iraq
-IE|IRL|Ireland
-IM|IMN|Isle of Man
+HU|HUN|Hungary|Ungarn
+IS|ISL|Iceland|Island
+IN|IND|India|Indien
+ID|IDN|Indonesia|Indonesien
+IR|IRN|Iran|Iran Islamic Republic of
+IQ|IRQ|Iraq|Irak
+IE|IRL|Ireland|Irland
 IL|ISR|Israel
-IT|ITA|Italy
-JM|JAM|Jamaica
-JP|JPN|Japan
-JE|JEY|Jersey
-JO|JOR|Jordan
-KZ|KAZ|Kazakhstan
-KE|KEN|Kenya
+IT|ITA|Italy|Italien
+JM|JAM|Jamaica|Jamaika
+JP|JPN|Japan|Japon
+JO|JOR|Jordan|Jordanien
+KZ|KAZ|Kazakhstan|Kasachstan
+KE|KEN|Kenya|Kenia
 KI|KIR|Kiribati
-KP|PRK|North Korea
-KR|KOR|South Korea
+KP|PRK|North Korea|Democratic People's Republic of Korea|Nordkorea|Korea North
+KR|KOR|South Korea|Republic of Korea|Südkorea|Sudkorea|Korea South
 KW|KWT|Kuwait
-KG|KGZ|Kyrgyzstan
-LA|LAO|Laos
-LV|LVA|Latvia
-LB|LBN|Lebanon
+KG|KGZ|Kyrgyzstan|Kyrgyz Republic|Kirgisistan
+LA|LAO|Laos|Lao People's Democratic Republic
+LV|LVA|Latvia|Lettland
+LB|LBN|Lebanon|Libanon
 LS|LSO|Lesotho
 LR|LBR|Liberia
-LY|LBY|Libya
+LY|LBY|Libya|Libyen
 LI|LIE|Liechtenstein
-LT|LTU|Lithuania
-LU|LUX|Luxembourg
-MO|MAC|Macao
-MG|MDG|Madagascar
+LT|LTU|Lithuania|Litauen
+LU|LUX|Luxembourg|Luxemburg
+MG|MDG|Madagascar|Madagaskar
 MW|MWI|Malawi
-MY|MYS|Malaysia
-MV|MDV|Maldives
+MY|MYS|Malaysia|Malaysia
+MV|MDV|Maldives|Malediven
 ML|MLI|Mali
 MT|MLT|Malta
-MH|MHL|Marshall Islands
-MQ|MTQ|Martinique
-MR|MRT|Mauritania
+MH|MHL|Marshall Islands|Marshallinseln
+MR|MRT|Mauritania|Mauretanien
 MU|MUS|Mauritius
-YT|MYT|Mayotte
-MX|MEX|Mexico
-FM|FSM|Micronesia
-MD|MDA|Moldova
-MC|MCO|Monaco
-MN|MNG|Mongolia
+MX|MEX|Mexico|Mexiko
+FM|FSM|Micronesia|Federated States of Micronesia|Mikronesien
+MD|MDA|Moldova|Republic of Moldova|Moldau
+MC|MCO|Monaco|Monako
+MN|MNG|Mongolia|Mongolei
 ME|MNE|Montenegro
-MS|MSR|Montserrat
-MA|MAR|Morocco
-MZ|MOZ|Mozambique
-MM|MMR|Myanmar
+MA|MAR|Morocco|Marokko
+MZ|MOZ|Mozambique|Mosambik
+MM|MMR|Myanmar|Burma|Birma
 NA|NAM|Namibia
 NR|NRU|Nauru
 NP|NPL|Nepal
-NL|NLD|Netherlands
-NC|NCL|New Caledonia
-NZ|NZL|New Zealand
+NL|NLD|Netherlands|The Netherlands|Holland|Niederlande
+NZ|NZL|New Zealand|Neuseeland
 NI|NIC|Nicaragua
 NE|NER|Niger
-NG|NGA|Nigeria
-NU|NIU|Niue
-NF|NFK|Norfolk Island
-MK|MKD|North Macedonia
-MP|MNP|Northern Mariana Islands
-NO|NOR|Norway
+NG|NGA|Nigeria|Nigeria
+MK|MKD|North Macedonia|Macedonia|Mazedonien|Nordmazedonien
+NO|NOR|Norway|Norwegen
 OM|OMN|Oman
 PK|PAK|Pakistan
 PW|PLW|Palau
-PS|PSE|Palestine
-PA|PAN|Panama
-PG|PNG|Papua New Guinea
+PA|PAN|Panama|Panama
+PG|PNG|Papua New Guinea|Papua-Neuguinea
 PY|PRY|Paraguay
-PE|PER|Peru
-PH|PHL|Philippines
-PN|PCN|Pitcairn
-PL|POL|Poland
+PE|PER|Peru|Perú
+PH|PHL|Philippines|Philippinen
+PL|POL|Poland|Polen
 PT|PRT|Portugal
-PR|PRI|Puerto Rico
-QA|QAT|Qatar
-RE|REU|Reunion
-RO|ROU|Romania
-RU|RUS|Russia
-RW|RWA|Rwanda
-BL|BLM|Saint Barthelemy
-SH|SHN|Saint Helena
-KN|KNA|Saint Kitts and Nevis
-LC|LCA|Saint Lucia
-MF|MAF|Saint Martin
-PM|SPM|Saint Pierre and Miquelon
-VC|VCT|Saint Vincent and the Grenadines
+QA|QAT|Qatar|Katar
+RO|ROU|Romania|Rumania|Rumänien
+RU|RUS|Russia|Russian Federation|Russland
+RW|RWA|Rwanda|Ruanda
+KN|KNA|Saint Kitts and Nevis|St Kitts and Nevis|St. Kitts and Nevis
+LC|LCA|Saint Lucia|St Lucia|St. Lucia
+VC|VCT|Saint Vincent and the Grenadines|St Vincent and the Grenadines
 WS|WSM|Samoa
 SM|SMR|San Marino
-ST|STP|Sao Tome and Principe
-SA|SAU|Saudi Arabia
+ST|STP|Sao Tome and Principe|São Tomé and Príncipe
+SA|SAU|Saudi Arabia|Saudi-Arabien|Saudi Arabien
 SN|SEN|Senegal
-RS|SRB|Serbia
-SC|SYC|Seychelles
+RS|SRB|Serbia|Serbien
+SC|SYC|Seychelles|Seychellen
 SL|SLE|Sierra Leone
-SG|SGP|Singapore
-SX|SXM|Sint Maarten
-SK|SVK|Slovakia
-SI|SVN|Slovenia
-SB|SLB|Solomon Islands
+SG|SGP|Singapore|Singapur
+SK|SVK|Slovakia|Slowakia|Slowakei
+SI|SVN|Slovenia|Slowenien
+SB|SLB|Solomon Islands|Salomonen
 SO|SOM|Somalia
-ZA|ZAF|South Africa
-GS|SGS|South Georgia and the South Sandwich Islands
-SS|SSD|South Sudan
-ES|ESP|Spain
+ZA|ZAF|South Africa|Republic of South Africa|Suedafrika|Südafrika
+SS|SSD|South Sudan|Sued Sudan|Südsudan
+ES|ESP|Spain|Spanien
 LK|LKA|Sri Lanka
-SD|SDN|Sudan
+SD|SDN|Sudan|Sudan
 SR|SUR|Suriname
-SJ|SJM|Svalbard and Jan Mayen
-SE|SWE|Sweden
-CH|CHE|Switzerland
-SY|SYR|Syria
-TW|TWN|Taiwan
-TJ|TJK|Tajikistan
-TZ|TZA|Tanzania
-TH|THA|Thailand
-TL|TLS|Timor Leste
+SE|SWE|Sweden|Schweden
+CH|CHE|Switzerland|Schweiz|Swiss
+SY|SYR|Syria|Syrian Arab Republic|Syrien
+TJ|TJK|Tajikistan|Tadschikistan
+TZ|TZA|Tanzania|United Republic of Tanzania|Tansania
+TH|THA|Thailand|Thailand
+TL|TLS|Timor Leste|East Timor|Osttimor
 TG|TGO|Togo
-TK|TKL|Tokelau
 TO|TON|Tonga
-TT|TTO|Trinidad and Tobago
-TN|TUN|Tunisia
-TR|TUR|Turkey
-TM|TKM|Turkmenistan
-TC|TCA|Turks and Caicos Islands
+TT|TTO|Trinidad and Tobago|Trinidad und Tobago
+TN|TUN|Tunisia|Tunesien
+TR|TUR|Turkey|Türkiye|Turkiye|Tuerkei|Türkei
+TM|TKM|Turkmenistan|Turkmenistan
 TV|TUV|Tuvalu
-UG|UGA|Uganda
-UA|UKR|Ukraine
-AE|ARE|United Arab Emirates
-GB|GBR|United Kingdom
-US|USA|United States
-UM|UMI|United States Minor Outlying Islands
+UG|UGA|Uganda|Uganda
+UA|UKR|Ukraine|Ukraine
+AE|ARE|United Arab Emirates|UAE|Vereinigte Arabische Emirate
+GB|GBR|United Kingdom|UK|Great Britain|Britain|England|Scotland|Wales|Northern Ireland|Vereinigtes Koenigreich|Vereinigtes Königreich|Grossbritannien|Großbritannien
+US|USA|United States|United States of America|USA|US|U S A|America|Vereinigte Staaten
 UY|URY|Uruguay
-UZ|UZB|Uzbekistan
+UZ|UZB|Uzbekistan|Usbekistan
 VU|VUT|Vanuatu
-VE|VEN|Venezuela
-VN|VNM|Vietnam
+VA|VAT|Vatican City|Holy See|Vatican|Vatikan|Vatikanstadt
+VE|VEN|Venezuela|Venezuela
+VN|VNM|Vietnam|Viet Nam
+YE|YEM|Yemen|Jemen
+ZM|ZMB|Zambia|Sambia
+ZW|ZWE|Zimbabwe|Simbabwe
+TW|TWN|Taiwan|Taiwan China
+HK|HKG|Hong Kong
+MO|MAC|Macao|Macau
+PS|PSE|Palestine|Palestinian Territories|State of Palestine|Palaestina|Palästina
+PR|PRI|Puerto Rico
+GU|GUM|Guam
+VI|VIR|US Virgin Islands|United States Virgin Islands
 VG|VGB|British Virgin Islands
-VI|VIR|United States Virgin Islands
+BM|BMU|Bermuda
+KY|CYM|Cayman Islands
+GI|GIB|Gibraltar
+GL|GRL|Greenland|Groenland|Grönland
+FO|FRO|Faroe Islands|Faeroe Islands|Färöer
+RE|REU|Reunion|Réunion
+GF|GUF|French Guiana|Franzoesisch Guayana|Französisch-Guayana
+PF|PYF|French Polynesia|Franzoesisch Polynesien|Französisch-Polynesien
+NC|NCL|New Caledonia|Neukaledonien
+MQ|MTQ|Martinique
+GP|GLP|Guadeloupe
+AW|ABW|Aruba
+CW|CUW|Curacao|Curaçao
+SX|SXM|Sint Maarten
+BL|BLM|Saint Barthelemy|Saint Barthélemy
+MF|MAF|Saint Martin
+PM|SPM|Saint Pierre and Miquelon
+YT|MYT|Mayotte
+TF|ATF|French Southern Territories
+IO|IOT|British Indian Ocean Territory
+CC|CCK|Cocos Islands
+CX|CXR|Christmas Island
+NF|NFK|Norfolk Island
+PN|PCN|Pitcairn
+TK|TKL|Tokelau
 WF|WLF|Wallis and Futuna
-EH|ESH|Western Sahara
-YE|YEM|Yemen
-ZM|ZMB|Zambia
-ZW|ZWE|Zimbabwe
+EH|ESH|Western Sahara|Westsahara
+AQ|ATA|Antarctica|Antarktis
+AX|ALA|Aland Islands|Åland Islands|Aland
+BQ|BES|Bonaire Sint Eustatius and Saba|Caribbean Netherlands
+IM|IMN|Isle of Man|Man Island
+JE|JEY|Jersey
+GG|GGY|Guernsey
 """
 
-aliases = {
-    "AF": ["afghanistan"],
-    "AL": ["albanien"],
-    "DZ": ["algerien"],
-    "AS": ["amerikanisch samoa"],
-    "AD": ["andorra"],
-    "AO": ["angola"],
-    "AI": ["anguilla"],
-    "AG": ["antigua und barbuda", "antigua"],
-    "AR": ["argentinien"],
-    "AM": ["armenien"],
-    "AW": ["aruba"],
-    "AU": ["australien", "aus"],
-    "AT": ["osterreich", "austria"],
-    "AZ": ["aserbaidschan"],
-    "BS": ["the bahamas", "bahamas"],
-    "BH": ["bahrain"],
-    "BD": ["bangladesch"],
-    "BB": ["barbados"],
-    "BY": ["weissrussland", "belarus"],
-    "BE": ["belgien"],
-    "BZ": ["belize"],
-    "BJ": ["benin"],
-    "BM": ["bermuda"],
-    "BT": ["bhutan"],
-    "BO": ["bolivien", "plurinational state of bolivia"],
-    "BA": ["bosnien und herzegowina", "bosnia"],
-    "BW": ["botswana"],
-    "BR": ["brasilien", "brasil"],
-    "BN": ["brunei darussalam"],
-    "BG": ["bulgarien"],
-    "BF": ["burkina faso"],
-    "BI": ["burundi"],
-    "CV": ["cape verde", "kap verde", "cabo verde"],
-    "KH": ["kambodscha"],
-    "CM": ["kamerun"],
-    "CA": ["kanada"],
-    "KY": ["caymaninseln", "cayman islands"],
-    "CF": ["zentralafrikanische republik"],
-    "TD": ["tschad"],
-    "CL": ["chile"],
-    "CN": ["china", "prc", "people's republic of china"],
-    "CO": ["kolumbien"],
-    "KM": ["komoren"],
-    "CG": ["congo brazzaville", "republic of congo", "republik kongo"],
-    "CD": ["dr congo", "drc", "congo kinshasa", "democratic republic of congo", "demokratische republik kongo"],
-    "CR": ["costa rica"],
-    "CI": ["cote divoire", "ivory coast", "elfenbeinkuste", "elfenbeinkueste"],
-    "HR": ["kroatien"],
-    "CU": ["kuba"],
-    "CW": ["curacao", "curaçao"],
-    "CY": ["zypern"],
-    "CZ": ["czech republic", "tschechien", "tschechische republik"],
-    "DK": ["danemark"],
-    "DO": ["dominikanische republik"],
-    "EC": ["ecuador"],
-    "EG": ["agypten", "aegypten"],
-    "SV": ["el salvador"],
-    "GQ": ["aquatorialguinea"],
-    "ER": ["eritrea"],
-    "EE": ["estland"],
-    "SZ": ["swaziland", "eswatini"],
-    "ET": ["athiopien", "aethiopien"],
-    "FK": ["falklandinseln", "falkland islands"],
-    "FO": ["faröer", "faroe islands", "faröer inseln"],
-    "FJ": ["fidschi"],
-    "FI": ["finnland"],
-    "FR": ["frankreich"],
-    "GF": ["franzosisch guayana", "franzoesisch guayana"],
-    "PF": ["franzosisch polynesien", "franzoesisch polynesien"],
-    "GA": ["gabun"],
-    "GM": ["the gambia", "gambia"],
-    "GE": ["georgien"],
-    "DE": ["deutschland", "germany", "ger", "deu", "bundesrepublik deutschland", "deutsch"],
-    "GH": ["ghana"],
-    "GR": ["griechenland"],
-    "GL": ["gronland", "groenland"],
-    "GP": ["guadeloupe"],
-    "GT": ["guatemala"],
-    "GN": ["guinea"],
-    "GW": ["guinea bissau"],
-    "GY": ["guyana"],
-    "HT": ["haiti"],
-    "VA": ["vatican", "vatican city", "vatikan", "heiliger stuhl"],
-    "HN": ["honduras"],
-    "HK": ["hongkong"],
-    "HU": ["ungarn"],
-    "IS": ["island"],
-    "IN": ["indien", "bharat"],
-    "ID": ["indonesien"],
-    "IR": ["iran", "islamic republic of iran"],
-    "IQ": ["irak"],
-    "IE": ["irland", "republic of ireland"],
-    "IL": ["israel"],
-    "IT": ["italien"],
-    "JM": ["jamaika"],
-    "JP": ["japan", "nippon"],
-    "JO": ["jordanien"],
-    "KZ": ["kasachstan"],
-    "KE": ["kenia"],
-    "KP": ["dprk", "north korea", "nordkorea", "democratic peoples republic of korea"],
-    "KR": ["rok", "republic of korea", "south korea", "sudkorea", "suedkorea"],
-    "KW": ["kuwait"],
-    "KG": ["kirgisistan", "kyrgyz republic"],
-    "LA": ["laos", "lao pdr"],
-    "LV": ["lettland"],
-    "LB": ["libanon"],
-    "LS": ["lesotho"],
-    "LR": ["liberia"],
-    "LY": ["libyen"],
-    "LI": ["liechtenstein"],
-    "LT": ["litauen"],
-    "LU": ["luxemburg"],
-    "MO": ["macau", "macao"],
-    "MG": ["madagaskar"],
-    "MW": ["malawi"],
-    "MY": ["malaysia"],
-    "MV": ["malediven"],
-    "ML": ["mali"],
-    "MT": ["malta"],
-    "MR": ["mauretanien"],
-    "MU": ["mauritius"],
-    "MX": ["mexiko"],
-    "FM": ["federated states of micronesia"],
-    "MD": ["moldawien", "republik moldau", "republic of moldova"],
-    "MC": ["monaco"],
-    "MN": ["mongolei"],
-    "ME": ["montenegro"],
-    "MA": ["marokko"],
-    "MZ": ["mosambik"],
-    "MM": ["burma", "myanmar"],
-    "NA": ["namibia"],
-    "NP": ["nepal"],
-    "NL": ["niederlande", "holland", "the netherlands"],
-    "NZ": ["neuseeland"],
-    "NI": ["nicaragua"],
-    "NE": ["niger"],
-    "NG": ["nigeria"],
-    "MK": ["mazedonien", "nordmazedonien", "republic of north macedonia"],
-    "NO": ["norwegen"],
-    "OM": ["oman"],
-    "PK": ["pakistan"],
-    "PS": ["palestinian territories", "palastina", "palaestina", "state of palestine"],
-    "PA": ["panama"],
-    "PG": ["papua neuguinea"],
-    "PY": ["paraguay"],
-    "PE": ["peru"],
-    "PH": ["philippinen"],
-    "PL": ["polen"],
-    "PT": ["portugal"],
-    "PR": ["puerto rico"],
-    "QA": ["katar", "qatar"],
-    "RO": ["rumanien", "romania"],
-    "RU": ["russland", "russia", "russian federation"],
-    "RW": ["ruanda"],
-    "KN": ["st kitts and nevis", "saint kitts"],
-    "LC": ["st lucia", "saint lucia"],
-    "VC": ["st vincent and the grenadines", "saint vincent"],
-    "WS": ["samoa"],
-    "ST": ["sao tome", "sao tome and principe"],
-    "SA": ["saudi arabien", "saudi arabia", "ksa"],
-    "SN": ["senegal"],
-    "RS": ["serbien"],
-    "SC": ["seychellen"],
-    "SL": ["sierra leone"],
-    "SG": ["singapur"],
-    "SK": ["slowakei"],
-    "SI": ["slowenien"],
-    "SB": ["solomon islands", "salomonen"],
-    "SO": ["somalia"],
-    "ZA": ["sudafrika", "suedafrika", "south africa", "rsa"],
-    "SS": ["sudsudan", "suedsudan", "south sudan"],
-    "ES": ["spanien"],
-    "LK": ["sri lanka", "ceylon"],
-    "SD": ["sudan"],
-    "SR": ["suriname"],
-    "SE": ["schweden"],
-    "CH": ["schweiz", "switzerland", "suisse", "svizzera"],
-    "SY": ["syrien"],
-    "TW": ["taiwan", "republic of china"],
-    "TJ": ["tadschikistan"],
-    "TZ": ["tansania", "united republic of tanzania"],
-    "TH": ["thailand", "thailandia"],
-    "TL": ["east timor", "timor leste", "timor-leste", "osttimor"],
-    "TG": ["togo"],
-    "TO": ["tonga"],
-    "TT": ["trinidad und tobago"],
-    "TN": ["tunesien"],
-    "TR": ["turkei", "tuerkei", "turkiye", "türkiye"],
-    "TM": ["turkmenistan"],
-    "UG": ["uganda"],
-    "UA": ["ukraine"],
-    "AE": ["uae", "vereinigte arabische emirate", "united arab emirates"],
-    "GB": ["uk", "u k", "great britain", "britannien", "grossbritannien", "großbritannien", "united kingdom", "england", "scotland", "wales", "northern ireland"],
-    "US": ["usa", "u s a", "us", "u s", "united states of america", "vereinigte staaten", "amerika", "america"],
-    "UY": ["uruguay"],
-    "UZ": ["usbekistan"],
-    "VU": ["vanuatu"],
-    "VE": ["venezuela", "venezuela bolivarian republic of"],
-    "VN": ["vietnam", "viet nam"],
-    "VG": ["british virgin islands", "britische jungferninseln"],
-    "VI": ["us virgin islands", "united states virgin islands", "amerikanische jungferninseln"],
-    "EH": ["westsahara", "western sahara"],
-    "YE": ["jemen", "yemen"],
-    "ZM": ["sambia"],
-    "ZW": ["simbabwe", "zimbabwe"],
-}
-
-def normalize(value):
-    if value is None or pd.isna(value):
+def normalize_country(value):
+    if pd.isna(value):
         return ""
     text = str(value).strip()
-    if not text:
-        return ""
     text = unicodedata.normalize("NFKD", text)
     text = "".join(ch for ch in text if not unicodedata.combining(ch))
-    text = text.casefold().replace("&", " and ")
-    text = re.sub(r"[\W_]+", " ", text, flags=re.UNICODE)
-    return re.sub(r"\s+", " ", text).strip()
+    text = text.replace("ß", "ss").replace("ẞ", "SS")
+    return re.sub(r"[^a-z0-9]+", "", text.lower())
 
 country_map = {}
 for line in data.strip().splitlines():
-    iso2, iso3, english_name = [part.strip() for part in line.split("|", 2)]
-    for value in (iso2, iso3, english_name):
-        key = normalize(value)
+    parts = [part.strip() for part in line.split("|") if part.strip()]
+    code = parts[0]
+    for alias in parts:
+        key = normalize_country(alias)
         if key:
-            country_map[key] = iso2
+            if key not in country_map:
+                country_map[key] = code
+            elif country_map[key] != code:
+                country_map[key] = "UNKNOWN"
 
-for iso2, values in aliases.items():
-    for value in values:
-        key = normalize(value)
-        if key:
-            country_map[key] = iso2
+additional_aliases = {
+    "d": "DE", "deutsch": "DE", "deutsche": "DE", "german": "DE",
+    "f": "FR", "franzoesisch": "FR", "franzosisch": "FR",
+    "i": "IT", "italienisch": "IT",
+    "e": "ES", "spanisch": "ES",
+    "nl": "NL", "holland": "NL",
+    "ch": "CH", "schweizerisch": "CH",
+    "at": "AT", "oesterreichisch": "AT", "österreichisch": "AT",
+    "gb": "GB", "u k": "GB", "uk": "GB",
+    "usa": "US", "u s": "US", "u s a": "US",
+    "brasil": "BR", "br": "BR",
+    "russische foederation": "RU", "russische föderation": "RU",
+    "korea republic": "KR", "korea democratic peoples republic": "KP",
+}
+for alias, code in additional_aliases.items():
+    country_map[normalize_country(alias)] = code
 
 df = pd.read_parquet(input_path)
 
-for required_column in ["customer_id", "full_name", "email", "country", "registered_at"]:
-    if required_column not in df.columns:
-        df[required_column] = pd.NA
+if "country" not in df.columns:
+    df["country"] = "UNKNOWN"
+else:
+    normalized = df["country"].map(normalize_country)
+    result = normalized.map(country_map)
 
-df["country"] = df["country"].map(lambda x: country_map.get(normalize(x), "UNKNOWN")).astype("string")
+    def resolve(value, mapped):
+        if pd.notna(mapped):
+            return mapped
+        if not value:
+            return "UNKNOWN"
+        return "UNKNOWN"
+
+    df["country"] = [resolve(value, mapped) for value, mapped in zip(normalized, result)]
 
 os.makedirs(os.path.dirname(output_path), exist_ok=True)
 df.to_parquet(output_path, index=False)

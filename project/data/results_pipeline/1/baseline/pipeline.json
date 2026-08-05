@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-08-05T07:32:32.795847+00:00",
+  "timestamp": "2026-08-05T07:59:58.375438+00:00",
   "provider": "baseline",
   "requested_model": "rule_based",
   "mode": "pipeline",
@@ -69,9 +69,9 @@
       "attempts": 1,
       "error": null,
       "cost_usd": 0.0,
-      "duration_s": 0.02,
+      "duration_s": 0.01,
       "llm_s": 0.0,
-      "exec_s": 0.02,
+      "exec_s": 0.01,
       "prompt_tokens": 0,
       "completion_tokens": 0,
       "row_actual": 520,

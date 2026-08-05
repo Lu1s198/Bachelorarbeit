@@ -1,94 +1,105 @@
-from pathlib import Path
+import os
 import re
-import numpy as np
+import csv
 import pandas as pd
+import numpy as np
 
-input_path = Path(r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/1/products_raw.csv")
-output_path = Path(r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/openai/products/output.parquet")
+input_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/1/products_raw.csv"
+output_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/openai/products/output.parquet"
 
-df = pd.read_csv(input_path, dtype="string", sep=None, engine="python")
-
-required_columns = ["product_id", "name", "category", "price_eur", "in_stock"]
-missing_columns = [column for column in required_columns if column not in df.columns]
-if missing_columns:
-    raise ValueError(f"Missing required columns: {missing_columns}")
+def read_csv_robust(path):
+    encodings = ["utf-8", "utf-8-sig", "latin1", "cp1252"]
+    for encoding in encodings:
+        try:
+            with open(path, "r", encoding=encoding, newline="") as f:
+                sample = f.read(8192)
+                try:
+                    dialect = csv.Sniffer().sniff(sample, delimiters=",;|\t")
+                    separator = dialect.delimiter
+                except csv.Error:
+                    separator = ","
+            return pd.read_csv(path, sep=separator, encoding=encoding)
+        except UnicodeDecodeError:
+            continue
+    return pd.read_csv(path)
 
 def parse_price(value):
     if pd.isna(value):
         return np.nan
 
-    text = str(value).strip()
-    if not text:
-        return np.nan
-
-    text = text.replace("\u00a0", "").replace(" ", "")
-    text = re.sub(r"(?i)(eur|euro|€)", "", text)
-    text = re.sub(r"[^0-9,.\-()]", "", text)
-
+    text = str(value).strip().lower()
     if not text:
         return np.nan
 
     negative = text.startswith("-") or (text.startswith("(") and text.endswith(")"))
-    text = text.replace("-", "").replace("(", "").replace(")", "")
+    cleaned = re.sub(r"[^0-9,.\-]", "", text).replace("-", "")
 
-    comma_count = text.count(",")
-    dot_count = text.count(".")
+    if not cleaned or not re.search(r"\d", cleaned):
+        return np.nan
 
-    if comma_count and dot_count:
-        if text.rfind(",") > text.rfind("."):
-            text = text.replace(".", "").replace(",", ".")
+    comma_positions = [m.start() for m in re.finditer(",", cleaned)]
+    dot_positions = [m.start() for m in re.finditer(r"\.", cleaned)]
+
+    if comma_positions and dot_positions:
+        if comma_positions[-1] > dot_positions[-1]:
+            normalized = cleaned.replace(".", "").replace(",", ".")
         else:
-            text = text.replace(",", "")
-    elif comma_count:
-        if comma_count == 1:
-            text = text.replace(",", ".")
-        else:
-            parts = text.split(",")
-            if len(parts[-1]) in (1, 2):
-                text = "".join(parts[:-1]) + "." + parts[-1]
-            else:
-                text = "".join(parts)
-    elif dot_count > 1:
-        parts = text.split(".")
-        if len(parts[-1]) in (1, 2):
-            text = "".join(parts[:-1]) + "." + parts[-1]
-        else:
-            text = "".join(parts)
+            normalized = cleaned.replace(",", "")
+    elif comma_positions:
+        parts = cleaned.split(",")
+        normalized = "".join(parts[:-1]) + "." + parts[-1] if len(parts) > 1 else cleaned
+    else:
+        normalized = cleaned
 
     try:
-        result = float(text)
-        return -result if negative else result
+        number = float(normalized)
+        return -number if negative else number
     except ValueError:
         return np.nan
 
-df["price_eur"] = df["price_eur"].map(parse_price).astype("float64")
+df = read_csv_robust(input_path)
 
-stock_mapping = {
-    "ja": True,
-    "j": True,
-    "yes": True,
-    "y": True,
-    "true": True,
-    "t": True,
-    "1": True,
-    "x": True,
-    "nein": False,
-    "n": False,
-    "no": False,
-    "false": False,
-    "f": False,
-    "0": False,
-}
+if "price_eur" in df.columns:
+    df["price_eur"] = df["price_eur"].map(parse_price).astype("float64")
+else:
+    df["price_eur"] = pd.Series(np.nan, index=df.index, dtype="float64")
 
-stock_values = (
-    df["in_stock"]
-    .astype("string")
-    .str.strip()
-    .str.lower()
-    .replace("", pd.NA)
-)
+if "in_stock" in df.columns:
+    normalized_stock = (
+        df["in_stock"]
+        .astype("string")
+        .str.strip()
+        .str.lower()
+        .str.replace(r"\s+", "", regex=True)
+    )
+    stock_mapping = {
+        "ja": True,
+        "j": True,
+        "yes": True,
+        "y": True,
+        "true": True,
+        "t": True,
+        "1": True,
+        "wahr": True,
+        "nein": False,
+        "n": False,
+        "no": False,
+        "false": False,
+        "f": False,
+        "0": False,
+        "falsch": False,
+    }
+    df["in_stock"] = normalized_stock.map(stock_mapping).astype("boolean")
+else:
+    df["in_stock"] = pd.Series(pd.NA, index=df.index, dtype="boolean")
 
-df["in_stock"] = stock_values.map(stock_mapping).astype("boolean")
+for column in ["product_id", "name", "category"]:
+    if column not in df.columns:
+        df[column] = pd.NA
 
-output_path.parent.mkdir(parents=True, exist_ok=True)
+required_columns = ["product_id", "name", "category", "price_eur", "in_stock"]
+remaining_columns = [column for column in df.columns if column not in required_columns]
+df = df[required_columns + remaining_columns]
+
+os.makedirs(os.path.dirname(output_path), exist_ok=True)
 df.to_parquet(output_path, index=False)

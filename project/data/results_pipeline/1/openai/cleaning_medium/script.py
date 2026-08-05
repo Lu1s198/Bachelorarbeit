@@ -1,62 +1,92 @@
 import os
 import re
+from datetime import date, datetime
+
 import numpy as np
 import pandas as pd
 
 input_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/openai/cleaning_easy/output.parquet"
 output_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/openai/cleaning_medium/output.parquet"
 
+month_mapping = {
+    "january": 1, "february": 2, "march": 3, "april": 4,
+    "may": 5, "june": 6, "july": 7, "august": 8,
+    "september": 9, "october": 10, "november": 11, "december": 12,
+    "jan": 1, "feb": 2, "mar": 3, "apr": 4,
+    "jun": 6, "jul": 7, "aug": 8, "sep": 9,
+    "sept": 9, "oct": 10, "nov": 11, "dec": 12,
+}
+
+iso_pattern = re.compile(r"^(\d{4})-(\d{2})-(\d{2})(?:[T\s].*)?$")
+german_pattern = re.compile(r"^(\d{1,2})\.(\d{1,2})\.(\d{4})$")
+us_pattern = re.compile(r"^([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})$")
+unix_pattern = re.compile(r"^[+-]?\d+(?:\.\d+)?$")
+
+
+def format_date(year, month, day):
+    try:
+        return date(int(year), int(month), int(day)).isoformat()
+    except (TypeError, ValueError, OverflowError):
+        return pd.NA
+
+
+def normalize_registered_at(value):
+    if value is None or value is pd.NA:
+        return pd.NA
+
+    try:
+        if bool(pd.isna(value)):
+            return pd.NA
+    except (TypeError, ValueError):
+        pass
+
+    if isinstance(value, (pd.Timestamp, np.datetime64, datetime, date)):
+        timestamp = pd.Timestamp(value)
+        if pd.isna(timestamp):
+            return pd.NA
+        return timestamp.date().isoformat()
+
+    if isinstance(value, (int, float, np.integer, np.floating)) and not isinstance(value, bool):
+        timestamp = pd.to_datetime(value, unit="s", utc=True, errors="coerce")
+        if pd.isna(timestamp):
+            return pd.NA
+        return timestamp.date().isoformat()
+
+    text = str(value).strip()
+    if not text:
+        return pd.NA
+
+    if unix_pattern.fullmatch(text):
+        timestamp = pd.to_datetime(float(text), unit="s", utc=True, errors="coerce")
+        if pd.isna(timestamp):
+            return pd.NA
+        return timestamp.date().isoformat()
+
+    match = iso_pattern.fullmatch(text)
+    if match:
+        return format_date(match.group(1), match.group(2), match.group(3))
+
+    match = german_pattern.fullmatch(text)
+    if match:
+        return format_date(match.group(3), match.group(2), match.group(1))
+
+    match = us_pattern.fullmatch(text)
+    if match:
+        month = month_mapping.get(match.group(1).lower())
+        if month is not None:
+            return format_date(match.group(3), month, match.group(2))
+
+    return pd.NA
+
+
 df = pd.read_parquet(input_path)
 
 required_columns = ["customer_id", "full_name", "email", "country", "registered_at"]
-for column in required_columns:
-    if column not in df.columns:
-        df[column] = pd.NA
+missing_columns = [column for column in required_columns if column not in df.columns]
+if missing_columns:
+    raise ValueError(f"Missing required columns: {missing_columns}")
 
-source = df["registered_at"]
-text = source.astype("string").str.strip()
-normalized = pd.Series(pd.NA, index=df.index, dtype="string")
-
-unix_mask = text.str.fullmatch(r"[+-]?\d{9,11}(?:\.0+)?", na=False)
-if unix_mask.any():
-    unix_values = pd.to_numeric(text.loc[unix_mask], errors="coerce")
-    unix_dates = pd.to_datetime(unix_values, unit="s", errors="coerce", utc=True)
-    normalized.loc[unix_mask] = unix_dates.dt.strftime("%Y-%m-%d").astype("string")
-
-iso_mask = normalized.isna() & text.str.fullmatch(r"\d{4}-\d{2}-\d{2}", na=False)
-if iso_mask.any():
-    iso_dates = pd.to_datetime(text.loc[iso_mask], format="%Y-%m-%d", errors="coerce")
-    normalized.loc[iso_mask] = iso_dates.dt.strftime("%Y-%m-%d").astype("string")
-
-german_mask = normalized.isna() & text.str.fullmatch(r"\d{1,2}\.\d{1,2}\.\d{4}", na=False)
-if german_mask.any():
-    german_dates = pd.to_datetime(text.loc[german_mask], format="%d.%m.%Y", errors="coerce")
-    normalized.loc[german_mask] = german_dates.dt.strftime("%Y-%m-%d").astype("string")
-
-for month_format in ("%B %d %Y", "%b %d %Y", "%B %d, %Y", "%b %d, %Y"):
-    mask = normalized.isna() & text.notna()
-    if mask.any():
-        parsed = pd.to_datetime(text.loc[mask], format=month_format, errors="coerce")
-        valid = parsed.notna()
-        if valid.any():
-            normalized.loc[parsed.index[valid]] = parsed.loc[valid].dt.strftime("%Y-%m-%d").astype("string")
-
-remaining_mask = normalized.isna() & text.notna()
-if remaining_mask.any():
-    remaining = text.loc[remaining_mask]
-    parsed = pd.to_datetime(remaining, format="ISO8601", errors="coerce")
-    unresolved = parsed.isna()
-    if unresolved.any():
-        parsed.loc[unresolved] = pd.to_datetime(
-            remaining.loc[unresolved],
-            format="mixed",
-            errors="coerce"
-        )
-    valid = parsed.notna()
-    if valid.any():
-        normalized.loc[parsed.index[valid]] = parsed.loc[valid].dt.strftime("%Y-%m-%d").astype("string")
-
-df["registered_at"] = normalized
+df["registered_at"] = df["registered_at"].map(normalize_registered_at).astype("string")
 
 os.makedirs(os.path.dirname(output_path), exist_ok=True)
 df.to_parquet(output_path, index=False)

@@ -3,14 +3,19 @@ import numpy as np
 import re
 import os
 
-df = pd.read_csv("C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/1/products_raw.csv")
+input_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/1/products_raw.csv"
+output_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/anthropic/products/output.parquet"
 
-def parse_price(val):
+df = pd.read_csv(input_path, dtype=str)
+
+def clean_price(val):
     if pd.isna(val):
         return np.nan
-    s = str(val)
-    s = s.replace('€', '').replace('EUR', '').replace('eur', '').strip()
-    s = s.replace(' ', '')
+    s = str(val).strip()
+    s = re.sub(r'[^\d,.\-]', '', s)
+    s = s.strip()
+    if s == '':
+        return np.nan
     if ',' in s and '.' in s:
         if s.rfind(',') > s.rfind('.'):
             s = s.replace('.', '')
@@ -24,7 +29,7 @@ def parse_price(val):
     except ValueError:
         return np.nan
 
-def parse_bool(val):
+def clean_bool(val):
     if pd.isna(val):
         return np.nan
     s = str(val).strip().lower()
@@ -37,10 +42,8 @@ def parse_bool(val):
     else:
         return np.nan
 
-df['price_eur'] = df['price_eur'].apply(parse_price).astype(float)
-df['in_stock'] = df['in_stock'].apply(parse_bool).astype('boolean')
+df['price_eur'] = df['price_eur'].apply(clean_price)
+df['in_stock'] = df['in_stock'].apply(clean_bool)
 
-output_path = "C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/anthropic/products/output.parquet"
 os.makedirs(os.path.dirname(output_path), exist_ok=True)
-
 df.to_parquet(output_path, index=False)

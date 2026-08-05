@@ -1,28 +1,26 @@
 import pandas as pd
 import numpy as np
 import re
+from difflib import SequenceMatcher
 
 input_path = "C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/anthropic/dedup_medium/output.parquet"
 output_path = "C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/anthropic/dedup_hard/output.parquet"
 
 df = pd.read_parquet(input_path)
 
-if "customer_id" in df.columns:
-    try:
-        df["customer_id"] = pd.to_numeric(df["customer_id"], errors="coerce")
-    except Exception:
-        pass
+df['customer_id'] = df['customer_id'].astype(str)
 
 TITLES = {
-    "mr", "mrs", "ms", "miss", "mx", "dr", "prof", "professor", "sir",
-    "madam", "herr", "frau", "fraeulein", "fräulein", "jr", "sr", "st"
+    'mr', 'mrs', 'ms', 'miss', 'mx', 'dr', 'prof', 'professor',
+    'herr', 'frau', 'fr', 'hr', 'mag', 'ing', 'sir', 'madam',
+    'dr.', 'prof.', 'mr.', 'mrs.', 'ms.'
 }
 
 def normalize_name(name):
     if pd.isna(name):
         return ""
-    s = str(name).lower()
-    s = re.sub(r"[^a-z\s]", " ", s)
+    s = str(name).strip().lower()
+    s = re.sub(r'[.,]', ' ', s)
     tokens = s.split()
     tokens = [t for t in tokens if t not in TITLES]
     tokens = [t for t in tokens if len(t) > 1]
@@ -32,34 +30,19 @@ def normalize_email(email):
     if pd.isna(email):
         return ""
     s = str(email).strip().lower()
-    if "@" in s:
-        local, domain = s.split("@", 1)
-        local = local.replace(".", "")
-        return local + "@" + domain
-    return s
+    if '@' not in s:
+        return s
+    local, domain = s.split('@', 1)
+    local = local.replace('.', '')
+    return f"{local}@{domain}"
 
-def levenshtein(a, b):
+df['_norm_name'] = df['full_name'].apply(normalize_name)
+df['_norm_email'] = df['email'].apply(normalize_email)
+
+def name_similarity(a, b):
     if a == b:
-        return 0
-    la, lb = len(a), len(b)
-    if la == 0:
-        return lb
-    if lb == 0:
-        return la
-    prev = list(range(lb + 1))
-    for i, ca in enumerate(a, 1):
-        cur = [i] + [0] * lb
-        for j, cb in enumerate(b, 1):
-            cost = 0 if ca == cb else 1
-            cur[j] = min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost)
-        prev = cur
-    return prev[lb]
-
-name_col = "full_name" if "full_name" in df.columns else None
-email_col = "email" if "email" in df.columns else None
-
-df["_norm_name"] = df[name_col].apply(normalize_name) if name_col else ""
-df["_norm_email"] = df[email_col].apply(normalize_email) if email_col else ""
+        return 1.0
+    return SequenceMatcher(None, a, b).ratio()
 
 n = len(df)
 parent = list(range(n))
@@ -75,59 +58,40 @@ def union(x, y):
     if rx != ry:
         parent[rx] = ry
 
-email_groups = {}
-for idx, val in enumerate(df["_norm_email"]):
-    if val:
-        email_groups.setdefault(val, []).append(idx)
-for indices in email_groups.values():
-    if len(indices) > 1:
-        first = indices[0]
-        for other in indices[1:]:
-            union(first, other)
+groups = {}
+for idx, email in enumerate(df['_norm_email']):
+    groups.setdefault(email, []).append(idx)
 
-name_groups = {}
-for idx, val in enumerate(df["_norm_name"]):
-    if val:
-        name_groups.setdefault(val, []).append(idx)
-for indices in name_groups.values():
-    if len(indices) > 1:
-        first = indices[0]
-        for other in indices[1:]:
-            union(first, other)
+for email, idxs in groups.items():
+    if len(idxs) < 2:
+        continue
+    for i in range(len(idxs)):
+        for j in range(i + 1, len(idxs)):
+            a_idx, b_idx = idxs[i], idxs[j]
+            name_a = df.at[a_idx, '_norm_name']
+            name_b = df.at[b_idx, '_norm_name']
+            if name_a == name_b:
+                union(a_idx, b_idx)
+            elif name_a and name_b:
+                sim = name_similarity(name_a, name_b)
+                if sim >= 0.82:
+                    union(a_idx, b_idx)
 
-bucket_groups = {}
-for idx, val in enumerate(df["_norm_name"]):
-    if val and len(val) >= 3:
-        key = (val[0], len(val) // 3)
-        bucket_groups.setdefault(key, []).append(idx)
+df['_cluster'] = [find(i) for i in range(n)]
 
-for indices in bucket_groups.values():
-    m = len(indices)
-    if m > 1 and m <= 500:
-        for i in range(m):
-            for j in range(i + 1, m):
-                a_idx, b_idx = indices[i], indices[j]
-                a_name = df["_norm_name"].iloc[a_idx]
-                b_name = df["_norm_name"].iloc[b_idx]
-                if abs(len(a_name) - len(b_name)) <= 1:
-                    dist = levenshtein(a_name, b_name)
-                    if dist <= 1:
-                        union(a_idx, b_idx)
+def sort_key(cid):
+    try:
+        return (0, int(cid))
+    except (ValueError, TypeError):
+        return (1, str(cid))
 
-df["_group"] = [find(i) for i in range(n)]
+df['_sort_key'] = df['customer_id'].apply(sort_key)
 
-if "customer_id" in df.columns:
-    idx_min = df.groupby("_group")["customer_id"].idxmin()
-else:
-    idx_min = df.groupby("_group").apply(lambda g: g.index[0])
+df_sorted = df.sort_values('_sort_key')
+result = df_sorted.drop_duplicates(subset='_cluster', keep='first')
 
-result = df.loc[idx_min].copy()
+result = result.drop(columns=['_norm_name', '_norm_email', '_cluster', '_sort_key'])
 
-result = result.drop(columns=["_norm_name", "_norm_email", "_group"], errors="ignore")
-
-if "customer_id" in result.columns:
-    result = result.sort_values("customer_id").reset_index(drop=True)
-else:
-    result = result.reset_index(drop=True)
+result = result.reset_index(drop=True)
 
 result.to_parquet(output_path, index=False)

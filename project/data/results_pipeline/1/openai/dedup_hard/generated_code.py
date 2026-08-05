@@ -1,154 +1,155 @@
 import os
 import re
-import math
 import unicodedata
 from collections import defaultdict
-from difflib import SequenceMatcher
+from functools import lru_cache
 
 import numpy as np
 import pandas as pd
 
-
 input_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/openai/dedup_medium/output.parquet"
 output_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/openai/dedup_hard/output.parquet"
 
-df = pd.read_parquet(input_path).copy()
+df = pd.read_parquet(input_path)
 
 required_columns = ["customer_id", "full_name", "email", "country", "registered_at"]
-for column in required_columns:
-    if column not in df.columns:
-        df[column] = pd.NA
+missing_columns = [col for col in required_columns if col not in df.columns]
+if missing_columns:
+    raise ValueError(f"Missing required columns: {missing_columns}")
 
-df["customer_id"] = df["customer_id"].astype("string")
-df["full_name"] = df["full_name"].astype("string")
-df["email"] = df["email"].astype("string")
+df = df.reset_index(drop=True)
+n = len(df)
 
-
-titles = {
-    "mr", "mister", "mrs", "ms", "miss", "mx",
-    "dr", "doctor", "prof", "professor",
-    "sir", "madam", "madame", "mme", "mlle",
-    "herr", "frau", "fr", "hr", "drmed", "drphil",
-    "ing", "dipl", "dipling", "mag", "mba", "phd",
-    "phd", "md", "dds", "dvm", "rev", "fr",
-    "lord", "lady", "hon", "judge"
+title_tokens = {
+    "herr", "frau", "mr", "mrs", "ms", "miss", "mx",
+    "dr", "prof", "professor", "doktor", "doctor",
+    "sir", "dame", "lord", "lady", "rev", "reverend",
+    "fr", "sr", "br", "schwester", "bruder",
+    "ing", "dipl", "mba", "msc", "bsc", "ma", "ba",
+    "phd", "md", "dds", "dvm", "jd", "esq"
 }
 
+suffix_tokens = {
+    "jr", "junior", "sr", "senior", "ii", "iii", "iv", "v",
+    "phd", "md", "dds", "dvm", "esq", "mba", "msc", "bsc"
+}
 
-def ascii_normalize(value):
-    if value is None or pd.isna(value):
-        return ""
-    value = str(value).strip().lower()
+def ascii_fold(value):
     value = unicodedata.normalize("NFKD", value)
-    value = "".join(ch for ch in value if not unicodedata.combining(ch))
-    value = value.replace("ß", "ss").replace("æ", "ae").replace("œ", "oe")
-    return value
-
+    return "".join(ch for ch in value if not unicodedata.combining(ch))
 
 def normalize_email(value):
-    value = ascii_normalize(value)
+    if pd.isna(value):
+        return ""
+    value = str(value).strip().casefold()
     if not value or "@" not in value:
         return ""
     local, domain = value.rsplit("@", 1)
     local = re.sub(r"\s+", "", local)
     domain = re.sub(r"\s+", "", domain)
-    local = local.replace(".", "")
     if not local or not domain:
         return ""
+    local = local.replace(".", "")
     return f"{local}@{domain}"
 
-
 def normalize_name(value):
-    value = ascii_normalize(value)
+    if pd.isna(value):
+        return ()
+    value = ascii_fold(str(value)).casefold().strip()
     if not value:
-        return "", [], "", ""
-
-    if "," in value:
-        parts = [part.strip() for part in value.split(",") if part.strip()]
-        if len(parts) >= 2:
-            value = " ".join(parts[1:] + [parts[0]])
-
-    value = re.sub(r"[^a-z0-9\s]", " ", value)
+        return ()
+    value = re.sub(r"['`´’\-]", "", value)
+    value = re.sub(r"[^a-z0-9]+", " ", value)
     tokens = [token for token in value.split() if token]
-
-    while tokens and tokens[0] in titles:
+    while tokens and tokens[0] in title_tokens:
         tokens.pop(0)
-
-    while tokens and tokens[-1] in {"jr", "sr", "ii", "iii", "iv"}:
+    while tokens and tokens[-1] in suffix_tokens:
         tokens.pop()
+    tokens = [token for token in tokens if token not in title_tokens]
+    tokens = [token for token in tokens if len(token) > 1 or token.isdigit()]
+    return tuple(tokens)
 
-    if not tokens:
-        return "", [], "", ""
+@lru_cache(maxsize=250000)
+def levenshtein_distance(a, b):
+    if a == b:
+        return 0
+    if not a:
+        return len(b)
+    if not b:
+        return len(a)
+    if len(a) < len(b):
+        a, b = b, a
+    previous = list(range(len(b) + 1))
+    for i, char_a in enumerate(a, start=1):
+        current = [i]
+        for j, char_b in enumerate(b, start=1):
+            cost = 0 if char_a == char_b else 1
+            current.append(min(
+                current[-1] + 1,
+                previous[j] + 1,
+                previous[j - 1] + cost
+            ))
+        previous = current
+    return previous[-1]
 
-    name_without_initials = [token for token in tokens if len(token) > 1]
-    comparison_tokens = name_without_initials if len(name_without_initials) >= 2 else tokens
+def token_close(a, b):
+    if a == b:
+        return True
+    if not a or not b:
+        return False
+    max_len = max(len(a), len(b))
+    min_len = min(len(a), len(b))
+    distance = levenshtein_distance(a, b)
+    if max_len <= 2:
+        return False
+    if max_len <= 4:
+        return distance <= 1 and min_len >= 3
+    return distance <= max(1, int(max_len * 0.20))
 
-    normalized = "".join(comparison_tokens)
-    first = comparison_tokens[0] if comparison_tokens else ""
-    last = comparison_tokens[-1] if len(comparison_tokens) >= 2 else ""
-    return normalized, comparison_tokens, first, last
+def names_compatible(tokens_a, tokens_b):
+    if not tokens_a or not tokens_b:
+        return False
 
+    if tokens_a == tokens_b:
+        return True
 
-def soundex(value):
-    if not value:
-        return ""
-    value = re.sub(r"[^a-z]", "", value.lower())
-    if not value:
-        return ""
+    compact_a = "".join(tokens_a)
+    compact_b = "".join(tokens_b)
+    if compact_a == compact_b:
+        return True
 
-    mapping = {
-        "b": "1", "f": "1", "p": "1", "v": "1",
-        "c": "2", "g": "2", "j": "2", "k": "2", "q": "2", "s": "2", "x": "2", "z": "2",
-        "d": "3", "t": "3",
-        "l": "4",
-        "m": "5", "n": "5",
-        "r": "6"
-    }
+    if len(tokens_a) == len(tokens_b) and sorted(tokens_a) == sorted(tokens_b):
+        return True
 
-    first_letter = value[0].upper()
-    previous = mapping.get(value[0], "")
-    digits = []
+    if len(tokens_a) == 1 or len(tokens_b) == 1:
+        if len(tokens_a) == 1 and len(tokens_b) == 1:
+            return token_close(tokens_a[0], tokens_b[0])
+        return False
 
-    for char in value[1:]:
-        digit = mapping.get(char, "")
-        if digit and digit != previous:
-            digits.append(digit)
-        previous = digit
+    first_a, last_a = tokens_a[0], tokens_a[-1]
+    first_b, last_b = tokens_b[0], tokens_b[-1]
 
-    return (first_letter + "".join(digits) + "000")[:4]
+    direct_match = token_close(first_a, first_b) and token_close(last_a, last_b)
+    reversed_match = token_close(first_a, last_b) and token_close(last_a, first_b)
 
+    if direct_match or reversed_match:
+        return True
 
-n = len(df)
-name_norm = []
-name_tokens = []
-first_names = []
-last_names = []
-email_norm = []
+    if len(compact_a) >= 6 and len(compact_b) >= 6:
+        distance = levenshtein_distance(compact_a, compact_b)
+        allowed = max(1, int(max(len(compact_a), len(compact_b)) * 0.16))
+        return distance <= allowed
 
-for full_name, email in zip(df["full_name"], df["email"]):
-    normalized, tokens, first, last = normalize_name(full_name)
-    name_norm.append(normalized)
-    name_tokens.append(tokens)
-    first_names.append(first)
-    last_names.append(last)
-    email_norm.append(normalize_email(email))
+    return False
 
-df["_name_norm"] = name_norm
-df["_first_name"] = first_names
-df["_last_name"] = last_names
-df["_email_norm"] = email_norm
-
-
-parent = np.arange(n, dtype=np.int64)
-rank = np.zeros(n, dtype=np.int8)
-
+parent = list(range(n))
+rank = [0] * n
 
 def find(x):
     while parent[x] != x:
         parent[x] = parent[parent[x]]
         x = parent[x]
     return x
-
 
 def union(a, b):
     root_a = find(a)
@@ -163,153 +164,67 @@ def union(a, b):
         parent[root_b] = root_a
         rank[root_a] += 1
 
+email_values = df["email"].tolist()
+name_values = df["full_name"].tolist()
+
+normalized_emails = [normalize_email(value) for value in email_values]
+normalized_names = [normalize_name(value) for value in name_values]
 
 email_groups = defaultdict(list)
-name_groups = defaultdict(list)
-first_last_groups = defaultdict(list)
+for idx, email in enumerate(normalized_emails):
+    if email and normalized_names[idx]:
+        email_groups[email].append(idx)
 
-for i, (email, name, first, last) in enumerate(
-    zip(df["_email_norm"], df["_name_norm"], df["_first_name"], df["_last_name"])
-):
-    if email:
-        email_groups[email].append(i)
-    if name:
-        name_groups[name].append(i)
-    if first and last:
-        first_last_groups[(first, last)].append(i)
-
-for group in email_groups.values():
-    if len(group) > 1:
-        anchor = group[0]
-        for idx in group[1:]:
-            union(anchor, idx)
-
-for group in name_groups.values():
-    if len(group) > 1:
-        anchor = group[0]
-        for idx in group[1:]:
-            union(anchor, idx)
-
-for group in first_last_groups.values():
-    if len(group) > 1:
-        anchor = group[0]
-        for idx in group[1:]:
-            union(anchor, idx)
-
-
-def similarity(left, right):
-    if not left or not right:
-        return 0.0
-    if left == right:
-        return 1.0
-    return SequenceMatcher(None, left, right, autojunk=False).ratio()
-
-
-blocks = defaultdict(list)
-
-for i, (first, last) in enumerate(zip(first_names, last_names)):
-    if not first or not last:
+for indices in email_groups.values():
+    if len(indices) < 2:
         continue
 
-    keys = {
-        ("p1", first[:3], last[:3]),
-        ("p2", first[:2], last[:4]),
-        ("p3", first[:4], last[:2]),
-        ("sx", soundex(first), soundex(last)),
-    }
+    exact_name_groups = defaultdict(list)
+    for idx in indices:
+        exact_name_groups[normalized_names[idx]].append(idx)
 
-    for key in keys:
-        if key[1] and key[2]:
-            blocks[key].append(i)
+    for same_name_indices in exact_name_groups.values():
+        if len(same_name_indices) > 1:
+            anchor = same_name_indices[0]
+            for idx in same_name_indices[1:]:
+                union(anchor, idx)
 
+    for pos_a in range(len(indices)):
+        idx_a = indices[pos_a]
+        name_a = normalized_names[idx_a]
+        for pos_b in range(pos_a + 1, len(indices)):
+            idx_b = indices[pos_b]
+            if find(idx_a) == find(idx_b):
+                continue
+            if names_compatible(name_a, normalized_names[idx_b]):
+                union(idx_a, idx_b)
 
-candidate_pairs = set()
-max_block_size = 400
+def customer_id_key(value, position):
+    if pd.isna(value):
+        return (2, "", position)
+    try:
+        numeric_value = float(value)
+        if np.isfinite(numeric_value):
+            return (0, numeric_value, position)
+    except (TypeError, ValueError):
+        pass
+    return (1, str(value), position)
 
-for group in blocks.values():
-    if len(group) < 2 or len(group) > max_block_size:
-        continue
-    group = sorted(set(group))
-    for position, left_idx in enumerate(group[:-1]):
-        for right_idx in group[position + 1:]:
-            candidate_pairs.add((left_idx, right_idx))
+components = defaultdict(list)
+customer_ids = df["customer_id"].tolist()
 
+for idx in range(n):
+    components[find(idx)].append(idx)
 
-for left_idx, right_idx in candidate_pairs:
-    left_first = first_names[left_idx]
-    left_last = last_names[left_idx]
-    right_first = first_names[right_idx]
-    right_last = last_names[right_idx]
+keep_indices = []
+for component_indices in components.values():
+    keep_indices.append(min(
+        component_indices,
+        key=lambda idx: customer_id_key(customer_ids[idx], idx)
+    ))
 
-    first_score = similarity(left_first, right_first)
-    last_score = similarity(left_last, right_last)
-    full_score = similarity(name_norm[left_idx], name_norm[right_idx])
-
-    first_exact = left_first == right_first
-    last_exact = left_last == right_last
-
-    is_match = False
-
-    if first_exact and last_score >= 0.80 and len(left_last) >= 3 and len(right_last) >= 3:
-        is_match = True
-    elif last_exact and first_score >= 0.80 and len(left_first) >= 3 and len(right_first) >= 3:
-        is_match = True
-    elif (
-        first_score >= 0.80
-        and last_score >= 0.80
-        and full_score >= 0.84
-        and len(left_first) >= 3
-        and len(left_last) >= 3
-        and len(right_first) >= 3
-        and len(right_last) >= 3
-    ):
-        is_match = True
-    elif (
-        first_score >= 0.90
-        and last_score >= 0.90
-        and full_score >= 0.90
-    ):
-        is_match = True
-
-    if is_match:
-        union(left_idx, right_idx)
-
-
-roots = np.array([find(i) for i in range(n)], dtype=np.int64)
-df["_root"] = roots
-
-customer_id_numeric = pd.to_numeric(df["customer_id"], errors="coerce")
-df["_customer_id_numeric"] = customer_id_numeric
-df["_customer_id_text"] = df["customer_id"].fillna("").astype("string")
-
-df["_numeric_missing"] = df["_customer_id_numeric"].isna().astype(np.int8)
-df_sorted = df.sort_values(
-    by=["_root", "_numeric_missing", "_customer_id_numeric", "_customer_id_text"],
-    kind="stable",
-    na_position="last",
-)
-
-result = df_sorted.drop_duplicates(subset="_root", keep="first").copy()
-result = result.drop(
-    columns=[
-        "_name_norm",
-        "_first_name",
-        "_last_name",
-        "_email_norm",
-        "_root",
-        "_customer_id_numeric",
-        "_customer_id_text",
-        "_numeric_missing",
-    ],
-    errors="ignore",
-)
-
-result = result.sort_values(
-    by=["customer_id"],
-    key=lambda series: pd.to_numeric(series, errors="coerce"),
-    kind="stable",
-    na_position="last",
-).reset_index(drop=True)
+keep_indices.sort(key=lambda idx: customer_id_key(customer_ids[idx], idx))
+result = df.iloc[keep_indices].copy()
 
 os.makedirs(os.path.dirname(output_path), exist_ok=True)
 result.to_parquet(output_path, index=False)

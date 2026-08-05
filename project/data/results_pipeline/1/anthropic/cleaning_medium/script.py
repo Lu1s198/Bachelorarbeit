@@ -1,57 +1,66 @@
 import pandas as pd
 import numpy as np
 import re
-from datetime import datetime
+from datetime import datetime, timezone
 
-df = pd.read_parquet("C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/anthropic/cleaning_easy/output.parquet")
+input_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/anthropic/cleaning_easy/output.parquet"
+output_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/anthropic/cleaning_medium/output.parquet"
+
+df = pd.read_parquet(input_path)
 
 def normalize_date(val):
-    if pd.isna(val):
+    if val is None:
         return None
+    if isinstance(val, float) and np.isnan(val):
+        return None
+    if isinstance(val, pd.Timestamp):
+        return val.strftime("%Y-%m-%d")
+
     s = str(val).strip()
-    if s == "" or s.lower() == "none" or s.lower() == "nan":
+    if s == "" or s.lower() == "nan" or s.lower() == "none":
         return None
 
-    # Unix timestamp (seconds) - all digits
-    if re.fullmatch(r"\d{9,10}", s):
+    # Unix timestamp (all digits, possibly with sign)
+    if re.match(r'^-?\d+(\.\d+)?$', s):
         try:
-            dt = datetime.utcfromtimestamp(int(s))
+            ts = float(s)
+            dt = datetime.fromtimestamp(ts, tz=timezone.utc)
             return dt.strftime("%Y-%m-%d")
-        except (ValueError, OSError, OverflowError):
+        except (ValueError, OverflowError, OSError):
             pass
 
-    # ISO format YYYY-MM-DD
-    m = re.fullmatch(r"(\d{4})-(\d{2})-(\d{2})", s)
-    if m:
-        return s
-
-    # German format TT.MM.JJJJ
-    m = re.fullmatch(r"(\d{2})\.(\d{2})\.(\d{4})", s)
+    # German format DD.MM.YYYY
+    m = re.match(r'^(\d{1,2})\.(\d{1,2})\.(\d{4})$', s)
     if m:
         day, month, year = m.groups()
-        return f"{year}-{month}-{day}"
-
-    # US format 'Month DD YYYY' or 'Month DD, YYYY'
-    m = re.fullmatch(r"([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})", s)
-    if m:
-        month_name, day, year = m.groups()
         try:
-            dt = datetime.strptime(f"{month_name} {day} {year}", "%B %d %Y")
+            dt = datetime(int(year), int(month), int(day))
+            return dt.strftime("%Y-%m-%d")
+        except ValueError:
+            pass
+
+    # US format 'Month DD YYYY'
+    m = re.match(r'^([A-Za-z]+)\s+(\d{1,2}),?\s+(\d{4})$', s)
+    if m:
+        try:
+            dt = datetime.strptime(f"{m.group(1)} {m.group(2)} {m.group(3)}", "%B %d %Y")
             return dt.strftime("%Y-%m-%d")
         except ValueError:
             try:
-                dt = datetime.strptime(f"{month_name} {day} {year}", "%b %d %Y")
+                dt = datetime.strptime(f"{m.group(1)} {m.group(2)} {m.group(3)}", "%b %d %Y")
                 return dt.strftime("%Y-%m-%d")
             except ValueError:
                 pass
 
-    # Fallback: try pandas to_datetime
+    # ISO format or other parseable formats
     try:
-        dt = pd.to_datetime(s, errors="raise")
+        dt = pd.to_datetime(s, errors='raise')
         return dt.strftime("%Y-%m-%d")
-    except Exception:
-        return None
+    except (ValueError, TypeError):
+        pass
 
-df["registered_at"] = df["registered_at"].apply(normalize_date)
+    return None
 
-df.to_parquet("C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/anthropic/cleaning_medium/output.parquet", index=False)
+df['registered_at'] = df['registered_at'].apply(normalize_date)
+
+df.to_parquet(output_path, index=False)

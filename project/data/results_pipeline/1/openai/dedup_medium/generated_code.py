@@ -14,15 +14,17 @@ if missing_columns:
 df["_registered_at_sort"] = pd.to_datetime(df["registered_at"], format="%Y-%m-%d", errors="coerce")
 df["_original_order"] = range(len(df))
 
-df = df.sort_values(
-    by=["email", "_registered_at_sort", "_original_order"],
-    ascending=[True, False, True],
-    na_position="last",
-    kind="stable",
+result = (
+    df.sort_values(
+        by=["email", "_registered_at_sort", "_original_order"],
+        ascending=[True, False, True],
+        na_position="last",
+        kind="stable",
+    )
+    .drop_duplicates(subset=["email"], keep="first")
+    .sort_values("_original_order", kind="stable")
+    .drop(columns=["_registered_at_sort", "_original_order"])
 )
 
-df = df.drop_duplicates(subset=["email"], keep="first")
-df = df.drop(columns=["_registered_at_sort", "_original_order"])
-
 os.makedirs(os.path.dirname(output_path), exist_ok=True)
-df.to_parquet(output_path, index=False)
+result.to_parquet(output_path, index=False)

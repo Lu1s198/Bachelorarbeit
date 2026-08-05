@@ -49,8 +49,9 @@ ORDER_COLS = ["order_id", "customer_id", "product_id", "quantity",
 FINAL_COLS = ["country_code", "category", "total_revenue_eur", "order_count"]
 
 SYSTEM = (
-    "You are an experienced data engineer. Respond only with executable Python(v3.12) "
-    "code that uses pandas(v3.0). No explanations, no markdown code block, no text "
+    "You are an experienced data engineer. Respond only with executable Python "
+    "code. The execution environment uses Python 3.12 with pandas 3.0. "
+    "Make sure the code works with that version. No explanations, no markdown code block, no text "
     "outside the code. Use only the pandas and numpy libraries and the Python "
     "standard library; do not import any other third-party packages (for example, "
     "do not use pycountry or similar packages that may not be installed) -- "
@@ -73,7 +74,7 @@ PIPELINE: list[Step] = [
          [("input", "raw:customers_raw.csv")],
          "Entferne aus allen Textspalten führende und nachfolgende Leerzeichen und "
          "ersetze fehlende Werte in der Spalte `country` durch 'UNKNOWN'. Behalte "
-         "alle Spalten unverändert bei.", CUSTOMER_COLS),
+         "alle Spalten unverändert bei. Beachte das verschiedene Versionen von Bibliotheken verschiedene Idiome haben", CUSTOMER_COLS),
     Step("cleaning_medium", "2 · Bereinigung: Datumsformate",
          [("input", "step:cleaning_easy")],
          "Normalisiere die Spalte `registered_at` auf das ISO-Format YYYY-MM-DD. Sie "
@@ -102,7 +103,8 @@ PIPELINE: list[Step] = [
          "abweichender Schreibweise des Namens (Tippfehler, Groß-/Kleinschreibung, "
          "mit/ohne Mittelinitial) und/oder abweichender E-Mail-Schreibweise (Punkte vor "
          "dem @, Groß-/Kleinschreibung). Namen können Anreden/Titel enthalten, diese "
-         "sind nicht Teil des Namens." 
+         "sind nicht Teil des Namens. Für Übereinstimmungen müssen Name und E-Mail auf " \
+         "die selbe Person hindeuten" 
          "Behalte bei Übereinstimmungen die kleinste customer_id",
          CUSTOMER_COLS),
     Step("products", "7 · Produkte: Typkonvertierung",
@@ -125,7 +127,8 @@ PIPELINE: list[Step] = [
          "Aggregiere pro Land (`country_code`) und Produktkategorie (`category`) den "
          "Gesamtumsatz `total_revenue_eur = sum(quantity * unit_price_eur)` und die "
          "Anzahl Bestellungen `order_count`. Sortiere absteigend nach "
-         "`total_revenue_eur`.", FINAL_COLS),
+         "`total_revenue_eur`. Das Ergebnis enthält nur Zeilen mit gültigem country_code " \
+         "und gültiger category; Bestellungen ohne passenden Kunden- oder Produktdatensatz bleiben unberücksichtigt.", FINAL_COLS),
 ]
 
 

@@ -20,6 +20,10 @@ from experiments.pipeline_runner import PIPELINE
 from reporting.analysis import PROVIDER_LABEL
 from reporting.compare import FIG_DIR, MODEL_LABELS, MODEL_ORDER, save_fig
 
+# Die regelbasierte Vergleichsbasis durchlaeuft dieselbe Kette (run_baseline_pipeline)
+# und erscheint deshalb als zusaetzliche Spalte hinter den Modellen.
+PIPE_ORDER = [*MODEL_ORDER, "baseline"]
+
 PIPELINE_RESULTS = settings.data_dir / "results_pipeline"
 
 STATUS_COLOR = {
@@ -38,7 +42,7 @@ def load_pipeline(seed: int = 1) -> pd.DataFrame:
     rows = []
     order = {s.name: i for i, s in enumerate(PIPELINE)}
     labels = {s.name: s.label for s in PIPELINE}
-    for prov in MODEL_ORDER:
+    for prov in PIPE_ORDER:
         p = PIPELINE_RESULTS / str(seed) / prov / "pipeline.json"
         if not p.exists():
             continue
@@ -50,6 +54,8 @@ def load_pipeline(seed: int = 1) -> pd.DataFrame:
                 order=order.get(s["step"], 99), status=s["status"],
                 accuracy=s.get("accuracy"), attempts=s.get("attempts"),
                 error=s.get("error"),
+                duration_s=s.get("duration_s"), llm_s=s.get("llm_s"),
+                exec_s=s.get("exec_s"),
                 cost_usd=s.get("cost_usd", 0.0) or 0.0,
                 prompt_tokens=s.get("prompt_tokens", 0) or 0,
                 completion_tokens=s.get("completion_tokens", 0) or 0,
@@ -63,7 +69,7 @@ def pipeline_heatmap(seed: int = 1, save: bool = True):
     """Schritt (Zeilen) x Modell (Spalten): Status/Genauigkeit der Pipeline."""
     df = load_pipeline(seed)
     steps = [s for s in PIPELINE]
-    provs = [p for p in MODEL_ORDER if p in set(df.provider)]
+    provs = [p for p in PIPE_ORDER if p in set(df.provider)]
     labels = [PROVIDER_LABEL[p] for p in provs]
     cmap = plt.cm.RdYlGn
 
@@ -124,7 +130,7 @@ def step_accuracy(seed: int = 1, save: bool = True):
     steps = list(PIPELINE)
     x = np.arange(len(steps))
     fig, ax = plt.subplots(figsize=(11, 4.8))
-    for i, prov in enumerate([p for p in MODEL_ORDER if p in set(df.provider)]):
+    for i, prov in enumerate([p for p in PIPE_ORDER if p in set(df.provider)]):
         sub = df[df.provider == prov].set_index("step")
         vals = [sub.loc[s.name, "accuracy"] if s.name in sub.index else np.nan
                 for s in steps]
@@ -149,47 +155,76 @@ def step_accuracy(seed: int = 1, save: bool = True):
 
 
 def effort(seed: int = 1, save: bool = True):
-    """Aufwand der Pipeline: Kosten je Schritt (gestapelt je Modell) und Versuche."""
+    """Aufwand der Pipeline: Kosten und Dauer je Schritt sowie benötigte Versuche.
+
+    Die Dauer ist die Wanduhrzeit je Schritt inklusive Wiederholungen und Backoff;
+    ältere Läufe ohne Zeitmessung erscheinen als Lücke."""
     df = load_pipeline(seed)
-    provs = [p for p in MODEL_ORDER if p in set(df.provider)]
+    provs = [p for p in PIPE_ORDER if p in set(df.provider)]
     labels = [PROVIDER_LABEL[p] for p in provs]
     steps = list(PIPELINE)
 
-    fig, axes = plt.subplots(1, 2, figsize=(14, 4.6))
-    bottom = np.zeros(len(provs))
-    for k, s in enumerate(steps):
-        vals = [float(df[(df.provider == p) & (df.step == s.name)]["cost_usd"].sum())
-                for p in provs]
-        axes[0].bar(labels, vals, 0.55, bottom=bottom,
-                    color=plt.cm.viridis(k / max(len(steps) - 1, 1)), label=s.label)
-        bottom += np.array(vals)
-    for i, v in enumerate(bottom):
-        axes[0].text(i, v, f"${v:.3f}", ha="center", va="bottom", fontsize=8)
-    axes[0].set_ylabel("Kosten ($)")
-    axes[0].set_title("Kosten der Pipeline je Modell (gestapelt nach Schritt)")
-    axes[0].legend(fontsize=6.5, ncol=1, loc="upper left", bbox_to_anchor=(1.0, 1.0))
-    axes[0].grid(axis="y", ls=":", alpha=0.5)
+    fig, axes = plt.subplots(1, 3, figsize=(19, 4.6))
+
+    def _stacked(ax, column, fmt, title, ylabel):
+        bottom = np.zeros(len(provs))
+        for k, s in enumerate(steps):
+            vals = [float(df[(df.provider == p) & (df.step == s.name)][column]
+                          .fillna(0).sum()) for p in provs]
+            ax.bar(labels, vals, 0.55, bottom=bottom,
+                   color=plt.cm.viridis(k / max(len(steps) - 1, 1)), label=s.label)
+            bottom += np.array(vals)
+        for i, v in enumerate(bottom):
+            if v > 0:
+                ax.text(i, v, fmt.format(v), ha="center", va="bottom", fontsize=8)
+        ax.set_ylabel(ylabel)
+        ax.set_title(title, fontsize=10)
+        ax.grid(axis="y", ls=":", alpha=0.5)
+
+    _stacked(axes[0], "cost_usd", "${:.3f}",
+             "Kosten je Teilnehmer (gestapelt nach Schritt)", "Kosten ($)")
+    _stacked(axes[1], "duration_s", "{:.0f}s",
+             "Dauer je Teilnehmer (gestapelt nach Schritt)", "Dauer (s)")
+    axes[1].legend(fontsize=6.5, ncol=1, loc="upper left", bbox_to_anchor=(1.0, 1.0))
 
     att = df.pivot_table(index="step", columns="provider", values="attempts",
                          aggfunc="max").reindex([s.name for s in steps])
     att = att[[p for p in provs if p in att.columns]]
-    im = axes[1].imshow(att.values.astype(float), cmap="OrRd", vmin=0, vmax=3,
+    im = axes[2].imshow(att.values.astype(float), cmap="OrRd", vmin=0, vmax=3,
                         aspect="auto")
-    axes[1].set_xticks(range(att.shape[1]))
-    axes[1].set_xticklabels([PROVIDER_LABEL[c] for c in att.columns])
-    axes[1].set_yticks(range(att.shape[0]))
-    axes[1].set_yticklabels([s.label for s in steps], fontsize=8)
+    axes[2].set_xticks(range(att.shape[1]))
+    axes[2].set_xticklabels([PROVIDER_LABEL[c] for c in att.columns])
+    axes[2].set_yticks(range(att.shape[0]))
+    axes[2].set_yticklabels([s.label for s in steps], fontsize=8)
     for r in range(att.shape[0]):
         for c in range(att.shape[1]):
             v = att.values[r, c]
             if not np.isnan(v):
-                axes[1].text(c, r, f"{int(v)}", ha="center", va="center", fontsize=9)
-    axes[1].set_title("Benötigte Versuche je Schritt (max. 3)")
-    fig.colorbar(im, ax=axes[1], fraction=0.03, pad=0.02)
+                axes[2].text(c, r, f"{int(v)}", ha="center", va="center", fontsize=9)
+    axes[2].set_title("Benötigte Versuche je Schritt (max. 3)", fontsize=10)
+    fig.colorbar(im, ax=axes[2], fraction=0.03, pad=0.02)
     fig.tight_layout()
     if save:
         save_fig(fig, "pipeline_aufwand")
     return fig, df
+
+
+def step_durations(seed: int = 1) -> pd.DataFrame:
+    """Dauer je Schritt und Teilnehmer (Sekunden), plus Aufteilung in Modell- und
+    Ausführungszeit für den Durchschnitt über die Modelle."""
+    df = load_pipeline(seed)
+    steps = [s.name for s in PIPELINE]
+    T = df.pivot_table(index="step", columns="provider", values="duration_s",
+                       aggfunc="first", dropna=False).reindex(steps)
+    # Teilnehmer ohne Zeitmessung (Läufe vor deren Einführung) bleiben als
+    # NaN-Spalte sichtbar, statt stillschweigend zu verschwinden.
+    T = T.reindex(columns=[p for p in PIPE_ORDER if p in set(df.provider)])
+    T.columns = [PROVIDER_LABEL[c] for c in T.columns]
+    llm = df[df.provider != "baseline"]
+    T.insert(0, "davon Skript (Ø)", llm.groupby("step").exec_s.mean().reindex(steps).round(2))
+    T.insert(0, "davon Modell (Ø)", llm.groupby("step").llm_s.mean().reindex(steps).round(2))
+    T.index = [s.label for s in PIPELINE]
+    return T.round(2)
 
 
 # Zuordnung Pipeline-Schritt -> unabhängige Aufgabe der Matrix-Läufe
@@ -220,11 +255,14 @@ def pipeline_vs_matrix(runs: pd.DataFrame, seed: int = 1, save: bool = True):
     rows = []
     for s in steps:
         task = STEP_TO_TASK[s.name]
-        pipe = df[df.step == s.name]
-        pipe_val = pipe.accuracy.astype(float).mean() if not pipe.empty else np.nan
-        matrix_val = (cg.loc[task].mean() if task in cg.index else np.nan)
-        rows.append({"Schritt": s.label, "Pipeline (Ø Modelle)": pipe_val,
-                     "Einzellauf (beste Strategie, Ø Modelle)": matrix_val})
+        llm = df[(df.step == s.name) & (df.provider != "baseline")]
+        base = df[(df.step == s.name) & (df.provider == "baseline")]
+        rows.append({
+            "Schritt": s.label,
+            "Pipeline (Ø Modelle)": llm.accuracy.astype(float).mean() if not llm.empty else np.nan,
+            "Einzellauf (beste Strategie, Ø Modelle)": cg.loc[task].mean() if task in cg.index else np.nan,
+            "Baseline (Kette)": base.accuracy.astype(float).mean() if not base.empty else np.nan,
+        })
     T = pd.DataFrame(rows).set_index("Schritt")
     T["Differenz"] = T.iloc[:, 0] - T.iloc[:, 1]
 
@@ -234,6 +272,8 @@ def pipeline_vs_matrix(runs: pd.DataFrame, seed: int = 1, save: bool = True):
     ax.bar(x - w / 2, T.iloc[:, 0], w, color="#4e79a7", label="verkettete Pipeline")
     ax.bar(x + w / 2, T.iloc[:, 1], w, color="#f28e2b",
            label="unabhängige Einzelläufe (beste Strategie)")
+    ax.plot(x, T["Baseline (Kette)"], "D", ms=7, color="#59a14f",
+            label="regelbasierte Baseline (Kette)")
     ax.set_xticks(x)
     ax.set_xticklabels(T.index, rotation=30, ha="right", fontsize=8)
     ax.set_ylim(0, 1.1)
@@ -261,7 +301,7 @@ def final_step_diagnosis(seed: int = 1) -> pd.DataFrame:
     exp = build_chain_reference(seed)["final"]
     keys = ["country_code", "category"]
     rows = []
-    for prov in MODEL_ORDER:
+    for prov in PIPE_ORDER:
         p = PIPELINE_RESULTS / str(seed) / prov / "final" / "output.parquet"
         if not p.exists():
             continue
@@ -284,11 +324,66 @@ def final_step_diagnosis(seed: int = 1) -> pd.DataFrame:
     return pd.DataFrame(rows).set_index("Modell")
 
 
+def final_step_decomposition(seed: int = 1) -> pd.DataFrame:
+    """Zerlegt den Fehler des Endschritts in seine Ursachen.
+
+    Drei Messungen je Teilnehmer:
+
+    1. *eigener Code korrekt* -- die Referenz-Aggregationslogik wird auf **dieselben
+       Zwischenstände** angewandt. Ein Wert von 1,0 heißt: Join, Gruppierung und
+       Summen sind fehlerfrei, der gesamte Fehler ist stromaufwärts entstanden.
+    2. *nur Dedup-Effekt* -- die Ländercodes werden aus der Referenz übernommen, die
+       Kundenauswahl aus dem Lauf. Zeigt, was allein die Wahl des Duplikat-
+       Repräsentanten kostet (verwaiste Bestellungen fallen beim Join heraus).
+    3. *Endergebnis* -- der tatsächlich erreichte Wert.
+    """
+    from dataset import reference as ref
+    from experiments.pipeline_runner import build_chain_reference
+    from reporting.analysis import aligned_accuracy
+
+    chain = build_chain_reference(seed)
+    exp = chain["final"]
+    ref_c = chain["dedup_hard"].rename(columns={"country": "country_code"}).copy()
+    ref_c["customer_id"] = ref_c.customer_id.astype(str)
+
+    rows = []
+    for prov in PIPE_ORDER:
+        d = PIPELINE_RESULTS / str(seed) / prov
+        need = ["dedup_hard", "products", "orders", "final"]
+        if not all((d / s / "output.parquet").exists() for s in need):
+            continue
+        cust = pd.read_parquet(d / "dedup_hard" / "output.parquet") \
+            .rename(columns={"country": "country_code"})
+        prod = pd.read_parquet(d / "products" / "output.parquet")
+        orders = pd.read_parquet(d / "orders" / "output.parquet")
+        fin = pd.read_parquet(d / "final" / "output.parquet")
+        for t in (cust, orders):
+            t["customer_id"] = t.customer_id.astype(str)
+        for t in (cust, prod, orders):
+            if "product_id" in t.columns:
+                t["product_id"] = t.product_id.astype(str)
+
+        eigen = ref._transform_hard(orders, cust, prod)
+        fix = cust.drop(columns=["country_code"]).merge(
+            ref_c[["customer_id", "country_code"]], on="customer_id", how="left")
+        fix["country_code"] = fix["country_code"].fillna("UNKNOWN")
+        nur_dedup = ref._transform_hard(orders, fix, prod)
+        verwaist = int((~orders.customer_id.isin(cust.customer_id)).sum())
+        rows.append({
+            "Teilnehmer": PROVIDER_LABEL[prov],
+            "eigener Code korrekt": round(aligned_accuracy(fin, eigen), 3),
+            "nur Dedup-Effekt": round(aligned_accuracy(nur_dedup, exp), 3),
+            "Endergebnis": round(aligned_accuracy(fin, exp), 3),
+            "verwaiste Bestellungen": verwaist,
+        })
+    return pd.DataFrame(rows).set_index("Teilnehmer")
+
+
 def pipeline_summary(seed: int = 1) -> pd.DataFrame:
     """Kompakte Übersicht je Modell: erreichte Schritte, Endergebnis, Abbruchstelle."""
     df = load_pipeline(seed)
     rows = []
-    for prov in [p for p in MODEL_ORDER if p in set(df.provider)]:
+    for prov in [p for p in PIPE_ORDER if p in set(df.provider)]:
         sub = df[df.provider == prov].sort_values("order")
         n_ok = int((sub.status == "ok").sum())
         fin = sub[sub.step == "final"]

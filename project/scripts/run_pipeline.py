@@ -9,6 +9,7 @@ Aufruf:
     python scripts/run_pipeline.py --providers google
     python scripts/run_pipeline.py --providers anthropic openai --attempts 3
     python scripts/run_pipeline.py --seed 1
+    python scripts/run_pipeline.py --providers baseline   # regelbasierte Vergleichsbasis
 """
 
 from __future__ import annotations
@@ -28,7 +29,8 @@ ALL_PROVIDERS = ["anthropic", "openai", "google", "ollama"]
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--providers", nargs="+", default=ALL_PROVIDERS,
-                        help="anthropic openai google ollama (Standard: alle)")
+                        help="anthropic openai google ollama baseline "
+                             "(Standard: die vier Modelle)")
     parser.add_argument("--seed", type=int, default=1)
     parser.add_argument("--attempts", type=int, default=3,
                         help="max. Code-Erzeugungs-Versuche je Schritt (Standard: 3)")

@@ -1,10 +1,13 @@
 import os
 import re
+import math
 import unicodedata
+from collections import defaultdict
 from difflib import SequenceMatcher
 
 import numpy as np
 import pandas as pd
+
 
 input_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/openai/dedup_medium/output.parquet"
 output_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/openai/dedup_hard/output.parquet"
@@ -16,226 +19,297 @@ for column in required_columns:
     if column not in df.columns:
         df[column] = pd.NA
 
-df = df.reset_index(drop=True)
-n = len(df)
+df["customer_id"] = df["customer_id"].astype("string")
+df["full_name"] = df["full_name"].astype("string")
+df["email"] = df["email"].astype("string")
 
 
-def is_present(value):
-    if pd.isna(value):
-        return False
-    return str(value).strip() != ""
+titles = {
+    "mr", "mister", "mrs", "ms", "miss", "mx",
+    "dr", "doctor", "prof", "professor",
+    "sir", "madam", "madame", "mme", "mlle",
+    "herr", "frau", "fr", "hr", "drmed", "drphil",
+    "ing", "dipl", "dipling", "mag", "mba", "phd",
+    "phd", "md", "dds", "dvm", "rev", "fr",
+    "lord", "lady", "hon", "judge"
+}
 
 
-def normalize_text(value):
-    if not is_present(value):
+def ascii_normalize(value):
+    if value is None or pd.isna(value):
         return ""
-    text = unicodedata.normalize("NFKD", str(value))
-    text = "".join(char for char in text if not unicodedata.combining(char))
-    text = text.lower().strip()
-    return text
+    value = str(value).strip().lower()
+    value = unicodedata.normalize("NFKD", value)
+    value = "".join(ch for ch in value if not unicodedata.combining(ch))
+    value = value.replace("ß", "ss").replace("æ", "ae").replace("œ", "oe")
+    return value
 
 
 def normalize_email(value):
-    if not is_present(value):
+    value = ascii_normalize(value)
+    if not value or "@" not in value:
         return ""
-    email = normalize_text(value).replace(" ", "")
-    if email.count("@") != 1:
+    local, domain = value.rsplit("@", 1)
+    local = re.sub(r"\s+", "", local)
+    domain = re.sub(r"\s+", "", domain)
+    local = local.replace(".", "")
+    if not local or not domain:
         return ""
-    local_part, domain = email.split("@", 1)
-    if not local_part or not domain:
+    return f"{local}@{domain}"
+
+
+def normalize_name(value):
+    value = ascii_normalize(value)
+    if not value:
+        return "", [], "", ""
+
+    if "," in value:
+        parts = [part.strip() for part in value.split(",") if part.strip()]
+        if len(parts) >= 2:
+            value = " ".join(parts[1:] + [parts[0]])
+
+    value = re.sub(r"[^a-z0-9\s]", " ", value)
+    tokens = [token for token in value.split() if token]
+
+    while tokens and tokens[0] in titles:
+        tokens.pop(0)
+
+    while tokens and tokens[-1] in {"jr", "sr", "ii", "iii", "iv"}:
+        tokens.pop()
+
+    if not tokens:
+        return "", [], "", ""
+
+    name_without_initials = [token for token in tokens if len(token) > 1]
+    comparison_tokens = name_without_initials if len(name_without_initials) >= 2 else tokens
+
+    normalized = "".join(comparison_tokens)
+    first = comparison_tokens[0] if comparison_tokens else ""
+    last = comparison_tokens[-1] if len(comparison_tokens) >= 2 else ""
+    return normalized, comparison_tokens, first, last
+
+
+def soundex(value):
+    if not value:
         return ""
-    local_part = local_part.replace(".", "")
-    return f"{local_part}@{domain}"
+    value = re.sub(r"[^a-z]", "", value.lower())
+    if not value:
+        return ""
 
-
-def name_tokens(value):
-    text = normalize_text(value)
-    if not text:
-        return []
-    text = re.sub(r"[^a-z0-9]+", " ", text)
-    tokens = [token for token in text.split() if token]
-    return tokens
-
-
-def meaningful_name_tokens(value):
-    tokens = name_tokens(value)
-    return [token for token in tokens if len(token) > 1]
-
-
-def name_key(value):
-    tokens = meaningful_name_tokens(value)
-    return " ".join(tokens)
-
-
-def sorted_name_key(value):
-    tokens = meaningful_name_tokens(value)
-    return " ".join(sorted(tokens))
-
-
-def safe_ratio(left, right):
-    if not left or not right:
-        return 0.0
-    return SequenceMatcher(None, left, right).ratio()
-
-
-class UnionFind:
-    def __init__(self, size):
-        self.parent = list(range(size))
-        self.rank = [0] * size
-
-    def find(self, node):
-        while self.parent[node] != node:
-            self.parent[node] = self.parent[self.parent[node]]
-            node = self.parent[node]
-        return node
-
-    def union(self, left, right):
-        root_left = self.find(left)
-        root_right = self.find(right)
-        if root_left == root_right:
-            return
-        if self.rank[root_left] < self.rank[root_right]:
-            self.parent[root_left] = root_right
-        elif self.rank[root_left] > self.rank[root_right]:
-            self.parent[root_right] = root_left
-        else:
-            self.parent[root_right] = root_left
-            self.rank[root_left] += 1
-
-
-uf = UnionFind(n)
-
-emails = df["email"].map(normalize_email).tolist()
-name_keys = df["full_name"].map(name_key).tolist()
-sorted_name_keys = df["full_name"].map(sorted_name_key).tolist()
-token_lists = df["full_name"].map(meaningful_name_tokens).tolist()
-
-email_groups = {}
-for idx, email in enumerate(emails):
-    if email:
-        if email in email_groups:
-            uf.union(idx, email_groups[email])
-        else:
-            email_groups[email] = idx
-
-name_groups = {}
-for idx, key in enumerate(name_keys):
-    if key and len(key) >= 3:
-        if key in name_groups:
-            uf.union(idx, name_groups[key])
-        else:
-            name_groups[key] = idx
-
-sorted_name_groups = {}
-for idx, key in enumerate(sorted_name_keys):
-    if key and len(key) >= 3:
-        if key in sorted_name_groups:
-            uf.union(idx, sorted_name_groups[key])
-        else:
-            sorted_name_groups[key] = idx
-
-blocks = {}
-for idx, tokens in enumerate(token_lists):
-    if len(tokens) < 2:
-        continue
-
-    first_name = tokens[0]
-    last_name = tokens[-1]
-
-    block_keys = {
-        ("last_prefix", last_name[:3]),
-        ("first_prefix", first_name[:3]),
-        ("last_first", last_name[:2], first_name[:1]),
-        ("first_last_initial", first_name[:1], last_name[:1]),
+    mapping = {
+        "b": "1", "f": "1", "p": "1", "v": "1",
+        "c": "2", "g": "2", "j": "2", "k": "2", "q": "2", "s": "2", "x": "2", "z": "2",
+        "d": "3", "t": "3",
+        "l": "4",
+        "m": "5", "n": "5",
+        "r": "6"
     }
 
-    for block_key in block_keys:
-        if all(part for part in block_key[1:]):
-            blocks.setdefault(block_key, []).append(idx)
+    first_letter = value[0].upper()
+    previous = mapping.get(value[0], "")
+    digits = []
+
+    for char in value[1:]:
+        digit = mapping.get(char, "")
+        if digit and digit != previous:
+            digits.append(digit)
+        previous = digit
+
+    return (first_letter + "".join(digits) + "000")[:4]
 
 
-def likely_same_name(left_idx, right_idx):
-    left_tokens = token_lists[left_idx]
-    right_tokens = token_lists[right_idx]
+n = len(df)
+name_norm = []
+name_tokens = []
+first_names = []
+last_names = []
+email_norm = []
 
-    if len(left_tokens) < 2 or len(right_tokens) < 2:
-        return False
+for full_name, email in zip(df["full_name"], df["email"]):
+    normalized, tokens, first, last = normalize_name(full_name)
+    name_norm.append(normalized)
+    name_tokens.append(tokens)
+    first_names.append(first)
+    last_names.append(last)
+    email_norm.append(normalize_email(email))
 
-    left_first, left_last = left_tokens[0], left_tokens[-1]
-    right_first, right_last = right_tokens[0], right_tokens[-1]
-
-    first_similarity = safe_ratio(left_first, right_first)
-    last_similarity = safe_ratio(left_last, right_last)
-    full_similarity = safe_ratio(name_keys[left_idx], name_keys[right_idx])
-    sorted_similarity = safe_ratio(sorted_name_keys[left_idx], sorted_name_keys[right_idx])
-
-    if left_first == right_first and last_similarity >= 0.82 and full_similarity >= 0.82:
-        return True
-
-    if left_last == right_last and first_similarity >= 0.82 and full_similarity >= 0.82:
-        return True
-
-    if first_similarity >= 0.80 and last_similarity >= 0.80 and max(full_similarity, sorted_similarity) >= 0.84:
-        return True
-
-    if first_similarity >= 0.90 and last_similarity >= 0.72 and max(full_similarity, sorted_similarity) >= 0.88:
-        return True
-
-    if last_similarity >= 0.90 and first_similarity >= 0.72 and max(full_similarity, sorted_similarity) >= 0.88:
-        return True
-
-    return False
+df["_name_norm"] = name_norm
+df["_first_name"] = first_names
+df["_last_name"] = last_names
+df["_email_norm"] = email_norm
 
 
-checked_pairs = set()
+parent = np.arange(n, dtype=np.int64)
+rank = np.zeros(n, dtype=np.int8)
 
-for _, indices in blocks.items():
-    if len(indices) < 2:
+
+def find(x):
+    while parent[x] != x:
+        parent[x] = parent[parent[x]]
+        x = parent[x]
+    return x
+
+
+def union(a, b):
+    root_a = find(a)
+    root_b = find(b)
+    if root_a == root_b:
+        return
+    if rank[root_a] < rank[root_b]:
+        parent[root_a] = root_b
+    elif rank[root_a] > rank[root_b]:
+        parent[root_b] = root_a
+    else:
+        parent[root_b] = root_a
+        rank[root_a] += 1
+
+
+email_groups = defaultdict(list)
+name_groups = defaultdict(list)
+first_last_groups = defaultdict(list)
+
+for i, (email, name, first, last) in enumerate(
+    zip(df["_email_norm"], df["_name_norm"], df["_first_name"], df["_last_name"])
+):
+    if email:
+        email_groups[email].append(i)
+    if name:
+        name_groups[name].append(i)
+    if first and last:
+        first_last_groups[(first, last)].append(i)
+
+for group in email_groups.values():
+    if len(group) > 1:
+        anchor = group[0]
+        for idx in group[1:]:
+            union(anchor, idx)
+
+for group in name_groups.values():
+    if len(group) > 1:
+        anchor = group[0]
+        for idx in group[1:]:
+            union(anchor, idx)
+
+for group in first_last_groups.values():
+    if len(group) > 1:
+        anchor = group[0]
+        for idx in group[1:]:
+            union(anchor, idx)
+
+
+def similarity(left, right):
+    if not left or not right:
+        return 0.0
+    if left == right:
+        return 1.0
+    return SequenceMatcher(None, left, right, autojunk=False).ratio()
+
+
+blocks = defaultdict(list)
+
+for i, (first, last) in enumerate(zip(first_names, last_names)):
+    if not first or not last:
         continue
 
-    if len(indices) > 750:
+    keys = {
+        ("p1", first[:3], last[:3]),
+        ("p2", first[:2], last[:4]),
+        ("p3", first[:4], last[:2]),
+        ("sx", soundex(first), soundex(last)),
+    }
+
+    for key in keys:
+        if key[1] and key[2]:
+            blocks[key].append(i)
+
+
+candidate_pairs = set()
+max_block_size = 400
+
+for group in blocks.values():
+    if len(group) < 2 or len(group) > max_block_size:
         continue
+    group = sorted(set(group))
+    for position, left_idx in enumerate(group[:-1]):
+        for right_idx in group[position + 1:]:
+            candidate_pairs.add((left_idx, right_idx))
 
-    for position, left_idx in enumerate(indices[:-1]):
-        for right_idx in indices[position + 1:]:
-            pair = (left_idx, right_idx) if left_idx < right_idx else (right_idx, left_idx)
-            if pair in checked_pairs:
-                continue
-            checked_pairs.add(pair)
 
-            if likely_same_name(left_idx, right_idx):
-                uf.union(left_idx, right_idx)
+for left_idx, right_idx in candidate_pairs:
+    left_first = first_names[left_idx]
+    left_last = last_names[left_idx]
+    right_first = first_names[right_idx]
+    right_last = last_names[right_idx]
 
-groups = {}
-for idx in range(n):
-    root = uf.find(idx)
-    groups.setdefault(root, []).append(idx)
+    first_score = similarity(left_first, right_first)
+    last_score = similarity(left_last, right_last)
+    full_score = similarity(name_norm[left_idx], name_norm[right_idx])
 
-nonempty = df.notna() & df.astype("string").apply(lambda col: col.str.strip().ne(""))
-completeness = nonempty.sum(axis=1).astype(int)
+    first_exact = left_first == right_first
+    last_exact = left_last == right_last
 
-if "registered_at" in df.columns:
-    registered_present = df["registered_at"].notna().astype(int)
-else:
-    registered_present = pd.Series(0, index=df.index)
+    is_match = False
 
-keep_indices = []
-for indices in groups.values():
-    candidates = pd.DataFrame(
-        {
-            "idx": indices,
-            "completeness": completeness.iloc[indices].to_numpy(),
-            "registered_present": registered_present.iloc[indices].to_numpy(),
-        }
-    )
-    candidates = candidates.sort_values(
-        ["completeness", "registered_present", "idx"],
-        ascending=[False, False, True],
-        kind="stable",
-    )
-    keep_indices.append(int(candidates.iloc[0]["idx"]))
+    if first_exact and last_score >= 0.80 and len(left_last) >= 3 and len(right_last) >= 3:
+        is_match = True
+    elif last_exact and first_score >= 0.80 and len(left_first) >= 3 and len(right_first) >= 3:
+        is_match = True
+    elif (
+        first_score >= 0.80
+        and last_score >= 0.80
+        and full_score >= 0.84
+        and len(left_first) >= 3
+        and len(left_last) >= 3
+        and len(right_first) >= 3
+        and len(right_last) >= 3
+    ):
+        is_match = True
+    elif (
+        first_score >= 0.90
+        and last_score >= 0.90
+        and full_score >= 0.90
+    ):
+        is_match = True
 
-result = df.iloc[sorted(keep_indices)].copy()
+    if is_match:
+        union(left_idx, right_idx)
+
+
+roots = np.array([find(i) for i in range(n)], dtype=np.int64)
+df["_root"] = roots
+
+customer_id_numeric = pd.to_numeric(df["customer_id"], errors="coerce")
+df["_customer_id_numeric"] = customer_id_numeric
+df["_customer_id_text"] = df["customer_id"].fillna("").astype("string")
+
+df["_numeric_missing"] = df["_customer_id_numeric"].isna().astype(np.int8)
+df_sorted = df.sort_values(
+    by=["_root", "_numeric_missing", "_customer_id_numeric", "_customer_id_text"],
+    kind="stable",
+    na_position="last",
+)
+
+result = df_sorted.drop_duplicates(subset="_root", keep="first").copy()
+result = result.drop(
+    columns=[
+        "_name_norm",
+        "_first_name",
+        "_last_name",
+        "_email_norm",
+        "_root",
+        "_customer_id_numeric",
+        "_customer_id_text",
+        "_numeric_missing",
+    ],
+    errors="ignore",
+)
+
+result = result.sort_values(
+    by=["customer_id"],
+    key=lambda series: pd.to_numeric(series, errors="coerce"),
+    kind="stable",
+    na_position="last",
+).reset_index(drop=True)
 
 os.makedirs(os.path.dirname(output_path), exist_ok=True)
 result.to_parquet(output_path, index=False)

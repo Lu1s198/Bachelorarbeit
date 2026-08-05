@@ -24,6 +24,7 @@ Skript und Ausgabetabelle).
 from __future__ import annotations
 
 import json
+import time
 import traceback
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -48,8 +49,8 @@ ORDER_COLS = ["order_id", "customer_id", "product_id", "quantity",
 FINAL_COLS = ["country_code", "category", "total_revenue_eur", "order_count"]
 
 SYSTEM = (
-    "You are an experienced data engineer. Respond only with executable Python "
-    "code that uses pandas. No explanations, no markdown code block, no text "
+    "You are an experienced data engineer. Respond only with executable Python(v3.12) "
+    "code that uses pandas(v3.0). No explanations, no markdown code block, no text "
     "outside the code. Use only the pandas and numpy libraries and the Python "
     "standard library; do not import any other third-party packages (for example, "
     "do not use pycountry or similar packages that may not be installed) -- "
@@ -82,7 +83,9 @@ PIPELINE: list[Step] = [
     Step("cleaning_hard", "3 · Bereinigung: Ländercodes (ISO)",
          [("input", "step:cleaning_medium")],
          "Vereinheitliche die Spalte `country` auf den zweistelligen "
-         "ISO-3166-1-alpha-2-Code (z. B. 'DE'). Werte, die sich nicht eindeutig "
+         "ISO-3166-1-alpha-2-Code (z. B. 'DE'). Es können Abkürzungen jeglicher Art vorkommen.  " \
+         "Ländernamen/Kürzel können sowohl deutsch, als auch englisch sein, " \
+         "Werte, die sich nicht eindeutig "
          "zuordnen lassen, erhalten 'UNKNOWN'. Behalte alle Spalten.", CUSTOMER_COLS),
     Step("dedup_easy", "4 · Deduplizierung: exakte Duplikate",
          [("input", "step:cleaning_hard")],
@@ -97,8 +100,10 @@ PIPELINE: list[Step] = [
          [("input", "step:dedup_medium")],
          "Erkenne und entferne unscharfe Duplikate: dieselbe reale Person mit "
          "abweichender Schreibweise des Namens (Tippfehler, Groß-/Kleinschreibung, "
-         "mit/ohne Mittelinitial) oder abweichender E-Mail-Schreibweise (Punkte vor "
-         "dem @, Groß-/Kleinschreibung). Behalte je Person die vollständigste Zeile.",
+         "mit/ohne Mittelinitial) und/oder abweichender E-Mail-Schreibweise (Punkte vor "
+         "dem @, Groß-/Kleinschreibung). Namen können Anreden/Titel enthalten, diese "
+         "sind nicht Teil des Namens." 
+         "Behalte bei Übereinstimmungen die kleinste customer_id",
          CUSTOMER_COLS),
     Step("products", "7 · Produkte: Typkonvertierung",
          [("input", "raw:products_raw.csv")],
@@ -188,7 +193,8 @@ def run_pipeline(provider_name: str, seed: int, attempts: int = 3,
         resolved = _resolve_inputs(step, seed, available)
         if resolved is None:
             rec.update(status="blocked", schema_ok=False, accuracy=None,
-                       attempts=0, error="Vorheriger Schritt fehlgeschlagen")
+                       attempts=0, error="Vorheriger Schritt fehlgeschlagen",
+                       duration_s=0.0, llm_s=0.0, exec_s=0.0)
             steps.append(rec)
             print(f"   {step.label}: blockiert", flush=True)
             continue
@@ -198,6 +204,10 @@ def run_pipeline(provider_name: str, seed: int, attempts: int = 3,
         expected_df = chain_ref[step.name]
         status, schema_ok, accuracy, error = "code_error", False, None, None
         cost, ptok, ctok = 0.0, 0, 0
+        # Zeitmessung je Schritt: Gesamtdauer (inkl. Wiederholungen und Backoff),
+        # davon Antwortzeit des Modells und Laufzeit des erzeugten Skripts.
+        t_step = time.perf_counter()
+        llm_s, exec_s = 0.0, 0.0
         code = ""
         used = 0
         for attempt in range(1, attempts + 1):
@@ -209,10 +219,12 @@ def run_pipeline(provider_name: str, seed: int, attempts: int = 3,
                     max_tokens=settings.max_output_tokens)
                 ptok += resp.prompt_tokens or 0
                 ctok += resp.completion_tokens or 0
+                llm_s += resp.latency_seconds or 0.0
                 cost += estimate_cost_usd(resp.model, resp.prompt_tokens,
                                           resp.completion_tokens) or 0.0
                 code = extract_code(resp.text)
                 execution = run_generated_code(code, script_path, out_path)
+                exec_s += execution.duration_seconds or 0.0
                 if not execution.success:
                     error = f"Code-Ausführung fehlgeschlagen: {execution.stderr[-400:]}"
                     continue  # neuer Versuch
@@ -230,31 +242,45 @@ def run_pipeline(provider_name: str, seed: int, attempts: int = 3,
                 error = f"{type(exc).__name__}: {exc}"
                 continue
 
+        duration = time.perf_counter() - t_step
         if not schema_ok and status != "ok":
             status = "schema_break" if error and "Schema" in error else "code_error"
         if status == "ok":
             available[step.name] = out_path
-            print(f"   {step.label}: ok (acc={accuracy:.3f}, Versuche={used})", flush=True)
+            print(f"   {step.label}: ok (acc={accuracy:.3f}, Versuche={used}, "
+                  f"{duration:.2f}s)", flush=True)
         else:
-            print(f"   {step.label}: {status} nach {used} Versuch(en)", flush=True)
+            print(f"   {step.label}: {status} nach {used} Versuch(en) "
+                  f"({duration:.2f}s)", flush=True)
 
         rec.update(status=status, schema_ok=schema_ok,
                    accuracy=round(accuracy, 6) if accuracy is not None else None,
                    attempts=used, error=error, cost_usd=round(cost, 6),
+                   duration_s=round(duration, 2), llm_s=round(llm_s, 2),
+                   exec_s=round(exec_s, 2),
                    prompt_tokens=ptok, completion_tokens=ctok,
                    row_actual=(len(pd.read_parquet(out_path))
                                if out_path.exists() and status == "ok" else None),
                    row_expected=len(expected_df))
         _save_code(script_path.parent, code)
         steps.append(rec)
+        # Nach jedem Schritt sichern: bricht der Lauf ab (Anbieterfehler, Abbruch
+        # durch den Nutzer), bleiben die bereits gemessenen Schritte erhalten.
+        _write_record(base, provider_name, provider.model_id, seed, attempts, steps)
 
+    return _write_record(base, provider_name, provider.model_id, seed, attempts, steps)
+
+
+def _write_record(base: Path, provider_name: str, model_id: str, seed: int,
+                  attempts: int, steps: list[dict]) -> dict:
     record = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "provider": provider_name,
-        "requested_model": provider.model_id,
+        "requested_model": model_id,
         "mode": "pipeline",
         "seed": seed,
         "attempts_per_step": attempts,
+        "n_steps_completed": len(steps),
         "n_steps_ok": sum(s["status"] == "ok" for s in steps),
         "reached_end": any(s["step"] == "final" and s["status"] == "ok" for s in steps),
         "steps": steps,
@@ -277,5 +303,115 @@ def run_all_pipelines(providers: list[str], seed: int | None = None,
     out = []
     for p in providers:
         print(f"-> Pipeline | {p}", flush=True)
-        out.append(run_pipeline(p, seed, attempts=attempts))
+        if p == "baseline":
+            out.append(run_baseline_pipeline(seed))
+        else:
+            out.append(run_pipeline(p, seed, attempts=attempts))
     return out
+
+
+# ---------------------------------------------------------------- Baseline
+
+def _baseline_step(name: str, inputs: dict[str, pd.DataFrame]) -> pd.DataFrame:
+    """Regelbasierte Umsetzung eines Pipeline-Schritts.
+
+    Für die formalisierbaren Schritte ist die Regel zugleich die korrekte Lösung
+    (dieselben Routinen wie die Referenz); für die semantisch geprägten Schritte
+    -- Länder-Vereinheitlichung und Fuzzy-Duplikate -- kommen die begrenzten
+    Heuristiken der Vergleichsbasis zum Einsatz. Der Endschritt nutzt wie im
+    Prompt beschrieben den bereits vereinheitlichten Ländercode aus Schritt 3,
+    sodass dessen Fehler sich genauso fortpflanzen wie bei den Modellen."""
+    from baseline import pipeline as bp
+
+    i = inputs.get("input")
+    match name:
+        case "cleaning_easy":
+            return ref._cleaning_easy(i)
+        case "cleaning_medium":
+            return ref._cleaning_medium(i)
+        case "cleaning_hard":
+            return bp._cleaning_hard(i)          # begrenzte Ländertabelle
+        case "dedup_easy":
+            return ref._dedup_easy(i)
+        case "dedup_medium":
+            return ref._dedup_medium(i)
+        case "dedup_hard":
+            return bp._dedup_hard(i)             # Heuristik statt Weltwissen
+        case "products":
+            return ref._transform_easy(i)
+        case "orders":
+            return ref._transform_medium(i)
+        case "final":
+            customers = inputs["customers"].rename(columns={"country": "country_code"})
+            return ref._transform_hard(inputs["orders"], customers, inputs["products"])
+        case _:
+            raise KeyError(f"Unbekannter Schritt: {name}")
+
+
+def _read_table(path: Path) -> pd.DataFrame:
+    return pd.read_csv(path) if path.suffix == ".csv" else pd.read_parquet(path)
+
+
+def run_baseline_pipeline(seed: int) -> dict:
+    """Dieselbe verkettete Strecke, regelbasiert statt LLM-generiert.
+
+    Liefert einen Datensatz im gleichen Format wie ``run_pipeline``, sodass die
+    Baseline in Heatmap und Verlaufsgrafik als zusätzliche Spalte erscheint. Es
+    gibt keine Code-Erzeugung, daher immer genau ein Versuch und keine Kosten."""
+    chain_ref = build_chain_reference(seed)
+    base = PIPELINE_RESULTS / str(seed) / "baseline"
+    available: dict[str, Path] = {}
+    steps: list[dict] = []
+
+    for step in PIPELINE:
+        rec = {"step": step.name, "label": step.label}
+        resolved = _resolve_inputs(step, seed, available)
+        if resolved is None:
+            rec.update(status="blocked", schema_ok=False, accuracy=None,
+                       attempts=0, error="Vorheriger Schritt fehlgeschlagen",
+                       cost_usd=0.0, prompt_tokens=0, completion_tokens=0,
+                       duration_s=0.0, llm_s=0.0, exec_s=0.0)
+            steps.append(rec)
+            print(f"   {step.label}: blockiert", flush=True)
+            continue
+
+        out_path = base / step.name / "output.parquet"
+        expected_df = chain_ref[step.name]
+        status, schema_ok, accuracy, error = "code_error", False, None, None
+        t_step = time.perf_counter()
+        try:
+            result = _baseline_step(step.name, {r: _read_table(p) for r, p in resolved})
+            missing = [c for c in expected_df.columns if c not in result.columns]
+            if missing:
+                error = f"Schema unvollständig, fehlende Spalten: {missing}"
+                status = "schema_break"
+            else:
+                out_path.parent.mkdir(parents=True, exist_ok=True)
+                result.to_parquet(out_path, index=False)
+                schema_ok = True
+                accuracy = aligned_accuracy(result, expected_df)
+                status = "ok"
+                available[step.name] = out_path
+        except Exception as exc:  # noqa: BLE001
+            error = f"{type(exc).__name__}: {exc}"
+
+        duration = time.perf_counter() - t_step
+        if status == "ok":
+            print(f"   {step.label}: ok (acc={accuracy:.3f}, Versuche=1, "
+                  f"{duration:.2f}s)", flush=True)
+        else:
+            print(f"   {step.label}: {status} ({error}) ({duration:.2f}s)", flush=True)
+
+        rec.update(status=status, schema_ok=schema_ok,
+                   accuracy=round(accuracy, 6) if accuracy is not None else None,
+                   attempts=1, error=error, cost_usd=0.0,
+                   duration_s=round(duration, 2), llm_s=0.0,
+                   exec_s=round(duration, 2),
+                   prompt_tokens=0, completion_tokens=0,
+                   row_actual=(len(pd.read_parquet(out_path))
+                               if status == "ok" else None),
+                   row_expected=len(expected_df))
+        steps.append(rec)
+        _write_record(base, "baseline", "rule_based", seed, 1, steps)
+
+    return _write_record(base, "baseline", "rule_based", seed, 1, steps)

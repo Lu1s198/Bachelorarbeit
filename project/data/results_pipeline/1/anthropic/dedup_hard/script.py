@@ -1,140 +1,133 @@
 import pandas as pd
 import numpy as np
-from difflib import SequenceMatcher
+import re
 
-input_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/anthropic/dedup_medium/output.parquet"
-output_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/anthropic/dedup_hard/output.parquet"
+input_path = "C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/anthropic/dedup_medium/output.parquet"
+output_path = "C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/anthropic/dedup_hard/output.parquet"
 
 df = pd.read_parquet(input_path)
-df = df.reset_index(drop=True)
 
-# Ensure customer_id is a consistent type (string) to avoid mismatches later
-if 'customer_id' in df.columns:
-    df['customer_id'] = df['customer_id'].astype(str)
+if "customer_id" in df.columns:
+    try:
+        df["customer_id"] = pd.to_numeric(df["customer_id"], errors="coerce")
+    except Exception:
+        pass
 
-def normalize_email(email):
-    if pd.isna(email):
-        return None
-    e = str(email).strip().lower()
-    if '@' in e:
-        local, domain = e.split('@', 1)
-        local = local.replace('.', '')
-        return local + '@' + domain
-    return e
+TITLES = {
+    "mr", "mrs", "ms", "miss", "mx", "dr", "prof", "professor", "sir",
+    "madam", "herr", "frau", "fraeulein", "fräulein", "jr", "sr", "st"
+}
 
 def normalize_name(name):
     if pd.isna(name):
-        return None
-    n = str(name).strip().lower()
-    n = n.replace('.', '')
-    n = ' '.join(n.split())
-    parts = n.split(' ')
-    # Remove single-letter middle initials when there are more than 2 parts
-    if len(parts) > 2:
-        parts = [p for p in parts if len(p) > 1]
-    return ' '.join(parts)
+        return ""
+    s = str(name).lower()
+    s = re.sub(r"[^a-z\s]", " ", s)
+    tokens = s.split()
+    tokens = [t for t in tokens if t not in TITLES]
+    tokens = [t for t in tokens if len(t) > 1]
+    return " ".join(tokens)
 
-df['norm_email'] = df['email'].apply(normalize_email) if 'email' in df.columns else None
-df['norm_name'] = df['full_name'].apply(normalize_name) if 'full_name' in df.columns else None
+def normalize_email(email):
+    if pd.isna(email):
+        return ""
+    s = str(email).strip().lower()
+    if "@" in s:
+        local, domain = s.split("@", 1)
+        local = local.replace(".", "")
+        return local + "@" + domain
+    return s
+
+def levenshtein(a, b):
+    if a == b:
+        return 0
+    la, lb = len(a), len(b)
+    if la == 0:
+        return lb
+    if lb == 0:
+        return la
+    prev = list(range(lb + 1))
+    for i, ca in enumerate(a, 1):
+        cur = [i] + [0] * lb
+        for j, cb in enumerate(b, 1):
+            cost = 0 if ca == cb else 1
+            cur[j] = min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost)
+        prev = cur
+    return prev[lb]
+
+name_col = "full_name" if "full_name" in df.columns else None
+email_col = "email" if "email" in df.columns else None
+
+df["_norm_name"] = df[name_col].apply(normalize_name) if name_col else ""
+df["_norm_email"] = df[email_col].apply(normalize_email) if email_col else ""
 
 n = len(df)
+parent = list(range(n))
 
-class UnionFind:
-    def __init__(self, size):
-        self.parent = list(range(size))
+def find(x):
+    while parent[x] != x:
+        parent[x] = parent[parent[x]]
+        x = parent[x]
+    return x
 
-    def find(self, x):
-        while self.parent[x] != x:
-            self.parent[x] = self.parent[self.parent[x]]
-            x = self.parent[x]
-        return x
+def union(x, y):
+    rx, ry = find(x), find(y)
+    if rx != ry:
+        parent[rx] = ry
 
-    def union(self, x, y):
-        rx, ry = self.find(x), self.find(y)
-        if rx != ry:
-            self.parent[rx] = ry
-
-uf = UnionFind(n)
-
-# 1) Union rows with identical normalized email
 email_groups = {}
-for idx, key in enumerate(df['norm_email']):
-    if key is None or (isinstance(key, float) and np.isnan(key)):
-        continue
-    email_groups.setdefault(key, []).append(idx)
+for idx, val in enumerate(df["_norm_email"]):
+    if val:
+        email_groups.setdefault(val, []).append(idx)
+for indices in email_groups.values():
+    if len(indices) > 1:
+        first = indices[0]
+        for other in indices[1:]:
+            union(first, other)
 
-for idxs in email_groups.values():
-    if len(idxs) > 1:
-        first = idxs[0]
-        for other in idxs[1:]:
-            uf.union(first, other)
+name_groups = {}
+for idx, val in enumerate(df["_norm_name"]):
+    if val:
+        name_groups.setdefault(val, []).append(idx)
+for indices in name_groups.values():
+    if len(indices) > 1:
+        first = indices[0]
+        for other in indices[1:]:
+            union(first, other)
 
-# 2) Union rows with highly similar normalized name (fuzzy match for typos, casing, initials)
-name_values = df['norm_name'].tolist()
+bucket_groups = {}
+for idx, val in enumerate(df["_norm_name"]):
+    if val and len(val) >= 3:
+        key = (val[0], len(val) // 3)
+        bucket_groups.setdefault(key, []).append(idx)
 
-# Group by first letter + length bucket to reduce comparisons
-buckets = {}
-for idx, name in enumerate(name_values):
-    if not name:
-        continue
-    key = (name[0], len(name) // 3)
-    buckets.setdefault(key, []).append(idx)
+for indices in bucket_groups.values():
+    m = len(indices)
+    if m > 1 and m <= 500:
+        for i in range(m):
+            for j in range(i + 1, m):
+                a_idx, b_idx = indices[i], indices[j]
+                a_name = df["_norm_name"].iloc[a_idx]
+                b_name = df["_norm_name"].iloc[b_idx]
+                if abs(len(a_name) - len(b_name)) <= 1:
+                    dist = levenshtein(a_name, b_name)
+                    if dist <= 1:
+                        union(a_idx, b_idx)
 
-SIMILARITY_THRESHOLD = 0.88
+df["_group"] = [find(i) for i in range(n)]
 
-compared = set()
-for key, idxs in buckets.items():
-    for i in range(len(idxs)):
-        for j in range(i + 1, len(idxs)):
-            a, b = idxs[i], idxs[j]
-            if uf.find(a) == uf.find(b):
-                continue
-            pair_key = (min(a, b), max(a, b))
-            if pair_key in compared:
-                continue
-            compared.add(pair_key)
-            na, nb = name_values[a], name_values[b]
-            if na and nb:
-                ratio = SequenceMatcher(None, na, nb).ratio()
-                if ratio >= SIMILARITY_THRESHOLD:
-                    uf.union(a, b)
+if "customer_id" in df.columns:
+    idx_min = df.groupby("_group")["customer_id"].idxmin()
+else:
+    idx_min = df.groupby("_group").apply(lambda g: g.index[0])
 
-# Also compare across adjacent length buckets to catch off-by-one bucket boundary issues
-bucket_keys = list(buckets.keys())
-for k1 in bucket_keys:
-    letter, bucket_num = k1
-    neighbor_key = (letter, bucket_num + 1)
-    if neighbor_key in buckets:
-        idxs1 = buckets[k1]
-        idxs2 = buckets[neighbor_key]
-        for a in idxs1:
-            for b in idxs2:
-                if uf.find(a) == uf.find(b):
-                    continue
-                pair_key = (min(a, b), max(a, b))
-                if pair_key in compared:
-                    continue
-                compared.add(pair_key)
-                na, nb = name_values[a], name_values[b]
-                if na and nb:
-                    ratio = SequenceMatcher(None, na, nb).ratio()
-                    if ratio >= SIMILARITY_THRESHOLD:
-                        uf.union(a, b)
+result = df.loc[idx_min].copy()
 
-df['cluster'] = [uf.find(i) for i in range(n)]
+result = result.drop(columns=["_norm_name", "_norm_email", "_group"], errors="ignore")
 
-# Determine completeness (non-null count across original columns)
-original_cols = [c for c in df.columns if c not in ('norm_email', 'norm_name', 'cluster')]
-df['completeness'] = df[original_cols].notna().sum(axis=1)
-
-df_sorted = df.sort_values('completeness', ascending=False)
-result = df_sorted.groupby('cluster', as_index=False).first()
-
-result = result[original_cols]
-
-required_cols = ['customer_id', 'full_name', 'email', 'country', 'registered_at']
-other_cols = [c for c in result.columns if c not in required_cols]
-final_cols = [c for c in required_cols if c in result.columns] + other_cols
-result = result[final_cols]
+if "customer_id" in result.columns:
+    result = result.sort_values("customer_id").reset_index(drop=True)
+else:
+    result = result.reset_index(drop=True)
 
 result.to_parquet(output_path, index=False)

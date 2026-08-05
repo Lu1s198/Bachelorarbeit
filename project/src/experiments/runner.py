@@ -55,8 +55,16 @@ def _generate_with_retry(
         except Exception as exc:  # noqa: BLE001 - bewusst breit; Klassifikation folgt
             if attempt < attempts and _is_transient(exc):
                 delay = base_delay * 2 ** (attempt - 1)
-                print(f"   transienter Fehler ({type(exc).__name__}), "
-                      f"Retry {attempt}/{attempts - 1} in {delay:.0f}s ...", flush=True)
+                # Statuscode und Meldung mitloggen: ohne sie laesst sich hinterher
+                # nicht mehr unterscheiden, ob es Ueberlastung, Rate-Limit oder ein
+                # Netzproblem war (der Ausnahmetyp allein sagt bei generischen
+                # APIStatusError nichts aus).
+                code = getattr(exc, "status_code", None) or getattr(exc, "code", None)
+                msg = " ".join(str(exc).split())[:200]
+                print(f"   transienter Fehler ({type(exc).__name__}"
+                      f"{f', HTTP {code}' if code else ''}): {msg}\n"
+                      f"      Retry {attempt}/{attempts - 1} in {delay:.0f}s ...",
+                      flush=True)
                 time.sleep(delay)
                 continue
             raise

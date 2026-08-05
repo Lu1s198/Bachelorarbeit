@@ -20,19 +20,24 @@ import pandas as pd
 from config import settings
 from dataset import reference as ref
 
-# Bewusst begrenzte Länder-Tabelle: nur volle Namen und ISO-Codes,
-# KEINE Tippfehler/Abkürzungen (z.B. 'GER', 'Deutshcland', 'Holland', 'UK').
+# Begrenzte Länder-Tabelle mit den klassischen, standardisierten Schreibweisen:
+# volle Namen (deutsch/englisch), ISO-3166-1 alpha-2 und alpha-3 sowie die
+# dreistelligen IOC-Codes (GER, SUI, NED, ... weichen bei einigen Ländern vom
+# ISO-Code ab). NICHT abgedeckt sind Tippfehler, ASCII-Umschriften und
+# umgangssprachliche Namen -- also 'Deutshcland', 'OEsterreich', 'Holland',
+# 'England', 'UK'. Genau diese Fälle verlangen Weltwissen statt einer Tabelle.
 _LIMITED_COUNTRY_MAP = {
-    "de": "DE", "deutschland": "DE", "germany": "DE",
-    "at": "AT", "österreich": "AT", "austria": "AT",
-    "ch": "CH", "schweiz": "CH", "switzerland": "CH",
-    "fr": "FR", "frankreich": "FR", "france": "FR",
-    "it": "IT", "italien": "IT", "italy": "IT",
-    "es": "ES", "spanien": "ES", "spain": "ES",
-    "nl": "NL", "niederlande": "NL", "netherlands": "NL",
-    "be": "BE", "belgien": "BE", "belgium": "BE",
-    "pl": "PL", "polen": "PL", "poland": "PL",
-    "gb": "GB", "großbritannien": "GB", "united kingdom": "GB",
+    # ISO alpha-2 | ISO alpha-3 | IOC | deutscher Name | englischer Name
+    "de": "DE", "deu": "DE", "ger": "DE", "deutschland": "DE", "germany": "DE",
+    "at": "AT", "aut": "AT", "österreich": "AT", "austria": "AT",
+    "ch": "CH", "che": "CH", "sui": "CH", "schweiz": "CH", "switzerland": "CH",
+    "fr": "FR", "fra": "FR", "frankreich": "FR", "france": "FR",
+    "it": "IT", "ita": "IT", "italien": "IT", "italy": "IT",
+    "es": "ES", "esp": "ES", "spanien": "ES", "spain": "ES",
+    "nl": "NL", "nld": "NL", "ned": "NL", "niederlande": "NL", "netherlands": "NL",
+    "be": "BE", "bel": "BE", "belgien": "BE", "belgium": "BE",
+    "pl": "PL", "pol": "PL", "polen": "PL", "poland": "PL",
+    "gb": "GB", "gbr": "GB", "großbritannien": "GB", "united kingdom": "GB",
 }
 
 

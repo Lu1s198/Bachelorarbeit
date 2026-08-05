@@ -1,4 +1,5 @@
 import os
+import numpy as np
 import pandas as pd
 
 input_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/1/customers_raw.csv"
@@ -6,11 +7,14 @@ output_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_
 
 df = pd.read_csv(input_path)
 
-text_columns = df.select_dtypes(include=["object", "string"]).columns
-for column in text_columns:
-    df[column] = df[column].astype("string").str.strip()
+for column in df.columns:
+    if pd.api.types.is_object_dtype(df[column]) or pd.api.types.is_string_dtype(df[column]):
+        df[column] = df[column].map(
+            lambda value: value.strip() if isinstance(value, str) else value
+        )
 
-df["country"] = df["country"].fillna("UNKNOWN")
+if "country" in df.columns:
+    df["country"] = df["country"].fillna("UNKNOWN")
 
 os.makedirs(os.path.dirname(output_path), exist_ok=True)
 df.to_parquet(output_path, index=False)

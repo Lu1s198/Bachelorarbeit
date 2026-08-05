@@ -1,32 +1,35 @@
-import os
-import csv
+from pathlib import Path
 import re
 import numpy as np
 import pandas as pd
 
-input_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/1/products_raw.csv"
-output_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/openai/products/output.parquet"
+input_path = Path(r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/1/products_raw.csv")
+output_path = Path(r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/openai/products/output.parquet")
 
-with open(input_path, "r", encoding="utf-8-sig", newline="") as f:
-    sample = f.read(8192)
-    try:
-        delimiter = csv.Sniffer().sniff(sample, delimiters=",;|\t").delimiter
-    except csv.Error:
-        delimiter = ","
+df = pd.read_csv(input_path, dtype="string", sep=None, engine="python")
 
-df = pd.read_csv(input_path, sep=delimiter, encoding="utf-8-sig")
+required_columns = ["product_id", "name", "category", "price_eur", "in_stock"]
+missing_columns = [column for column in required_columns if column not in df.columns]
+if missing_columns:
+    raise ValueError(f"Missing required columns: {missing_columns}")
 
 def parse_price(value):
     if pd.isna(value):
         return np.nan
 
     text = str(value).strip()
-    text = re.sub(r"(?i)(eur|€)", "", text)
-    text = re.sub(r"\s+", "", text)
-    text = re.sub(r"[^0-9,.\-]", "", text)
-
-    if not text or text in {"-", ".", ",", "-.", "-,"}:
+    if not text:
         return np.nan
+
+    text = text.replace("\u00a0", "").replace(" ", "")
+    text = re.sub(r"(?i)(eur|euro|€)", "", text)
+    text = re.sub(r"[^0-9,.\-()]", "", text)
+
+    if not text:
+        return np.nan
+
+    negative = text.startswith("-") or (text.startswith("(") and text.endswith(")"))
+    text = text.replace("-", "").replace("(", "").replace(")", "")
 
     comma_count = text.count(",")
     dot_count = text.count(".")
@@ -38,11 +41,7 @@ def parse_price(value):
             text = text.replace(",", "")
     elif comma_count:
         if comma_count == 1:
-            before, after = text.rsplit(",", 1)
-            if len(after) in (1, 2):
-                text = before.replace(",", "") + "." + after
-            else:
-                text = text.replace(",", "")
+            text = text.replace(",", ".")
         else:
             parts = text.split(",")
             if len(parts[-1]) in (1, 2):
@@ -56,29 +55,40 @@ def parse_price(value):
         else:
             text = "".join(parts)
 
-    return pd.to_numeric(text, errors="coerce")
+    try:
+        result = float(text)
+        return -result if negative else result
+    except ValueError:
+        return np.nan
 
-def parse_boolean(value):
-    if pd.isna(value):
-        return pd.NA
+df["price_eur"] = df["price_eur"].map(parse_price).astype("float64")
 
-    text = str(value).strip().lower()
-    true_values = {"ja", "j", "true", "t", "1", "yes", "y", "wahr", "available"}
-    false_values = {"nein", "n", "false", "f", "0", "no", "falsch", "unavailable"}
+stock_mapping = {
+    "ja": True,
+    "j": True,
+    "yes": True,
+    "y": True,
+    "true": True,
+    "t": True,
+    "1": True,
+    "x": True,
+    "nein": False,
+    "n": False,
+    "no": False,
+    "false": False,
+    "f": False,
+    "0": False,
+}
 
-    if text in true_values:
-        return True
-    if text in false_values:
-        return False
-    return pd.NA
+stock_values = (
+    df["in_stock"]
+    .astype("string")
+    .str.strip()
+    .str.lower()
+    .replace("", pd.NA)
+)
 
-df["price_eur"] = df["price_eur"].apply(parse_price).astype("float64")
-df["in_stock"] = df["in_stock"].apply(parse_boolean).astype("boolean")
+df["in_stock"] = stock_values.map(stock_mapping).astype("boolean")
 
-required_columns = ["product_id", "name", "category", "price_eur", "in_stock"]
-for column in required_columns:
-    if column not in df.columns:
-        df[column] = pd.NA
-
-os.makedirs(os.path.dirname(output_path), exist_ok=True)
+output_path.parent.mkdir(parents=True, exist_ok=True)
 df.to_parquet(output_path, index=False)

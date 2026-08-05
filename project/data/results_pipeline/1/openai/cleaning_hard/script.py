@@ -7,275 +7,498 @@ import numpy as np
 input_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/openai/cleaning_medium/output.parquet"
 output_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/openai/cleaning_hard/output.parquet"
 
-df = pd.read_parquet(input_path)
+data = """
+AF|AFG|Afghanistan
+AL|ALB|Albania
+DZ|DZA|Algeria
+AS|ASM|American Samoa
+AD|AND|Andorra
+AO|AGO|Angola
+AI|AIA|Anguilla
+AQ|ATA|Antarctica
+AG|ATG|Antigua and Barbuda
+AR|ARG|Argentina
+AM|ARM|Armenia
+AW|ABW|Aruba
+AU|AUS|Australia
+AT|AUT|Austria
+AZ|AZE|Azerbaijan
+BS|BHS|Bahamas
+BH|BHR|Bahrain
+BD|BGD|Bangladesh
+BB|BRB|Barbados
+BY|BLR|Belarus
+BE|BEL|Belgium
+BZ|BLZ|Belize
+BJ|BEN|Benin
+BM|BMU|Bermuda
+BT|BTN|Bhutan
+BO|BOL|Bolivia
+BQ|BES|Bonaire Sint Eustatius and Saba
+BA|BIH|Bosnia and Herzegovina
+BW|BWA|Botswana
+BV|BVT|Bouvet Island
+BR|BRA|Brazil
+IO|IOT|British Indian Ocean Territory
+BN|BRN|Brunei
+BG|BGR|Bulgaria
+BF|BFA|Burkina Faso
+BI|BDI|Burundi
+CV|CPV|Cabo Verde
+KH|KHM|Cambodia
+CM|CMR|Cameroon
+CA|CAN|Canada
+KY|CYM|Cayman Islands
+CF|CAF|Central African Republic
+TD|TCD|Chad
+CL|CHL|Chile
+CN|CHN|China
+CX|CXR|Christmas Island
+CC|CCK|Cocos Islands
+CO|COL|Colombia
+KM|COM|Comoros
+CG|COG|Republic of the Congo
+CD|COD|Democratic Republic of the Congo
+CK|COK|Cook Islands
+CR|CRI|Costa Rica
+CI|CIV|Cote d Ivoire
+HR|HRV|Croatia
+CU|CUB|Cuba
+CW|CUW|Curacao
+CY|CYP|Cyprus
+CZ|CZE|Czechia
+DK|DNK|Denmark
+DJ|DJI|Djibouti
+DM|DMA|Dominica
+DO|DOM|Dominican Republic
+EC|ECU|Ecuador
+EG|EGY|Egypt
+SV|SLV|El Salvador
+GQ|GNQ|Equatorial Guinea
+ER|ERI|Eritrea
+EE|EST|Estonia
+SZ|SWZ|Eswatini
+ET|ETH|Ethiopia
+FK|FLK|Falkland Islands
+FO|FRO|Faroe Islands
+FJ|FJI|Fiji
+FI|FIN|Finland
+FR|FRA|France
+GF|GUF|French Guiana
+PF|PYF|French Polynesia
+TF|ATF|French Southern Territories
+GA|GAB|Gabon
+GM|GMB|Gambia
+GE|GEO|Georgia
+DE|DEU|Germany
+GH|GHA|Ghana
+GI|GIB|Gibraltar
+GR|GRC|Greece
+GL|GRL|Greenland
+GD|GRD|Grenada
+GP|GLP|Guadeloupe
+GU|GUM|Guam
+GT|GTM|Guatemala
+GG|GGY|Guernsey
+GN|GIN|Guinea
+GW|GNB|Guinea Bissau
+GY|GUY|Guyana
+HT|HTI|Haiti
+HM|HMD|Heard Island and McDonald Islands
+VA|VAT|Holy See
+HN|HND|Honduras
+HK|HKG|Hong Kong
+HU|HUN|Hungary
+IS|ISL|Iceland
+IN|IND|India
+ID|IDN|Indonesia
+IR|IRN|Iran
+IQ|IRQ|Iraq
+IE|IRL|Ireland
+IM|IMN|Isle of Man
+IL|ISR|Israel
+IT|ITA|Italy
+JM|JAM|Jamaica
+JP|JPN|Japan
+JE|JEY|Jersey
+JO|JOR|Jordan
+KZ|KAZ|Kazakhstan
+KE|KEN|Kenya
+KI|KIR|Kiribati
+KP|PRK|North Korea
+KR|KOR|South Korea
+KW|KWT|Kuwait
+KG|KGZ|Kyrgyzstan
+LA|LAO|Laos
+LV|LVA|Latvia
+LB|LBN|Lebanon
+LS|LSO|Lesotho
+LR|LBR|Liberia
+LY|LBY|Libya
+LI|LIE|Liechtenstein
+LT|LTU|Lithuania
+LU|LUX|Luxembourg
+MO|MAC|Macao
+MG|MDG|Madagascar
+MW|MWI|Malawi
+MY|MYS|Malaysia
+MV|MDV|Maldives
+ML|MLI|Mali
+MT|MLT|Malta
+MH|MHL|Marshall Islands
+MQ|MTQ|Martinique
+MR|MRT|Mauritania
+MU|MUS|Mauritius
+YT|MYT|Mayotte
+MX|MEX|Mexico
+FM|FSM|Micronesia
+MD|MDA|Moldova
+MC|MCO|Monaco
+MN|MNG|Mongolia
+ME|MNE|Montenegro
+MS|MSR|Montserrat
+MA|MAR|Morocco
+MZ|MOZ|Mozambique
+MM|MMR|Myanmar
+NA|NAM|Namibia
+NR|NRU|Nauru
+NP|NPL|Nepal
+NL|NLD|Netherlands
+NC|NCL|New Caledonia
+NZ|NZL|New Zealand
+NI|NIC|Nicaragua
+NE|NER|Niger
+NG|NGA|Nigeria
+NU|NIU|Niue
+NF|NFK|Norfolk Island
+MK|MKD|North Macedonia
+MP|MNP|Northern Mariana Islands
+NO|NOR|Norway
+OM|OMN|Oman
+PK|PAK|Pakistan
+PW|PLW|Palau
+PS|PSE|Palestine
+PA|PAN|Panama
+PG|PNG|Papua New Guinea
+PY|PRY|Paraguay
+PE|PER|Peru
+PH|PHL|Philippines
+PN|PCN|Pitcairn
+PL|POL|Poland
+PT|PRT|Portugal
+PR|PRI|Puerto Rico
+QA|QAT|Qatar
+RE|REU|Reunion
+RO|ROU|Romania
+RU|RUS|Russia
+RW|RWA|Rwanda
+BL|BLM|Saint Barthelemy
+SH|SHN|Saint Helena
+KN|KNA|Saint Kitts and Nevis
+LC|LCA|Saint Lucia
+MF|MAF|Saint Martin
+PM|SPM|Saint Pierre and Miquelon
+VC|VCT|Saint Vincent and the Grenadines
+WS|WSM|Samoa
+SM|SMR|San Marino
+ST|STP|Sao Tome and Principe
+SA|SAU|Saudi Arabia
+SN|SEN|Senegal
+RS|SRB|Serbia
+SC|SYC|Seychelles
+SL|SLE|Sierra Leone
+SG|SGP|Singapore
+SX|SXM|Sint Maarten
+SK|SVK|Slovakia
+SI|SVN|Slovenia
+SB|SLB|Solomon Islands
+SO|SOM|Somalia
+ZA|ZAF|South Africa
+GS|SGS|South Georgia and the South Sandwich Islands
+SS|SSD|South Sudan
+ES|ESP|Spain
+LK|LKA|Sri Lanka
+SD|SDN|Sudan
+SR|SUR|Suriname
+SJ|SJM|Svalbard and Jan Mayen
+SE|SWE|Sweden
+CH|CHE|Switzerland
+SY|SYR|Syria
+TW|TWN|Taiwan
+TJ|TJK|Tajikistan
+TZ|TZA|Tanzania
+TH|THA|Thailand
+TL|TLS|Timor Leste
+TG|TGO|Togo
+TK|TKL|Tokelau
+TO|TON|Tonga
+TT|TTO|Trinidad and Tobago
+TN|TUN|Tunisia
+TR|TUR|Turkey
+TM|TKM|Turkmenistan
+TC|TCA|Turks and Caicos Islands
+TV|TUV|Tuvalu
+UG|UGA|Uganda
+UA|UKR|Ukraine
+AE|ARE|United Arab Emirates
+GB|GBR|United Kingdom
+US|USA|United States
+UM|UMI|United States Minor Outlying Islands
+UY|URY|Uruguay
+UZ|UZB|Uzbekistan
+VU|VUT|Vanuatu
+VE|VEN|Venezuela
+VN|VNM|Vietnam
+VG|VGB|British Virgin Islands
+VI|VIR|United States Virgin Islands
+WF|WLF|Wallis and Futuna
+EH|ESH|Western Sahara
+YE|YEM|Yemen
+ZM|ZMB|Zambia
+ZW|ZWE|Zimbabwe
+"""
 
-records = [
-    ("AF", "AFG", "afghanistan"),
-    ("AL", "ALB", "albania", "shqiperia"),
-    ("DZ", "DZA", "algeria", "algerie"),
-    ("AD", "AND", "andorra"),
-    ("AO", "AGO", "angola"),
-    ("AG", "ATG", "antigua and barbuda", "antigua"),
-    ("AR", "ARG", "argentina"),
-    ("AM", "ARM", "armenia"),
-    ("AU", "AUS", "australia"),
-    ("AT", "AUT", "austria", "osterreich"),
-    ("AZ", "AZE", "azerbaijan", "azerbaidschan"),
-    ("BS", "BHS", "bahamas", "the bahamas"),
-    ("BH", "BHR", "bahrain"),
-    ("BD", "BGD", "bangladesh"),
-    ("BB", "BRB", "barbados"),
-    ("BY", "BLR", "belarus", "weissrussland", "belarus"),
-    ("BE", "BEL", "belgium", "belgien"),
-    ("BZ", "BLZ", "belize"),
-    ("BJ", "BEN", "benin"),
-    ("BT", "BTN", "bhutan"),
-    ("BO", "BOL", "bolivia", "bolivien", "plurinational state of bolivia"),
-    ("BA", "BIH", "bosnia and herzegovina", "bosnia herzogovina", "bosnien und herzegowina", "bosnia"),
-    ("BW", "BWA", "botswana"),
-    ("BR", "BRA", "brazil", "brasil", "brazilien"),
-    ("BN", "BRN", "brunei", "brunei darussalam"),
-    ("BG", "BGR", "bulgaria", "bulgarien"),
-    ("BF", "BFA", "burkina faso"),
-    ("BI", "BDI", "burundi"),
-    ("CV", "CPV", "cabo verde", "cape verde", "kap verde"),
-    ("KH", "KHM", "cambodia", "kampuchea", "kambodscha"),
-    ("CM", "CMR", "cameroon", "cameroun", "kamerun"),
-    ("CA", "CAN", "canada"),
-    ("CF", "CAF", "central african republic", "zentralafrikanische republik"),
-    ("TD", "TCD", "chad", "tschad"),
-    ("CL", "CHL", "chile"),
-    ("CN", "CHN", "china", "peoples republic of china", "pr china", "volksrepublik china"),
-    ("CO", "COL", "colombia", "kolumbien"),
-    ("KM", "COM", "comoros", "komoren"),
-    ("CD", "COD", "democratic republic of the congo", "dr congo", "drc", "congo kinshasa", "democratic republic congo"),
-    ("CG", "COG", "republic of the congo", "congo brazzaville"),
-    ("CR", "CRI", "costa rica"),
-    ("CI", "CIV", "cote d ivoire", "cote divoire", "ivory coast", "elfenbeinkuste"),
-    ("HR", "HRV", "croatia", "kroatien"),
-    ("CU", "CUB", "cuba"),
-    ("CY", "CYP", "cyprus", "zypern"),
-    ("CZ", "CZE", "czechia", "czech republic", "tschechien"),
-    ("DK", "DNK", "denmark", "danmark"),
-    ("DJ", "DJI", "djibouti", "dschibuti"),
-    ("DM", "DMA", "dominica"),
-    ("DO", "DOM", "dominican republic", "dominikanische republik"),
-    ("EC", "ECU", "ecuador", "equador"),
-    ("EG", "EGY", "egypt", "agypten"),
-    ("SV", "SLV", "el salvador"),
-    ("GQ", "GNQ", "equatorial guinea", "aquatorialguinea"),
-    ("ER", "ERI", "eritrea"),
-    ("EE", "EST", "estonia", "estland"),
-    ("SZ", "SWZ", "eswatini", "swaziland"),
-    ("ET", "ETH", "ethiopia", "athopia"),
-    ("FJ", "FJI", "fiji", "fidschi"),
-    ("FI", "FIN", "finland", "finnland"),
-    ("FR", "FRA", "france", "frankreich"),
-    ("GA", "GAB", "gabon"),
-    ("GM", "GMB", "gambia", "the gambia"),
-    ("GE", "GEO", "georgia", "georgien"),
-    ("DE", "DEU", "germany", "deutschland", "federal republic of germany", "bundesrepublik deutschland"),
-    ("GH", "GHA", "ghana"),
-    ("GR", "GRC", "greece", "hellas", "griechenland"),
-    ("GD", "GRD", "grenada"),
-    ("GT", "GTM", "guatemala"),
-    ("GN", "GIN", "guinea"),
-    ("GW", "GNB", "guinea bissau", "guinea-bissau"),
-    ("GY", "GUY", "guyana"),
-    ("HT", "HTI", "haiti"),
-    ("HN", "HND", "honduras"),
-    ("HU", "HUN", "hungary", "ungarn"),
-    ("IS", "ISL", "iceland", "island"),
-    ("IN", "IND", "india", "indien"),
-    ("ID", "IDN", "indonesia", "indonesien"),
-    ("IR", "IRN", "iran", "islamic republic of iran"),
-    ("IQ", "IRQ", "iraq", "irak"),
-    ("IE", "IRL", "ireland", "republic of ireland", "irland"),
-    ("IL", "ISR", "israel"),
-    ("IT", "ITA", "italy", "italien"),
-    ("JM", "JAM", "jamaica", "jamika"),
-    ("JP", "JPN", "japan"),
-    ("JO", "JOR", "jordan", "jordanien"),
-    ("KZ", "KAZ", "kazakhstan", "kasachstan"),
-    ("KE", "KEN", "kenya", "kenia"),
-    ("KI", "KIR", "kiribati"),
-    ("KP", "PRK", "north korea", "democratic peoples republic of korea", "dprk", "nordkorea"),
-    ("KR", "KOR", "south korea", "republic of korea", "korea republic", "sudkorea"),
-    ("KW", "KWT", "kuwait", "kuwait"),
-    ("KG", "KGZ", "kyrgyzstan", "kyrgyz republic", "kirgisistan"),
-    ("LA", "LAO", "laos", "lao peoples democratic republic"),
-    ("LV", "LVA", "latvia", "lettland"),
-    ("LB", "LBN", "lebanon", "libanon"),
-    ("LS", "LSO", "lesotho"),
-    ("LR", "LBR", "liberia"),
-    ("LY", "LBY", "libya", "libyen"),
-    ("LI", "LIE", "liechtenstein"),
-    ("LT", "LTU", "lithuania", "litauen"),
-    ("LU", "LUX", "luxembourg", "luxemburg"),
-    ("MG", "MDG", "madagascar", "madagaskar"),
-    ("MW", "MWI", "malawi"),
-    ("MY", "MYS", "malaysia", "malaysien"),
-    ("MV", "MDV", "maldives", "maldiven"),
-    ("ML", "MLI", "mali"),
-    ("MT", "MLT", "malta"),
-    ("MH", "MHL", "marshall islands"),
-    ("MR", "MRT", "mauritania", "mauretanien"),
-    ("MU", "MUS", "mauritius", "mauritius"),
-    ("MX", "MEX", "mexico", "mexiko"),
-    ("FM", "FSM", "micronesia", "federated states of micronesia"),
-    ("MD", "MDA", "moldova", "republic of moldova", "moldawien"),
-    ("MC", "MCO", "monaco", "monako"),
-    ("MN", "MNG", "mongolia", "mongolei"),
-    ("ME", "MNE", "montenegro"),
-    ("MA", "MAR", "morocco", "maroc", "morocco", "marokko"),
-    ("MZ", "MOZ", "mozambique", "mosambik"),
-    ("MM", "MMR", "myanmar", "burma", "burma myanmar"),
-    ("NA", "NAM", "namibia", "namibien"),
-    ("NR", "NRU", "nauru"),
-    ("NP", "NPL", "nepal", "nepal"),
-    ("NL", "NLD", "netherlands", "holland", "the netherlands", "niederlande"),
-    ("NZ", "NZL", "new zealand", "neuseeland"),
-    ("NI", "NIC", "nicaragua", "nikaragua"),
-    ("NE", "NER", "niger"),
-    ("NG", "NGA", "nigeria", "nigerien"),
-    ("MK", "MKD", "north macedonia", "macedonia", "nordmazedonien"),
-    ("NO", "NOR", "norway", "norge", "norwegen"),
-    ("OM", "OMN", "oman"),
-    ("PK", "PAK", "pakistan"),
-    ("PW", "PLW", "palau"),
-    ("PS", "PSE", "palestine", "palestinian territories", "state of palestine"),
-    ("PA", "PAN", "panama"),
-    ("PG", "PNG", "papua new guinea", "papua-neuguinea"),
-    ("PY", "PRY", "paraguay"),
-    ("PE", "PER", "peru"),
-    ("PH", "PHL", "philippines", "philippinen"),
-    ("PL", "POL", "poland", "polen"),
-    ("PT", "PRT", "portugal"),
-    ("QA", "QAT", "qatar", "katar"),
-    ("RO", "ROU", "romania", "rumania", "rumanien"),
-    ("RU", "RUS", "russia", "russian federation", "russland"),
-    ("RW", "RWA", "rwanda", "ruanda"),
-    ("KN", "KNA", "saint kitts and nevis", "st kitts and nevis"),
-    ("LC", "LCA", "saint lucia", "st lucia"),
-    ("VC", "VCT", "saint vincent and the grenadines", "st vincent and the grenadines"),
-    ("WS", "WSM", "samoa"),
-    ("SM", "SMR", "san marino"),
-    ("ST", "STP", "sao tome and principe", "sao tome principe"),
-    ("SA", "SAU", "saudi arabia", "saudi-arabia", "saudi arabien"),
-    ("SN", "SEN", "senegal"),
-    ("RS", "SRB", "serbia", "serbien"),
-    ("SC", "SYC", "seychelles"),
-    ("SL", "SLE", "sierra leone"),
-    ("SG", "SGP", "singapore", "singapur"),
-    ("SK", "SVK", "slovakia", "slovak republic", "slowakei"),
-    ("SI", "SVN", "slovenia", "slowenien"),
-    ("SB", "SLB", "solomon islands"),
-    ("SO", "SOM", "somalia", "somali"),
-    ("ZA", "ZAF", "south africa", "republic of south africa", "sudafrika"),
-    ("SS", "SSD", "south sudan", "sudsudan"),
-    ("ES", "ESP", "spain", "espana", "espagne", "spanien"),
-    ("LK", "LKA", "sri lanka"),
-    ("SD", "SDN", "sudan"),
-    ("SR", "SUR", "suriname"),
-    ("SE", "SWE", "sweden", "sverige", "schweden"),
-    ("CH", "CHE", "switzerland", "schweiz", "suisse", "svizzera"),
-    ("SY", "SYR", "syria", "syrian arab republic", "syrien"),
-    ("TW", "TWN", "taiwan", "taiwan province of china"),
-    ("TJ", "TJK", "tajikistan", "tadschikistan"),
-    ("TZ", "TZA", "tanzania", "united republic of tanzania"),
-    ("TH", "THA", "thailand", "thailand"),
-    ("TL", "TLS", "timor leste", "east timor", "osttimor"),
-    ("TG", "TGO", "togo"),
-    ("TO", "TON", "tonga"),
-    ("TT", "TTO", "trinidad and tobago"),
-    ("TN", "TUN", "tunisia", "tunesien"),
-    ("TR", "TUR", "turkey", "turkiye", "türkiye", "tuerkei", "turkei"),
-    ("TM", "TKM", "turkmenistan", "turkmenistan"),
-    ("TV", "TUV", "tuvalu"),
-    ("UG", "UGA", "uganda"),
-    ("UA", "UKR", "ukraine", "ukraina"),
-    ("AE", "ARE", "united arab emirates", "uae", "vereinigte arabische emirate"),
-    ("GB", "GBR", "united kingdom", "uk", "great britain", "britain", "england", "scotland", "wales", "northern ireland", "grossbritannien"),
-    ("US", "USA", "united states", "united states of america", "usa", "u s a", "us", "america", "vereinigte staaten"),
-    ("UY", "URY", "uruguay"),
-    ("UZ", "UZB", "uzbekistan", "usbekistan"),
-    ("VU", "VUT", "vanuatu"),
-    ("VA", "VAT", "vatican city", "holy see", "vatican", "vatikan"),
-    ("VE", "VEN", "venezuela", "venezuela bolivarian republic of"),
-    ("VN", "VNM", "vietnam", "viet nam"),
-    ("YE", "YEM", "yemen", "jemen"),
-    ("ZM", "ZMB", "zambia", "sambia"),
-    ("ZW", "ZWE", "zimbabwe", "simbabwe"),
-    ("HK", "HKG", "hong kong"),
-    ("MO", "MAC", "macao", "macau"),
-    ("PR", "PRI", "puerto rico"),
-    ("GU", "GUM", "guam"),
-    ("VI", "VIR", "us virgin islands", "u s virgin islands", "virgin islands us"),
-    ("VG", "VGB", "british virgin islands"),
-    ("GF", "GUF", "french guiana"),
-    ("PF", "PYF", "french polynesia"),
-    ("NC", "NCL", "new caledonia"),
-    ("RE", "REU", "reunion"),
-    ("GP", "GLP", "guadeloupe"),
-    ("MQ", "MTQ", "martinique"),
-    ("YT", "MYT", "mayotte"),
-    ("GL", "GRL", "greenland", "gronland"),
-    ("FO", "FRO", "faroe islands"),
-    ("GI", "GIB", "gibraltar"),
-    ("IM", "IMN", "isle of man"),
-    ("JE", "JEY", "jersey"),
-    ("GG", "GGY", "guernsey"),
-    ("AW", "ABW", "aruba"),
-    ("CW", "CUW", "curacao"),
-    ("SX", "SXM", "sint maarten"),
-    ("BQ", "BES", "bonaire sint eustatius and saba", "bonaire"),
-    ("BM", "BMU", "bermuda"),
-    ("KY", "CYM", "cayman islands"),
-    ("TC", "TCA", "turks and caicos islands"),
-    ("AI", "AIA", "anguilla"),
-    ("MS", "MSR", "montserrat"),
-    ("FK", "FLK", "falkland islands", "falkland islands malvinas"),
-    ("PM", "SPM", "saint pierre and miquelon"),
-    ("BL", "BLM", "saint barthelemy"),
-    ("MF", "MAF", "saint martin"),
-    ("WF", "WLF", "wallis and futuna"),
-    ("CX", "CXR", "christmas island"),
-    ("CC", "CCK", "cocos islands", "cocos keeling islands"),
-    ("NF", "NFK", "norfolk island"),
-    ("TK", "TKL", "tokelau"),
-    ("NU", "NIU", "niue"),
-    ("PN", "PCN", "pitcairn"),
-    ("SJ", "SJM", "svalbard and jan mayen"),
-    ("IO", "IOT", "british indian ocean territory"),
-    ("AQ", "ATA", "antarctica"),
-    ("EH", "ESH", "western sahara"),
-]
+aliases = {
+    "AF": ["afghanistan"],
+    "AL": ["albanien"],
+    "DZ": ["algerien"],
+    "AS": ["amerikanisch samoa"],
+    "AD": ["andorra"],
+    "AO": ["angola"],
+    "AI": ["anguilla"],
+    "AG": ["antigua und barbuda", "antigua"],
+    "AR": ["argentinien"],
+    "AM": ["armenien"],
+    "AW": ["aruba"],
+    "AU": ["australien", "aus"],
+    "AT": ["osterreich", "austria"],
+    "AZ": ["aserbaidschan"],
+    "BS": ["the bahamas", "bahamas"],
+    "BH": ["bahrain"],
+    "BD": ["bangladesch"],
+    "BB": ["barbados"],
+    "BY": ["weissrussland", "belarus"],
+    "BE": ["belgien"],
+    "BZ": ["belize"],
+    "BJ": ["benin"],
+    "BM": ["bermuda"],
+    "BT": ["bhutan"],
+    "BO": ["bolivien", "plurinational state of bolivia"],
+    "BA": ["bosnien und herzegowina", "bosnia"],
+    "BW": ["botswana"],
+    "BR": ["brasilien", "brasil"],
+    "BN": ["brunei darussalam"],
+    "BG": ["bulgarien"],
+    "BF": ["burkina faso"],
+    "BI": ["burundi"],
+    "CV": ["cape verde", "kap verde", "cabo verde"],
+    "KH": ["kambodscha"],
+    "CM": ["kamerun"],
+    "CA": ["kanada"],
+    "KY": ["caymaninseln", "cayman islands"],
+    "CF": ["zentralafrikanische republik"],
+    "TD": ["tschad"],
+    "CL": ["chile"],
+    "CN": ["china", "prc", "people's republic of china"],
+    "CO": ["kolumbien"],
+    "KM": ["komoren"],
+    "CG": ["congo brazzaville", "republic of congo", "republik kongo"],
+    "CD": ["dr congo", "drc", "congo kinshasa", "democratic republic of congo", "demokratische republik kongo"],
+    "CR": ["costa rica"],
+    "CI": ["cote divoire", "ivory coast", "elfenbeinkuste", "elfenbeinkueste"],
+    "HR": ["kroatien"],
+    "CU": ["kuba"],
+    "CW": ["curacao", "curaçao"],
+    "CY": ["zypern"],
+    "CZ": ["czech republic", "tschechien", "tschechische republik"],
+    "DK": ["danemark"],
+    "DO": ["dominikanische republik"],
+    "EC": ["ecuador"],
+    "EG": ["agypten", "aegypten"],
+    "SV": ["el salvador"],
+    "GQ": ["aquatorialguinea"],
+    "ER": ["eritrea"],
+    "EE": ["estland"],
+    "SZ": ["swaziland", "eswatini"],
+    "ET": ["athiopien", "aethiopien"],
+    "FK": ["falklandinseln", "falkland islands"],
+    "FO": ["faröer", "faroe islands", "faröer inseln"],
+    "FJ": ["fidschi"],
+    "FI": ["finnland"],
+    "FR": ["frankreich"],
+    "GF": ["franzosisch guayana", "franzoesisch guayana"],
+    "PF": ["franzosisch polynesien", "franzoesisch polynesien"],
+    "GA": ["gabun"],
+    "GM": ["the gambia", "gambia"],
+    "GE": ["georgien"],
+    "DE": ["deutschland", "germany", "ger", "deu", "bundesrepublik deutschland", "deutsch"],
+    "GH": ["ghana"],
+    "GR": ["griechenland"],
+    "GL": ["gronland", "groenland"],
+    "GP": ["guadeloupe"],
+    "GT": ["guatemala"],
+    "GN": ["guinea"],
+    "GW": ["guinea bissau"],
+    "GY": ["guyana"],
+    "HT": ["haiti"],
+    "VA": ["vatican", "vatican city", "vatikan", "heiliger stuhl"],
+    "HN": ["honduras"],
+    "HK": ["hongkong"],
+    "HU": ["ungarn"],
+    "IS": ["island"],
+    "IN": ["indien", "bharat"],
+    "ID": ["indonesien"],
+    "IR": ["iran", "islamic republic of iran"],
+    "IQ": ["irak"],
+    "IE": ["irland", "republic of ireland"],
+    "IL": ["israel"],
+    "IT": ["italien"],
+    "JM": ["jamaika"],
+    "JP": ["japan", "nippon"],
+    "JO": ["jordanien"],
+    "KZ": ["kasachstan"],
+    "KE": ["kenia"],
+    "KP": ["dprk", "north korea", "nordkorea", "democratic peoples republic of korea"],
+    "KR": ["rok", "republic of korea", "south korea", "sudkorea", "suedkorea"],
+    "KW": ["kuwait"],
+    "KG": ["kirgisistan", "kyrgyz republic"],
+    "LA": ["laos", "lao pdr"],
+    "LV": ["lettland"],
+    "LB": ["libanon"],
+    "LS": ["lesotho"],
+    "LR": ["liberia"],
+    "LY": ["libyen"],
+    "LI": ["liechtenstein"],
+    "LT": ["litauen"],
+    "LU": ["luxemburg"],
+    "MO": ["macau", "macao"],
+    "MG": ["madagaskar"],
+    "MW": ["malawi"],
+    "MY": ["malaysia"],
+    "MV": ["malediven"],
+    "ML": ["mali"],
+    "MT": ["malta"],
+    "MR": ["mauretanien"],
+    "MU": ["mauritius"],
+    "MX": ["mexiko"],
+    "FM": ["federated states of micronesia"],
+    "MD": ["moldawien", "republik moldau", "republic of moldova"],
+    "MC": ["monaco"],
+    "MN": ["mongolei"],
+    "ME": ["montenegro"],
+    "MA": ["marokko"],
+    "MZ": ["mosambik"],
+    "MM": ["burma", "myanmar"],
+    "NA": ["namibia"],
+    "NP": ["nepal"],
+    "NL": ["niederlande", "holland", "the netherlands"],
+    "NZ": ["neuseeland"],
+    "NI": ["nicaragua"],
+    "NE": ["niger"],
+    "NG": ["nigeria"],
+    "MK": ["mazedonien", "nordmazedonien", "republic of north macedonia"],
+    "NO": ["norwegen"],
+    "OM": ["oman"],
+    "PK": ["pakistan"],
+    "PS": ["palestinian territories", "palastina", "palaestina", "state of palestine"],
+    "PA": ["panama"],
+    "PG": ["papua neuguinea"],
+    "PY": ["paraguay"],
+    "PE": ["peru"],
+    "PH": ["philippinen"],
+    "PL": ["polen"],
+    "PT": ["portugal"],
+    "PR": ["puerto rico"],
+    "QA": ["katar", "qatar"],
+    "RO": ["rumanien", "romania"],
+    "RU": ["russland", "russia", "russian federation"],
+    "RW": ["ruanda"],
+    "KN": ["st kitts and nevis", "saint kitts"],
+    "LC": ["st lucia", "saint lucia"],
+    "VC": ["st vincent and the grenadines", "saint vincent"],
+    "WS": ["samoa"],
+    "ST": ["sao tome", "sao tome and principe"],
+    "SA": ["saudi arabien", "saudi arabia", "ksa"],
+    "SN": ["senegal"],
+    "RS": ["serbien"],
+    "SC": ["seychellen"],
+    "SL": ["sierra leone"],
+    "SG": ["singapur"],
+    "SK": ["slowakei"],
+    "SI": ["slowenien"],
+    "SB": ["solomon islands", "salomonen"],
+    "SO": ["somalia"],
+    "ZA": ["sudafrika", "suedafrika", "south africa", "rsa"],
+    "SS": ["sudsudan", "suedsudan", "south sudan"],
+    "ES": ["spanien"],
+    "LK": ["sri lanka", "ceylon"],
+    "SD": ["sudan"],
+    "SR": ["suriname"],
+    "SE": ["schweden"],
+    "CH": ["schweiz", "switzerland", "suisse", "svizzera"],
+    "SY": ["syrien"],
+    "TW": ["taiwan", "republic of china"],
+    "TJ": ["tadschikistan"],
+    "TZ": ["tansania", "united republic of tanzania"],
+    "TH": ["thailand", "thailandia"],
+    "TL": ["east timor", "timor leste", "timor-leste", "osttimor"],
+    "TG": ["togo"],
+    "TO": ["tonga"],
+    "TT": ["trinidad und tobago"],
+    "TN": ["tunesien"],
+    "TR": ["turkei", "tuerkei", "turkiye", "türkiye"],
+    "TM": ["turkmenistan"],
+    "UG": ["uganda"],
+    "UA": ["ukraine"],
+    "AE": ["uae", "vereinigte arabische emirate", "united arab emirates"],
+    "GB": ["uk", "u k", "great britain", "britannien", "grossbritannien", "großbritannien", "united kingdom", "england", "scotland", "wales", "northern ireland"],
+    "US": ["usa", "u s a", "us", "u s", "united states of america", "vereinigte staaten", "amerika", "america"],
+    "UY": ["uruguay"],
+    "UZ": ["usbekistan"],
+    "VU": ["vanuatu"],
+    "VE": ["venezuela", "venezuela bolivarian republic of"],
+    "VN": ["vietnam", "viet nam"],
+    "VG": ["british virgin islands", "britische jungferninseln"],
+    "VI": ["us virgin islands", "united states virgin islands", "amerikanische jungferninseln"],
+    "EH": ["westsahara", "western sahara"],
+    "YE": ["jemen", "yemen"],
+    "ZM": ["sambia"],
+    "ZW": ["simbabwe", "zimbabwe"],
+}
 
-def normalize_country_value(value):
-    if pd.isna(value):
+def normalize(value):
+    if value is None or pd.isna(value):
         return ""
     text = str(value).strip()
+    if not text:
+        return ""
     text = unicodedata.normalize("NFKD", text)
     text = "".join(ch for ch in text if not unicodedata.combining(ch))
-    text = text.lower()
-    text = text.replace("&", " and ")
-    text = re.sub(r"[\(\)\[\]\{\},.;:/_\\\-]+", " ", text)
-    text = re.sub(r"\s+", " ", text).strip()
-    return text
+    text = text.casefold().replace("&", " and ")
+    text = re.sub(r"[\W_]+", " ", text, flags=re.UNICODE)
+    return re.sub(r"\s+", " ", text).strip()
 
 country_map = {}
-for record in records:
-    code, iso3, *aliases = record
-    for alias in [code, iso3, *aliases]:
-        key = normalize_country_value(alias)
+for line in data.strip().splitlines():
+    iso2, iso3, english_name = [part.strip() for part in line.split("|", 2)]
+    for value in (iso2, iso3, english_name):
+        key = normalize(value)
         if key:
-            country_map[key] = code
+            country_map[key] = iso2
 
-if "country" not in df.columns:
-    df["country"] = "UNKNOWN"
-else:
-    normalized_country = df["country"].map(normalize_country_value)
-    df["country"] = normalized_country.map(country_map).fillna("UNKNOWN").astype("string")
+for iso2, values in aliases.items():
+    for value in values:
+        key = normalize(value)
+        if key:
+            country_map[key] = iso2
+
+df = pd.read_parquet(input_path)
+
+for required_column in ["customer_id", "full_name", "email", "country", "registered_at"]:
+    if required_column not in df.columns:
+        df[required_column] = pd.NA
+
+df["country"] = df["country"].map(lambda x: country_map.get(normalize(x), "UNKNOWN")).astype("string")
 
 os.makedirs(os.path.dirname(output_path), exist_ok=True)
 df.to_parquet(output_path, index=False)

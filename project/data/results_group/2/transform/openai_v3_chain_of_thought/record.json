@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-08-14T20:20:41.748859+00:00",
+  "provider": "openai",
+  "prompt_id": "v3_chain_of_thought",
+  "prompt_strategy": "chain_of_thought",
+  "group": "transform",
+  "group_label": "Gruppe 3 · Transformation (Schritte 7-9)",
+  "steps": [
+    "products",
+    "orders",
+    "final"
+  ],
+  "seed": 2,
+  "repetition": 1,
+  "status": "ok",
+  "accuracy": 1.0,
+  "attempts": 1,
+  "error": null,
+  "cost_usd": 0.019355,
+  "prompt_tokens": 668,
+  "completion_tokens": 1179,
+  "duration_s": 11.34,
+  "llm_s": 10.62,
+  "exec_s": 0.71,
+  "generated_code": "import os\nimport re\nimport pandas as pd\n\n# Sub-step 1: Define input/output paths and load the three source tables.\nbase_input = r\"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/2\"\nproducts_path = os.path.join(base_input, \"products_raw.csv\")\norders_path = os.path.join(base_input, \"orders_raw.csv\")\ncustomers_path = (\n    r\"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/\"\n    r\"results_pipeline/2/_reference/dedup_hard/output.parquet\"\n)\noutput_path = (\n    r\"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/\"\n    r\"results_group/2/transform/openai_v3_chain_of_thought/output.parquet\"\n)\n\nproducts = pd.read_csv(products_path)\norders = pd.read_csv(orders_path)\ncustomers = pd.read_parquet(customers_path)\n\n# Sub-step 2: Convert textual EUR prices into floats with a decimal point.\n# The parser supports values such as \"19,99\", \"€19.99\", and \"19.99 EUR\".\ndef parse_eur_price(series: pd.Series) -> pd.Series:\n    cleaned = (\n        series.astype(\"string\")\n        .str.replace(r\"[^\\d,.\\-]\", \"\", regex=True)\n        .str.strip()\n    )\n\n    # If both separators exist, treat the last separator as the decimal separator.\n    both_separators = cleaned.str.contains(\",\", na=False) & cleaned.str.contains(\".\", na=False)\n    comma_last = both_separators & (\n        cleaned.str.rfind(\",\") > cleaned.str.rfind(\".\")\n    )\n\n    normalized = cleaned.copy()\n    normalized.loc[comma_last] = (\n        normalized.loc[comma_last]\n        .str.replace(\".\", \"\", regex=False)\n        .str.replace(\",\", \".\", regex=False)\n    )\n    normalized.loc[both_separators & ~comma_last] = (\n        normalized.loc[both_separators & ~comma_last]\n        .str.replace(\",\", \"\", regex=False)\n    )\n\n    # With only a comma present, it is interpreted as the decimal separator.\n    comma_only = normalized.str.contains(\",\", na=False) & ~normalized.str.contains(\".\", na=False)\n    normalized.loc[comma_only] = normalized.loc[comma_only].str.replace(\",\", \".\", regex=False)\n\n    return pd.to_numeric(normalized, errors=\"coerce\")\n\nproducts[\"price_eur\"] = parse_eur_price(products[\"price_eur\"])\n\n# Sub-step 3: Convert supported stock text representations into nullable booleans.\nstock_values = products[\"in_stock\"].astype(\"string\").str.strip().str.lower()\nproducts[\"in_stock\"] = stock_values.map(\n    {\n        \"ja\": True,\n        \"yes\": True,\n        \"true\": True,\n        \"1\": True,\n        \"nein\": False,\n        \"no\": False,\n        \"false\": False,\n        \"0\": False,\n    }\n).astype(\"boolean\")\n\n# Sub-step 4: Calculate order totals and extract year/month from the order timestamp.\norders[\"total_eur\"] = orders[\"quantity\"] * orders[\"unit_price_eur\"]\norders[\"ordered_at\"] = pd.to_datetime(orders[\"ordered_at\"], errors=\"coerce\")\norders[\"order_year\"] = orders[\"ordered_at\"].dt.year.astype(\"Int64\")\norders[\"order_month\"] = orders[\"ordered_at\"].dt.month.astype(\"Int64\")\n\n# Sub-step 5: Prepare customer country values as the requested country_code.\ncustomers = customers.copy()\ncustomers[\"country_code\"] = customers[\"country\"].astype(\"string\").str.strip()\n\n# Sub-step 6: Keep only valid country/category dimension values before joining.\nvalid_customers = customers.loc[\n    customers[\"country_code\"].notna() & customers[\"country_code\"].ne(\"\"),\n    [\"customer_id\", \"country_code\"],\n]\nvalid_products = products.loc[\n    products[\"category\"].notna() & products[\"category\"].astype(\"string\").str.strip().ne(\"\"),\n    [\"product_id\", \"category\"],\n].copy()\nvalid_products[\"category\"] = valid_products[\"category\"].astype(\"string\").str.strip()\n\n# Sub-step 7: Inner joins intentionally exclude orders lacking a matching customer or product.\nenriched_orders = (\n    orders.merge(valid_customers, on=\"customer_id\", how=\"inner\", validate=\"many_to_one\")\n    .merge(valid_products, on=\"product_id\", how=\"inner\", validate=\"many_to_one\")\n)\n\n# Sub-step 8: Aggregate revenue and order count by country and product category, then sort.\nresult = (\n    enriched_orders.groupby([\"country_code\", \"category\"], as_index=False, dropna=True)\n    .agg(\n        total_revenue_eur=(\"total_eur\", \"sum\"),\n        order_count=(\"order_id\", \"count\"),\n    )\n    .sort_values(\n        [\"total_revenue_eur\", \"country_code\", \"category\"],\n        ascending=[False, True, True],\n        kind=\"stable\",\n    )\n    .reset_index(drop=True)\n)\n\n# Sub-step 9: Create the destination directory and write only the final transformation result.\nos.makedirs(os.path.dirname(output_path), exist_ok=True)\nresult.to_parquet(output_path, index=False)",
+  "row_actual": 66,
+  "row_expected": 66
+}

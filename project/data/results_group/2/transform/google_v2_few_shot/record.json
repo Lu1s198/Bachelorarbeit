@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-08-14T20:21:07.972968+00:00",
+  "provider": "google",
+  "prompt_id": "v2_few_shot",
+  "prompt_strategy": "few_shot",
+  "group": "transform",
+  "group_label": "Gruppe 3 · Transformation (Schritte 7-9)",
+  "steps": [
+    "products",
+    "orders",
+    "final"
+  ],
+  "seed": 2,
+  "repetition": 1,
+  "status": "ok",
+  "accuracy": 1.0,
+  "attempts": 1,
+  "error": null,
+  "cost_usd": 0.020036,
+  "prompt_tokens": 1277,
+  "completion_tokens": 2416,
+  "duration_s": 12.87,
+  "llm_s": 9.37,
+  "exec_s": 0.71,
+  "generated_code": "import os\nimport pandas as pd\n\nproducts_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/2/products_raw.csv\"\norders_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/2/orders_raw.csv\"\ncustomers_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/2/_reference/dedup_hard/output.parquet\"\noutput_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_group/2/transform/google_v2_few_shot/output.parquet\"\n\nproducts = pd.read_csv(products_path)\norders = pd.read_csv(orders_path)\ncustomers = pd.read_parquet(customers_path)\n\n# Step 1\nproducts[\"price_eur\"] = (\n    products[\"price_eur\"]\n    .astype(str)\n    .str.replace(\"€\", \"\", regex=False)\n    .str.replace(\"EUR\", \"\", regex=False)\n    .str.replace(\",\", \".\", regex=False)\n    .str.strip()\n    .astype(float)\n)\n\nproducts[\"in_stock\"] = (\n    products[\"in_stock\"]\n    .astype(str)\n    .str.strip()\n    .str.lower()\n    .isin([\"ja\", \"true\", \"1\"])\n)\n\n# Step 2\norders[\"total_eur\"] = orders[\"quantity\"] * orders[\"unit_price_eur\"]\nordered_at_dt = pd.to_datetime(orders[\"ordered_at\"])\norders[\"order_year\"] = ordered_at_dt.dt.year.astype(int)\norders[\"order_month\"] = ordered_at_dt.dt.month.astype(int)\n\n# Step 3\nmerged = orders.merge(customers, on=\"customer_id\", how=\"inner\")\nmerged = merged.merge(products, on=\"product_id\", how=\"inner\")\n\nmerged = merged.rename(columns={\"country\": \"country_code\"})\n\nvalid_mask = (\n    merged[\"country_code\"].notna()\n    & (merged[\"country_code\"].astype(str).str.strip() != \"\")\n    & merged[\"category\"].notna()\n    & (merged[\"category\"].astype(str).str.strip() != \"\")\n)\n\ndf_valid = merged[valid_mask]\n\nresult = (\n    df_valid.groupby([\"country_code\", \"category\"], as_index=False)\n    .agg(\n        total_revenue_eur=(\"total_eur\", \"sum\"),\n        order_count=(\"order_id\", \"count\"),\n    )\n    .sort_values(by=\"total_revenue_eur\", ascending=False)\n)\n\nos.makedirs(os.path.dirname(output_path), exist_ok=True)\nresult.to_parquet(output_path, index=False)",
+  "row_actual": 66,
+  "row_expected": 66
+}

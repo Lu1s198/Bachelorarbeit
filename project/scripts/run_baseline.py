@@ -24,6 +24,7 @@ from baseline import run_baseline_task  # noqa: E402
 from config import settings  # noqa: E402
 from dataset.scenarios import ALL_TASKS  # noqa: E402
 from evaluation import evaluate_correctness  # noqa: E402
+from reporting.analysis import aligned_accuracy  # noqa: E402
 
 
 def main(seed: int) -> None:
@@ -57,8 +58,18 @@ def main(seed: int) -> None:
         (out_dir / "baseline.json").write_text(
             json.dumps(record, indent=2, ensure_ascii=False, default=str), encoding="utf-8"
         )
-        print(f"{task.id}: accuracy={correctness['accuracy']:.3f} "
-              f"completeness={correctness['completeness']:.3f}")
+        # Neben der strengen Genauigkeit auch die abgeglichene ausgeben. Die
+        # strenge faellt bei abweichender Zeilenzahl hart auf 0, weil sie den
+        # Vergleich dann gar nicht erst durchfuehrt -- ein Ergebnis mit 514
+        # statt 500 Zeilen sieht damit genauso aus wie ein voellig falsches.
+        # Die Auswertung in Kapitel 8 verwendet durchgaengig die abgeglichene.
+        abgeglichen = aligned_accuracy(actual, expected)
+        hinweis = ""
+        if correctness["accuracy"] == 0.0 and abgeglichen > 0.5:
+            hinweis = f"   (streng 0 nur wegen Zeilenzahl {len(actual)} statt {len(expected)})"
+        print(f"{task.id}: streng={correctness['accuracy']:.3f} "
+              f"abgeglichen={abgeglichen:.3f} "
+              f"completeness={correctness['completeness']:.3f}{hinweis}")
 
 
 if __name__ == "__main__":

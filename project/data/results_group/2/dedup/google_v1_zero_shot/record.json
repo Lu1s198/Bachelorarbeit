@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-08-14T20:17:17.226285+00:00",
+  "provider": "google",
+  "prompt_id": "v1_zero_shot",
+  "prompt_strategy": "zero_shot",
+  "group": "dedup",
+  "group_label": "Gruppe 2 · Deduplizierung (Schritte 4-6)",
+  "steps": [
+    "dedup_easy",
+    "dedup_medium",
+    "dedup_hard"
+  ],
+  "seed": 2,
+  "repetition": 1,
+  "status": "ok",
+  "accuracy": 0.99,
+  "attempts": 1,
+  "error": null,
+  "cost_usd": 0.046482,
+  "prompt_tokens": 498,
+  "completion_tokens": 6098,
+  "duration_s": 34.59,
+  "llm_s": 26.45,
+  "exec_s": 8.11,
+  "generated_code": "import os\nimport re\nfrom difflib import SequenceMatcher\nimport pandas as pd\n\ninput_path = r\"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/2/_reference/cleaning_hard/output.parquet\"\nif not os.path.exists(input_path):\n    input_path = r\"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/2/output.parquet\"\n\ndf = pd.read_parquet(input_path)\n\n# Step 1: Remove exact duplicates\ndf = df.drop_duplicates(keep=\"first\")\n\n# Step 2: Remove rows with duplicate email, keeping the most recent registered_at\ndf = df.sort_values(\n    by=[\"registered_at\", \"customer_id\"], ascending=[False, True]\n)\ndf[\"_email_clean_step2\"] = df[\"email\"].astype(str).str.lower().str.strip()\ndf = df.drop_duplicates(subset=[\"_email_clean_step2\"], keep=\"first\").drop(\n    columns=[\"_email_clean_step2\"]\n)\n\n# Step 3: Remove fuzzy duplicates, keeping smallest customer_id\ndf = df.sort_values(by=\"customer_id\", ascending=True).reset_index(drop=True)\n\nTITLES = {\n    \"mr\",\n    \"mrs\",\n    \"ms\",\n    \"dr\",\n    \"prof\",\n    \"dipl\",\n    \"ing\",\n    \"herr\",\n    \"frau\",\n    \"sir\",\n    \"madam\",\n    \"doktor\",\n    \"professor\",\n}\n\n\ndef normalize_email(email):\n    if not isinstance(email, str):\n        return \"\"\n    email = email.lower().strip()\n    if \"@\" in email:\n        local, domain = email.rsplit(\"@\", 1)\n        local = local.replace(\".\", \"\")\n        if \"+\" in local:\n            local = local.split(\"+\")[0]\n        return f\"{local}@{domain}\"\n    return email\n\n\ndef normalize_name(name):\n    if not isinstance(name, str):\n        return \"\"\n    name = name.lower()\n    name = re.sub(r\"[^\\w\\s]\", \" \", name)\n    tokens = name.split()\n    cleaned = [\n        t for t in tokens if t not in TITLES and (len(t) > 1 or len(tokens) <= 2)\n    ]\n    return \" \".join(cleaned)\n\n\ndef similarity(a, b):\n    if not a or not b:\n        return 0.0\n    return SequenceMatcher(None, a, b).ratio()\n\n\nnorm_emails = [normalize_email(e) for e in df[\"email\"]]\nnorm_names = [normalize_name(n) for n in df[\"full_name\"]]\nsorted_names = [\" \".join(sorted(n.split())) for n in norm_names]\n\nn = len(df)\nparent = list(range(n))\n\n\ndef find(i):\n    path = []\n    while parent[i] != i:\n        path.append(i)\n        i = parent[i]\n    for node in path:\n        parent[node] = i\n    return i\n\n\ndef union(i, j):\n    root_i = find(i)\n    root_j = find(j)\n    if root_i != root_j:\n        parent[root_i] = root_j\n\n\ndef is_match(i, j):\n    e1, e2 = norm_emails[i], norm_emails[j]\n    n1, n2 = norm_names[i], norm_names[j]\n\n    if e1 and e1 == e2:\n        return True\n\n    s_email = similarity(e1, e2)\n    s_name = max(\n        similarity(n1, n2), similarity(sorted_names[i], sorted_names[j])\n    )\n\n    if s_email >= 0.85 and s_name >= 0.75:\n        return True\n    if s_name >= 0.85 and s_email >= 0.75:\n        return True\n\n    return False\n\n\nif n <= 2000:\n    for i in range(n):\n        for j in range(i + 1, n):\n            if is_match(i, j):\n                union(i, j)\nelse:\n    blocks = {}\n    for i in range(n):\n        keys = set()\n        em = norm_emails[i]\n        nm = norm_names[i]\n        if \"@\" in em:\n            keys.add(\"dom_\" + em.split(\"@\")[1])\n            keys.add(\"loc_\" + em.split(\"@\")[0][:3])\n        if nm:\n            keys.add(\"nm_\" + nm[:3])\n        for k in keys:\n            blocks.setdefault(k, []).append(i)\n\n    for candidates in blocks.values():\n        c_len = len(candidates)\n        if c_len > 1:\n            for idx1 in range(c_len):\n                for idx2 in range(idx1 + 1, c_len):\n                    i, j = candidates[idx1], candidates[idx2]\n                    if find(i) != find(j) and is_match(i, j):\n                        union(i, j)\n\nkeep_indices = []\nseen_roots = set()\nfor i in range(n):\n    root = find(i)\n    if root not in seen_roots:\n        seen_roots.add(root)\n        keep_indices.append(i)\n\noutput_df = (\n    df.iloc[keep_indices]\n    .sort_values(by=\"customer_id\", ascending=True)\n    .reset_index(drop=True)\n)\noutput_df = output_df[\n    [\"customer_id\", \"full_name\", \"email\", \"country\", \"registered_at\"]\n]\n\noutput_path = r\"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_group/2/dedup/google_v1_zero_shot/output.parquet\"\nos.makedirs(os.path.dirname(output_path), exist_ok=True)\noutput_df.to_parquet(output_path, index=False)",
+  "row_actual": 500,
+  "row_expected": 495
+}

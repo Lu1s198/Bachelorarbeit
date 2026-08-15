@@ -1,0 +1,103 @@
+```csv
+product_id,name,category,price_eur,in_stock
+1,Synergized contextually-based alliance,Clothing,494.35,true
+2,Diverse next generation success,Sports,248.40,true
+3,Self-enabling grid-enabled complexity,Books,155.17,true
+4,Cross-group upward-trending adapter,Clothing,98.29,true
+5,Enterprise-wide web-enabled leverage,Clothing,456.82,true
+6,Managed executive standardization,Sports,432.98,true
+7,Compatible executive budgetary management,Toys,114.17,true
+8,Innovative asynchronous algorithm,Sports,170.92,true
+9,Upgradable value-added infrastructure,Clothing,270.25,true
+10,Extended non-volatile knowledgebase,Clothing,6.53,true
+11,Enhanced client-server encryption,Home,162.53,true
+12,Organic uniform model,Clothing,106.87,true
+13,Customizable holistic artificial intelligence,Electronics,260.34,false
+14,Universal bi-directional customer loyalty,Toys,95.41,true
+15,Re-engineered executive knowledgebase,Sports,383.68,true
+16,Progressive fault-tolerant superstructure,Electronics,109.64,true
+17,Configurable system-worthy methodology,Books,458.11,true
+18,Right-sized responsive migration,Books,391.67,true
+19,Stand-alone mission-critical system engine,Sports,70.41,true
+20,Self-enabling interactive collaboration,Sports,23.50,true
+21,Versatile executive application,Electronics,375.43,true
+22,Assimilated composite moratorium,Electronics,315.56,true
+23,Robust 4thgeneration core,Clothing,309.87,true
+24,Object-based maximized help-desk,Toys,465.56,true
+25,De-engineered homogeneous monitoring,Books,404.89,true
+26,Horizontal web-enabled capability,Sports,243.71,true
+27,Devolved foreground groupware,Clothing,199.27,true
+28,Automated 6thgeneration complexity,Toys,342.42,true
+29,Innovative zero-defect function,Books,337.30,true
+30,Upgradable dynamic protocol,Books,233.41,true
+31,Expanded interactive approach,Clothing,119.81,true
+32,Integrated web-enabled implementation,Home,410.42,false
+33,Universal asynchronous challenge,Electronics,85.05,true
+34,Fully-configurable even-keeled strategy,Home,207.18,false
+35,Grass-roots interactive standardization,Electronics,231.13,true
+36,Digitized 3rdgeneration protocol,Home,46.64,true
+37,Multi-lateral bifurcated adapter,Books,480.72,true
+38,Re-engineered eco-centric customer loyalty,Toys,353.73,true
+39,User-centric impactful software,Sports,399.88,true
+40,Switchable real-time secured line,Clothing,126.14,true
+41,Proactive demand-driven productivity,Home,462.36,true
+42,Up-sized even-keeled structure,Home,220.34,true
+43,Virtual disintermediate initiative,Books,415.60,true
+44,Intuitive analyzing paradigm,Home,12.36,true
+45,Organic mobile solution,Electronics,250.18,true
+46,Public-key leadingedge functionalities,Books,397.38,false
+47,Synchronized methodical strategy,Books,206.57,true
+48,User-friendly impactful frame,Books,128.43,false
+49,Decentralized human-resource adapter,Sports,133.09,true
+50,Cross-group 5thgeneration analyzer,Home,267.96,true
+51,Configurable tangible hierarchy,Toys,117.56,false
+52,Multi-lateral 24/7 open system,Books,316.79,false
+53,Phased 4thgeneration archive,Home,474.16,true
+54,Innovative modular attitude,Clothing,117.77,true
+55,Object-based web-enabled system engine,Sports,291.13,true
+56,Pre-emptive 3rdgeneration standardization,Clothing,499.44,false
+57,Balanced asymmetric hub,Toys,403.58,true
+58,Assimilated dynamic protocol,Home,112.52,true
+59,Down-sized high-level artificial intelligence,Clothing,459.75,false
+60,Down-sized bifurcated Graphic Interface,Electronics,495.06,true
+61,Realigned global architecture,Electronics,63.42,true
+62,Networked static collaboration,Home,169.90,false
+63,Integrated client-driven hierarchy,Electronics,93.84,true
+64,Total analyzing open architecture,Books,152.94,true
+65,Switchable value-added hub,Clothing,268.06,true
+66,Reverse-engineered systematic monitoring,Sports,290.43,true
+67,Organic analyzing support,Books,315.24,true
+68,Balanced value-added circuit,Clothing,161.95,true
+69,Reduced fresh-thinking challenge,Toys,48.08,true
+70,Switchable secondary circuit,Sports,142.29,false
+71,Public-key zero administration strategy,Home,131.74,false
+72,Centralized full-range secured line,Toys,321.77,false
+73,Progressive value-added workforce,Electronics,314.11,true
+74,Open-source stable firmware,Home,127.75,true
+75,Ergonomic responsive migration,Toys,57.49,true
+76,Synergized mission-critical encryption,Sports,253.57,true
+77,Horizontal well-modulated architecture,Clothing,437.92,true
+78,Synchronized methodical knowledge user,Home,194.59,true
+79,Total empowering protocol,Home,146.97,true
+80,Open-architected client-driven neural-net,Electronics,208.83,false
+81,Organized contextually-based matrix,Toys,437.82,true
+82,Grass-roots high-level service-desk,Electronics,378.23,false
+83,Extended tangible Graphical User Interface,Books,272.59,true
+84,Monitored zero tolerance methodology,Sports,170.79,true
+85,Team-oriented upward-trending interface,Clothing,112.29,true
+86,Sharable context-sensitive definition,Electronics,493.98,true
+87,Streamlined actuating frame,Toys,282.68,true
+88,Expanded bifurcated service-desk,Toys,215.51,true
+89,Open-source logistical knowledge user,Home,452.72,true
+90,Assimilated composite superstructure,Books,40.81,true
+91,Cross-group background access,Sports,5.29,true
+92,Polarized fault-tolerant conglomeration,Home,250.00,true
+93,Multi-channeled demand-driven model,Clothing,423.47,true
+94,Innovative explicit flexibility,Toys,256.37,true
+95,Horizontal fresh-thinking superstructure,Electronics,411.77,true
+96,Customizable 24hour knowledge user,Sports,180.87,true
+97,Realigned foreground matrix,Sports,147.62,false
+98,Networked secondary capability,Sports,408.32,true
+99,Implemented modular core,Toys,67.73,false
+100,Synergized bottom-line ability,Toys,51.01,true
+```

@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-08-14T20:19:51.981175+00:00",
+  "provider": "anthropic",
+  "prompt_id": "v2_few_shot",
+  "prompt_strategy": "few_shot",
+  "group": "transform",
+  "group_label": "Gruppe 3 · Transformation (Schritte 7-9)",
+  "steps": [
+    "products",
+    "orders",
+    "final"
+  ],
+  "seed": 2,
+  "repetition": 1,
+  "status": "ok",
+  "accuracy": 1.0,
+  "attempts": 1,
+  "error": null,
+  "cost_usd": 0.020412,
+  "prompt_tokens": 1799,
+  "completion_tokens": 1001,
+  "duration_s": 8.78,
+  "llm_s": 8.04,
+  "exec_s": 0.72,
+  "generated_code": "import pandas as pd\n\nproducts = pd.read_csv(\"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/2/products_raw.csv\")\norders = pd.read_csv(\"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/2/orders_raw.csv\")\ncustomers = pd.read_parquet(\"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/2/_reference/dedup_hard/output.parquet\")\n\n# Step 1\nproducts[\"price_eur\"] = (\n    products[\"price_eur\"]\n    .astype(str)\n    .str.replace(\"€\", \"\", regex=False)\n    .str.replace(\"EUR\", \"\", regex=False)\n    .str.strip()\n    .str.replace(\",\", \".\", regex=False)\n    .astype(float)\n)\n\ndef to_bool(val):\n    v = str(val).strip().lower()\n    if v in (\"ja\", \"true\", \"1\"):\n        return True\n    if v in (\"nein\", \"false\", \"0\"):\n        return False\n    return None\n\nproducts[\"in_stock\"] = products[\"in_stock\"].apply(to_bool)\n\n# Step 2\norders[\"total_eur\"] = orders[\"quantity\"] * orders[\"unit_price_eur\"]\norders[\"ordered_at\"] = pd.to_datetime(orders[\"ordered_at\"], errors=\"coerce\")\norders[\"order_year\"] = orders[\"ordered_at\"].dt.year.astype(\"Int64\")\norders[\"order_month\"] = orders[\"ordered_at\"].dt.month.astype(\"Int64\")\n\n# Step 3\nmerged = orders.merge(customers, on=\"customer_id\", how=\"inner\")\nmerged = merged.merge(products, on=\"product_id\", how=\"inner\")\n\nmerged[\"country_code\"] = merged[\"country\"]\n\nmerged = merged[\n    merged[\"country_code\"].notna() & (merged[\"country_code\"].astype(str).str.strip() != \"\") &\n    merged[\"category\"].notna() & (merged[\"category\"].astype(str).str.strip() != \"\")\n]\n\nresult = (\n    merged.groupby([\"country_code\", \"category\"])\n    .agg(\n        total_revenue_eur=(\"total_eur\", \"sum\"),\n        order_count=(\"order_id\", \"count\"),\n    )\n    .reset_index()\n    .sort_values(\"total_revenue_eur\", ascending=False)\n)\n\nresult.to_parquet(\n    \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_group/2/transform/anthropic_v2_few_shot/output.parquet\",\n    index=False,\n)",
+  "row_actual": 66,
+  "row_expected": 66
+}

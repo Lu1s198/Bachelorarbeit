@@ -29,7 +29,7 @@ from dataset import reference as ref
 _LIMITED_COUNTRY_MAP = {
     # ISO alpha-2 | ISO alpha-3 | IOC | deutscher Name | englischer Name
     "de": "DE", "deu": "DE", "ger": "DE", "deutschland": "DE", "germany": "DE",
-    "at": "AT", "aut": "AT", "österreich": "AT", "austria": "AT",
+    "at": "AT", "aut": "AT", "österreich": "AT","oesterreich": "AT", "austria": "AT",
     "ch": "CH", "che": "CH", "sui": "CH", "schweiz": "CH", "switzerland": "CH",
     "fr": "FR", "fra": "FR", "frankreich": "FR", "france": "FR",
     "it": "IT", "ita": "IT", "italien": "IT", "italy": "IT",
@@ -37,7 +37,7 @@ _LIMITED_COUNTRY_MAP = {
     "nl": "NL", "nld": "NL", "ned": "NL", "niederlande": "NL", "netherlands": "NL",
     "be": "BE", "bel": "BE", "belgien": "BE", "belgium": "BE",
     "pl": "PL", "pol": "PL", "polen": "PL", "poland": "PL",
-    "gb": "GB", "gbr": "GB", "großbritannien": "GB", "united kingdom": "GB",
+    "gb": "GB", "gbr": "GB", "großbritannien": "GB", "united kingdom": "GB", "uk" : "GB",
 }
 
 

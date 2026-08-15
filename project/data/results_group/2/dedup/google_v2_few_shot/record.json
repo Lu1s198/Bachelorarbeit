@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-08-14T20:17:52.235138+00:00",
+  "provider": "google",
+  "prompt_id": "v2_few_shot",
+  "prompt_strategy": "few_shot",
+  "group": "dedup",
+  "group_label": "Gruppe 2 · Deduplizierung (Schritte 4-6)",
+  "steps": [
+    "dedup_easy",
+    "dedup_medium",
+    "dedup_hard"
+  ],
+  "seed": 2,
+  "repetition": 1,
+  "status": "ok",
+  "accuracy": 0.99,
+  "attempts": 2,
+  "error": null,
+  "cost_usd": 0.114656,
+  "prompt_tokens": 2072,
+  "completion_tokens": 14873,
+  "duration_s": 79.15,
+  "llm_s": 60.31,
+  "exec_s": 9.08,
+  "generated_code": "from difflib import SequenceMatcher\nimport os\nimport re\nimport pandas as pd\n\ninput_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/2/_reference/cleaning_hard/output.parquet\"\nif not os.path.exists(input_path):\n    input_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/2/input.parquet\"\n    if not os.path.exists(input_path):\n        input_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/2/output.parquet\"\n\noutput_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_group/2/dedup/google_v2_few_shot/output.parquet\"\n\ndf = pd.read_parquet(input_path)\n\n# 1. Exact duplicates\ndf = df.drop_duplicates(keep=\"first\")\n\n# 2. Duplicate email - keep most recent registered_at\ndf[\"registered_at_dt\"] = pd.to_datetime(df[\"registered_at\"], errors=\"coerce\")\ndf = df.sort_values(\n    by=[\"registered_at_dt\", \"customer_id\"], ascending=[False, True]\n)\ndf = df.drop_duplicates(subset=[\"email\"], keep=\"first\")\ndf = df.drop(columns=[\"registered_at_dt\"])\n\n# 3. Fuzzy duplicates\nTITLES = {\n    \"dr\",\n    \"dr.\",\n    \"prof\",\n    \"prof.\",\n    \"herr\",\n    \"frau\",\n    \"mr\",\n    \"mr.\",\n    \"mrs\",\n    \"mrs.\",\n    \"ms\",\n    \"ms.\",\n    \"dipl.-ing.\",\n    \"ing.\",\n}\n\n\ndef normalize_email(email):\n    if pd.isna(email) or not email:\n        return \"\"\n    email = str(email).lower().strip()\n    if \"@\" in email:\n        local, domain = email.split(\"@\", 1)\n        local = local.replace(\".\", \"\")\n        return f\"{local}@{domain}\"\n    return email\n\n\ndef clean_name(name):\n    if pd.isna(name) or not name:\n        return \"\"\n    s = str(name).lower().strip()\n    words = re.findall(r\"\\b\\w+\\b\", s)\n    words = [w for w in words if w not in TITLES]\n    if len(words) > 2:\n        words = [\n            w\n            for i, w in enumerate(words)\n            if not (0 < i < len(words) - 1 and len(w) == 1)\n        ]\n    return \" \".join(words)\n\n\ndef str_sim(s1, s2):\n    if not s1 or not s2:\n        return 0.0\n    if s1 == s2:\n        return 1.0\n    return SequenceMatcher(None, s1, s2).ratio()\n\n\ndef name_sim(n1, n2):\n    if not n1 or not n2:\n        return 0.0\n    if n1 == n2:\n        return 1.0\n    r1 = SequenceMatcher(None, n1, n2).ratio()\n    t1 = \" \".join(sorted(n1.split()))\n    t2 = \" \".join(sorted(n2.split()))\n    r2 = SequenceMatcher(None, t1, t2).ratio()\n    return max(r1, r2)\n\n\nrecords = []\nfor idx, row in df.iterrows():\n    records.append(\n        {\n            \"row\": row,\n            \"norm_email\": normalize_email(row[\"email\"]),\n            \"clean_name\": clean_name(row[\"full_name\"]),\n        }\n    )\n\nn = len(records)\nparent = list(range(n))\n\n\ndef find(i):\n    if parent[i] == i:\n        return i\n    parent[i] = find(parent[i])\n    return parent[i]\n\n\ndef union(i, j):\n    root_i = find(i)\n    root_j = find(j)\n    if root_i != root_j:\n        parent[root_i] = root_j\n\n\ndef is_match(r1, r2):\n    n1, n2 = r1[\"clean_name\"], r2[\"clean_name\"]\n    e1, e2 = r1[\"norm_email\"], r2[\"norm_email\"]\n\n    if e1 and e2 and e1 == e2:\n        ns = name_sim(n1, n2)\n        if ns >= 0.50 or n1 in n2 or n2 in n1 or not n1 or not n2:\n            return True\n\n    if n1 and n2 and n1 == n2:\n        es = str_sim(e1, e2)\n        if es >= 0.50 or e1 in e2 or e2 in e1 or not e1 or not e2:\n            return True\n\n    ns = name_sim(n1, n2)\n    es = str_sim(e1, e2)\n    if ns >= 0.80 and es >= 0.80:\n        return True\n\n    return False\n\n\nfor i in range(n):\n    for j in range(i + 1, n):\n        if is_match(records[i], records[j]):\n            union(i, j)\n\ngroups = {}\nfor i in range(n):\n    root = find(i)\n    if root not in groups:\n        groups[root] = []\n    groups[root].append(records[i][\"row\"])\n\nfinal_rows = []\nfor root, row_list in groups.items():\n    group_df = pd.DataFrame(row_list)\n    group_df = group_df.sort_values(by=\"customer_id\", ascending=True)\n    final_rows.append(group_df.iloc[0])\n\nresult_df = pd.DataFrame(final_rows)\nresult_df = result_df[\n    [\"customer_id\", \"full_name\", \"email\", \"country\", \"registered_at\"]\n]\n\nos.makedirs(os.path.dirname(output_path), exist_ok=True)\nresult_df.to_parquet(output_path, index=False)",
+  "row_actual": 500,
+  "row_expected": 495
+}

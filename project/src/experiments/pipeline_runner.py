@@ -156,18 +156,59 @@ def build_chain_reference(seed: int) -> dict[str, pd.DataFrame]:
     }
 
 
-def _resolve_inputs(step: Step, seed: int, available: dict[str, Path]):
-    """Liefert (Rolle, Pfad)-Liste oder None, wenn eine Abhängigkeit blockiert ist."""
+def _resolve_inputs(step: Step, seed: int, available: dict[str, Path],
+                    input_source: str = "self"):
+    """Liefert (Rolle, Pfad)-Liste oder None, wenn eine Abhängigkeit blockiert ist.
+
+    ``input_source="reference"`` entkoppelt die Kette: Jeder Schritt bekommt statt der
+    eigenen Vorgänger-Ausgabe die *Soll*-Ausgabe des Vorgängers aus der Kettenreferenz.
+    Damit ist jeder Schritt einzeln messbar -- auch nach einem Absturz --, die
+    Obergrenze liegt für alle Modelle bei 1,0, und die Differenz zum verketteten Lauf
+    beziffert genau die Kosten der Fehlerfortpflanzung. Die Referenz liefert nur saubere
+    Eingabedaten, nicht die Lösung des jeweiligen Schritts."""
     resolved = []
     for role, src in step.inputs:
         if src.startswith("raw:"):
             resolved.append((role, settings.synthetic_dir / str(seed) / src[4:]))
         else:  # step:<name>
             dep = src.split(":", 1)[1]
-            if dep not in available:
-                return None
-            resolved.append((role, available[dep]))
+            if input_source == "reference":
+                p = _reference_dir(seed) / dep / "output.parquet"
+                resolved.append((role, p))
+            else:
+                if dep not in available:
+                    return None
+                resolved.append((role, available[dep]))
     return resolved
+
+
+def _column_types(path: Path) -> str:
+    """Spalten und pandas-dtypes der Eingabedatei als Kurzbeschreibung.
+
+    Wird je Schritt aus der tatsächlichen Eingabe abgeleitet -- entlang der Kette
+    ändern sich die Typen (nach Schritt 7 ist ``price_eur`` ein Float, nach
+    Schritt 8 kommen abgeleitete Spalten dazu), eine statische Angabe im
+    Systemprompt wäre für die meisten Schritte falsch. Die Typangabe ist eine
+    Eigenschaft der Daten, kein Lösungshinweis."""
+    try:
+        df = _read_table(path)
+    except Exception:  # noqa: BLE001 - Beschreibung ist optional, nie laufentscheidend
+        return ""
+    return ", ".join(f"{c}: {t}" for c, t in df.dtypes.astype(str).items())
+
+
+def _reference_dir(seed: int) -> Path:
+    return PIPELINE_RESULTS / str(seed) / "_reference"
+
+
+def materialize_reference(seed: int) -> Path:
+    """Schreibt die Soll-Ausgaben der Kettenreferenz als Parquet, damit sie im
+    isolierten Lauf als Eingabe dienen können."""
+    d = _reference_dir(seed)
+    for name, df in build_chain_reference(seed).items():
+        (d / name).mkdir(parents=True, exist_ok=True)
+        df.to_parquet(d / name / "output.parquet", index=False)
+    return d
 
 
 def _build_prompt(step: Step, resolved: list[tuple[str, Path]], out_path: Path) -> str:
@@ -175,6 +216,9 @@ def _build_prompt(step: Step, resolved: list[tuple[str, Path]], out_path: Path) 
              "write the result as a Parquet file.", "", "Input file(s):"]
     for role, path in resolved:
         lines.append(f"  - {role}: {path.as_posix()}")
+        types = _column_types(path)
+        if types:
+            lines.append(f"    columns as read by pandas: {types}")
     lines += ["", "Task:", step.instruction, "",
               f"The result must contain (at least) the columns: {', '.join(step.expected_cols)}.",
               f"Write the resulting table as a Parquet file to exactly: {out_path.as_posix()}",
@@ -182,18 +226,41 @@ def _build_prompt(step: Step, resolved: list[tuple[str, Path]], out_path: Path) 
     return "\n".join(lines)
 
 
+def _run_dir(seed: int, provider_name: str, suffix: str, rep: int) -> Path:
+    """Ablageordner eines Laufs. Wiederholung 1 behaelt den schlichten Namen,
+    damit bereits erhobene Laeufe unveraendert gueltig bleiben; ab der zweiten
+    kommt ``_r<N>`` dazu, sodass sich Wiederholungen nicht ueberschreiben."""
+    name = f"{provider_name}{suffix}" + (f"_r{rep}" if rep > 1 else "")
+    return PIPELINE_RESULTS / str(seed) / name
+
+
 def run_pipeline(provider_name: str, seed: int, attempts: int = 3,
-                 model: str | None = None) -> dict:
-    """Durchläuft die verkettete Pipeline für ein Modell und protokolliert jeden Schritt."""
+                 model: str | None = None, best_of: int = 1,
+                 input_source: str = "self", rep: int = 1) -> dict:
+    """Durchläuft die verkettete Pipeline für ein Modell und protokolliert jeden Schritt.
+
+    ``attempts`` steuert das Standardverhalten: Ein Schritt wird bis zu ``attempts``
+    Mal erzeugt, aber beim ersten brauchbaren Ergebnis übernommen.
+
+    ``best_of > 1`` schaltet auf **Oracle-Auswahl** um: Es werden immer genau
+    ``best_of`` Kandidaten erzeugt und derjenige mit der höchsten abgeglichenen
+    Genauigkeit gegen die Referenz übernommen. Das misst nicht mehr, was das Modell
+    autonom liefert, sondern die *Obergrenze* bei perfekter Auswahl -- vergleichbar
+    mit einer pass@k-Auswertung. Ergebnisse aus diesem Modus sind entsprechend zu
+    kennzeichnen und nicht mit ``best_of=1``-Läufen in eine Tabelle zu mischen."""
     provider = get_provider(provider_name, model=model)
     chain_ref = build_chain_reference(seed)
-    base = PIPELINE_RESULTS / str(seed) / provider_name
+    # Entkoppelter Lauf in eigenen Ordner, damit der normale Lauf erhalten bleibt.
+    if input_source == "reference":
+        materialize_reference(seed)
+    suffix = "_isolated" if input_source == "reference" else ""
+    base = _run_dir(seed, provider_name, suffix, rep)
     available: dict[str, Path] = {}
     steps: list[dict] = []
 
     for step in PIPELINE:
         rec = {"step": step.name, "label": step.label}
-        resolved = _resolve_inputs(step, seed, available)
+        resolved = _resolve_inputs(step, seed, available, input_source)
         if resolved is None:
             rec.update(status="blocked", schema_ok=False, accuracy=None,
                        attempts=0, error="Vorheriger Schritt fehlgeschlagen",
@@ -213,7 +280,12 @@ def run_pipeline(provider_name: str, seed: int, attempts: int = 3,
         llm_s, exec_s = 0.0, 0.0
         code = ""
         used = 0
-        for attempt in range(1, attempts + 1):
+        # Bei best_of > 1 werden immer alle Kandidaten erzeugt und am Ende der
+        # beste übernommen; sonst bricht die Schleife beim ersten Erfolg ab.
+        n_tries = max(attempts, best_of) if best_of > 1 else attempts
+        best: dict | None = None          # bester Kandidat (Tabelle, Code, Genauigkeit)
+        candidates: list[dict] = []
+        for attempt in range(1, n_tries + 1):
             used = attempt
             try:
                 prompt = _build_prompt(step, resolved, out_path)
@@ -230,27 +302,53 @@ def run_pipeline(provider_name: str, seed: int, attempts: int = 3,
                 exec_s += execution.duration_seconds or 0.0
                 if not execution.success:
                     error = f"Code-Ausführung fehlgeschlagen: {execution.stderr[-400:]}"
+                    candidates.append({"versuch": attempt, "status": "code_error"})
                     continue  # neuer Versuch
                 actual = pd.read_parquet(out_path)
                 missing = [c for c in expected_df.columns if c not in actual.columns]
                 if missing:
                     schema_ok = False
                     error = f"Schema unvollständig, fehlende Spalten: {missing}"
+                    candidates.append({"versuch": attempt, "status": "schema_break"})
                     continue  # neuer Versuch
+                acc = aligned_accuracy(actual, expected_df)
+                candidates.append({"versuch": attempt, "status": "ok",
+                                   "accuracy": round(acc, 6)})
+                if best is None or acc > best["accuracy"]:
+                    best = {"accuracy": acc, "table": actual, "code": code,
+                            "versuch": attempt}
                 schema_ok = True
-                accuracy = aligned_accuracy(actual, expected_df)
+                accuracy = acc
                 status, error = "ok", None
-                break
+                if best_of <= 1:
+                    break                 # Standardverhalten: erster Erfolg zählt
             except Exception as exc:  # noqa: BLE001
                 error = f"{type(exc).__name__}: {exc}"
+                candidates.append({"versuch": attempt, "status": "exception"})
                 continue
+
+        if best is not None:
+            # Gewinner-Tabelle und -Code festschreiben (der letzte Kandidat hat die
+            # Datei ggf. überschrieben).
+            best["table"].to_parquet(out_path, index=False)
+            code, accuracy = best["code"], best["accuracy"]
+            schema_ok, status, error = True, "ok", None
+        if best_of > 1:
+            rec["kandidaten"] = candidates
+            rec["gewaehlter_versuch"] = best["versuch"] if best else None
+            rec["auswahl"] = "oracle_best_of"
 
         duration = time.perf_counter() - t_step
         if not schema_ok and status != "ok":
             status = "schema_break" if error and "Schema" in error else "code_error"
         if status == "ok":
             available[step.name] = out_path
-            print(f"   {step.label}: ok (acc={accuracy:.3f}, Versuche={used}, "
+            extra = ""
+            if best_of > 1:
+                gut = [k for k in candidates if k["status"] == "ok"]
+                extra = (f", {len(gut)}/{len(candidates)} lauffaehig, "
+                         f"bester = Versuch {best['versuch']}")
+            print(f"   {step.label}: ok (acc={accuracy:.3f}, Versuche={used}{extra}, "
                   f"{duration:.2f}s)", flush=True)
         else:
             print(f"   {step.label}: {status} nach {used} Versuch(en) "
@@ -269,20 +367,26 @@ def run_pipeline(provider_name: str, seed: int, attempts: int = 3,
         steps.append(rec)
         # Nach jedem Schritt sichern: bricht der Lauf ab (Anbieterfehler, Abbruch
         # durch den Nutzer), bleiben die bereits gemessenen Schritte erhalten.
-        _write_record(base, provider_name, provider.model_id, seed, attempts, steps)
+        _write_record(base, provider_name, provider.model_id, seed, attempts, steps,
+                      best_of, input_source, rep)
 
-    return _write_record(base, provider_name, provider.model_id, seed, attempts, steps)
+    return _write_record(base, provider_name, provider.model_id, seed, attempts, steps,
+                      best_of, input_source, rep)
 
 
 def _write_record(base: Path, provider_name: str, model_id: str, seed: int,
-                  attempts: int, steps: list[dict]) -> dict:
+                  attempts: int, steps: list[dict], best_of: int = 1,
+                  input_source: str = "self", rep: int = 1) -> dict:
     record = {
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "provider": provider_name,
         "requested_model": model_id,
         "mode": "pipeline",
         "seed": seed,
+        "repetition": rep,
         "attempts_per_step": attempts,
+        "best_of": best_of,
+        "input_source": input_source,
         "n_steps_completed": len(steps),
         "n_steps_ok": sum(s["status"] == "ok" for s in steps),
         "reached_end": any(s["step"] == "final" and s["status"] == "ok" for s in steps),
@@ -301,15 +405,21 @@ def _save_code(step_dir: Path, code: str) -> None:
 
 
 def run_all_pipelines(providers: list[str], seed: int | None = None,
-                      attempts: int = 3) -> list[dict]:
+                      attempts: int = 3, best_of: int = 1,
+                      input_source: str = "self", rep: int = 1) -> list[dict]:
     seed = seed if seed is not None else settings.random_seed
     out = []
     for p in providers:
-        print(f"-> Pipeline | {p}", flush=True)
+        modus = (f" | best-of-{best_of} (Oracle-Auswahl)" if best_of > 1 else "")
+        modus += " | Eingaben aus der Baseline (Schritte entkoppelt)"             if input_source == "baseline" else ""
+        print(f"-> Pipeline | {p}{modus}", flush=True)
         if p == "baseline":
-            out.append(run_baseline_pipeline(seed))
+            # Regelbasiert und damit deterministisch: Wiederholungen liefern
+            # bitgenau dasselbe Ergebnis, deshalb immer nur ein Lauf.
+            out.append(run_baseline_pipeline(seed, input_source=input_source))
         else:
-            out.append(run_pipeline(p, seed, attempts=attempts))
+            out.append(run_pipeline(p, seed, attempts=attempts, best_of=best_of,
+                                    input_source=input_source, rep=rep))
     return out
 
 
@@ -355,20 +465,30 @@ def _read_table(path: Path) -> pd.DataFrame:
     return pd.read_csv(path) if path.suffix == ".csv" else pd.read_parquet(path)
 
 
-def run_baseline_pipeline(seed: int) -> dict:
+def run_baseline_pipeline(seed: int, input_source: str = "self") -> dict:
     """Dieselbe verkettete Strecke, regelbasiert statt LLM-generiert.
 
     Liefert einen Datensatz im gleichen Format wie ``run_pipeline``, sodass die
     Baseline in Heatmap und Verlaufsgrafik als zusätzliche Spalte erscheint. Es
-    gibt keine Code-Erzeugung, daher immer genau ein Versuch und keine Kosten."""
+    gibt keine Code-Erzeugung, daher immer genau ein Versuch und keine Kosten.
+
+    ``input_source="reference"`` fuehrt sie -- wie die Modelle -- mit Soll-Eingaben
+    aus. Der Aussagewert ist begrenzt und asymmetrisch: In den formalisierbaren
+    Schritten verwendet die Baseline dieselben Routinen wie die Referenz, dort ist
+    das Ergebnis definitionsgemaess 1,0 und kein Leistungsnachweis. Nicht trivial
+    sind allein Schritt 3 und 6, wo die begrenzten Heuristiken der Vergleichsbasis
+    greifen. Der Lauf ist dennoch sinnvoll, weil er belegt, dass auch die Regel
+    ihren Endschritt mit sauberer Eingabe vollstaendig loest -- der in der Kette
+    gemessene Verlust also auch bei ihr geerbt und nicht eigener Fehler ist."""
     chain_ref = build_chain_reference(seed)
-    base = PIPELINE_RESULTS / str(seed) / "baseline"
+    suffix = "_isolated" if input_source == "reference" else ""
+    base = PIPELINE_RESULTS / str(seed) / f"baseline{suffix}"
     available: dict[str, Path] = {}
     steps: list[dict] = []
 
     for step in PIPELINE:
         rec = {"step": step.name, "label": step.label}
-        resolved = _resolve_inputs(step, seed, available)
+        resolved = _resolve_inputs(step, seed, available, input_source)
         if resolved is None:
             rec.update(status="blocked", schema_ok=False, accuracy=None,
                        attempts=0, error="Vorheriger Schritt fehlgeschlagen",

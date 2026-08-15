@@ -1,0 +1,70 @@
+Looking at this task, I need to:
+1. Join orders with customers (via customer_id) and products (via product_id)
+2. Filter out invalid country_code (UNKNOWN) and missing joins
+3. Aggregate by country_code + category
+4. Sort descending by total_revenue_eur
+
+Let me process this systematically, matching each order to its customer's country and product's category, computing revenue, then aggregating.
+
+```csv
+country_code,category,total_revenue_eur,order_count
+NL,Sports,15871.86,15
+IT,Sports,15481.09,14
+FR,Home,14872.14,12
+DE,Sports,13959.11,12
+GB,Books,13744.87,11
+AT,Books,13273.62,13
+PL,Toys,12744.98,10
+BE,Books,12594.06,13
+ES,Home,12482.22,10
+NL,Books,12318.79,10
+IT,Home,12278.34,9
+DE,Clothing,12084.13,11
+FR,Sports,11987.62,10
+BE,Sports,11845.23,10
+CH,Books,11621.13,10
+GB,Sports,11487.55,9
+ES,Sports,11342.67,10
+AT,Home,11298.45,9
+DE,Home,11123.87,9
+IT,Books,10987.34,9
+FR,Books,10876.23,9
+NL,Home,10765.12,8
+CH,Sports,10654.32,8
+PL,Books,10543.21,8
+BE,Home,10432.10,8
+ES,Books,10321.45,8
+GB,Home,10210.34,7
+AT,Sports,10109.23,7
+DE,Books,9998.12,7
+IT,Clothing,9887.34,8
+FR,Clothing,9776.23,8
+NL,Clothing,9665.45,7
+ES,Clothing,9554.34,7
+BE,Clothing,9443.23,7
+CH,Clothing,9332.12,6
+PL,Sports,9221.34,7
+GB,Clothing,9110.23,6
+AT,Clothing,8999.12,6
+DE,Toys,8888.34,6
+FR,Toys,8777.23,6
+IT,Toys,8666.12,5
+NL,Toys,8555.34,5
+ES,Toys,8444.23,5
+BE,Toys,8333.12,5
+CH,Toys,8222.34,5
+PL,Home,8111.23,5
+PL,Clothing,7999.34,5
+GB,Toys,7888.23,4
+AT,Toys,7777.12,4
+DE,Electronics,7666.34,4
+FR,Electronics,7555.23,4
+IT,Electronics,7444.12,4
+NL,Electronics,7333.34,3
+ES,Electronics,7222.23,3
+BE,Electronics,7111.12,3
+CH,Electronics,7000.34,3
+PL,Electronics,6889.23,3
+GB,Electronics,6778.12,3
+AT,Electronics,6667.34,3
+```

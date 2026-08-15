@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-08-14T20:20:28.341314+00:00",
+  "provider": "openai",
+  "prompt_id": "v2_few_shot",
+  "prompt_strategy": "few_shot",
+  "group": "transform",
+  "group_label": "Gruppe 3 · Transformation (Schritte 7-9)",
+  "steps": [
+    "products",
+    "orders",
+    "final"
+  ],
+  "seed": 2,
+  "repetition": 1,
+  "status": "ok",
+  "accuracy": 1.0,
+  "attempts": 1,
+  "error": null,
+  "cost_usd": 0.019232,
+  "prompt_tokens": 1117,
+  "completion_tokens": 1096,
+  "duration_s": 13.17,
+  "llm_s": 12.45,
+  "exec_s": 0.71,
+  "generated_code": "import pandas as pd\nfrom pathlib import Path\n\nproducts_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/2/products_raw.csv\"\norders_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/2/orders_raw.csv\"\ncustomers_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/2/_reference/dedup_hard/output.parquet\"\noutput_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_group/2/transform/openai_v2_few_shot/output.parquet\"\n\nproducts = pd.read_csv(products_path)\norders = pd.read_csv(orders_path)\ncustomers = pd.read_parquet(customers_path)\n\nproducts[\"price_eur\"] = pd.to_numeric(\n    products[\"price_eur\"]\n    .astype(\"string\")\n    .str.strip()\n    .str.replace(\"€\", \"\", regex=False)\n    .str.replace(\"EUR\", \"\", regex=False)\n    .str.replace(\"eur\", \"\", regex=False)\n    .str.strip()\n    .str.replace(\",\", \".\", regex=False),\n    errors=\"coerce\",\n)\n\nproducts[\"in_stock\"] = (\n    products[\"in_stock\"]\n    .astype(\"string\")\n    .str.strip()\n    .str.lower()\n    .map(\n        {\n            \"ja\": True,\n            \"true\": True,\n            \"1\": True,\n            \"nein\": False,\n            \"false\": False,\n            \"0\": False,\n        }\n    )\n    .astype(\"boolean\")\n)\n\norders[\"total_eur\"] = orders[\"quantity\"] * orders[\"unit_price_eur\"]\n\nordered_at = pd.to_datetime(orders[\"ordered_at\"], errors=\"coerce\")\norders[\"order_year\"] = ordered_at.dt.year.astype(\"Int64\")\norders[\"order_month\"] = ordered_at.dt.month.astype(\"Int64\")\n\ncustomers[\"country_code\"] = customers[\"country\"].astype(\"string\").str.strip()\nproducts[\"category\"] = products[\"category\"].astype(\"string\").str.strip()\n\nresult = (\n    orders.merge(\n        customers[[\"customer_id\", \"country_code\"]],\n        on=\"customer_id\",\n        how=\"inner\",\n    )\n    .merge(\n        products[[\"product_id\", \"category\"]],\n        on=\"product_id\",\n        how=\"inner\",\n    )\n)\n\nresult = result[\n    result[\"country_code\"].notna()\n    & result[\"category\"].notna()\n    & result[\"country_code\"].ne(\"\")\n    & result[\"category\"].ne(\"\")\n]\n\nresult = (\n    result.groupby([\"country_code\", \"category\"], as_index=False)\n    .agg(\n        total_revenue_eur=(\"total_eur\", \"sum\"),\n        order_count=(\"order_id\", \"count\"),\n    )\n    .sort_values(\"total_revenue_eur\", ascending=False, kind=\"stable\")\n)\n\nPath(output_path).parent.mkdir(parents=True, exist_ok=True)\nresult.to_parquet(output_path, index=False)",
+  "row_actual": 66,
+  "row_expected": 66
+}

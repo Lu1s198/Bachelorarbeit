@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-08-14T20:19:11.808915+00:00",
+  "provider": "google",
+  "prompt_id": "v3_chain_of_thought",
+  "prompt_strategy": "chain_of_thought",
+  "group": "dedup",
+  "group_label": "Gruppe 2 · Deduplizierung (Schritte 4-6)",
+  "steps": [
+    "dedup_easy",
+    "dedup_medium",
+    "dedup_hard"
+  ],
+  "seed": 2,
+  "repetition": 1,
+  "status": "ok",
+  "accuracy": 0.99,
+  "attempts": 1,
+  "error": null,
+  "cost_usd": 0.035567,
+  "prompt_tokens": 506,
+  "completion_tokens": 4641,
+  "duration_s": 30.01,
+  "llm_s": 20.59,
+  "exec_s": 6.43,
+  "generated_code": "import os\nimport re\nfrom difflib import SequenceMatcher\nimport pandas as pd\n\n# Define input and output file paths\ninput_path = (\n    \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/2/\"\n    \"_reference/cleaning_hard/output.parquet\"\n)\noutput_path = (\n    \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_group/2/\"\n    \"dedup/google_v3_chain_of_thought/output.parquet\"\n)\n\n# Step 1: Read input data and remove exact duplicates\n# -----------------------------------------------------------------------------\n# Read input parquet file\ndf = pd.read_parquet(input_path)\n\n# Step 1: Remove exact duplicates (identical in all columns), keeping the first occurrence\ndf = df.drop_duplicates(keep=\"first\")\n\n\n# Step 2: Handle duplicate emails based on registered_at\n# -----------------------------------------------------------------------------\n# Sort by registered_at descending (latest date first) and customer_id ascending (deterministic tie-breaker)\ndf = df.sort_values(\n    by=[\"registered_at\", \"customer_id\"], ascending=[False, True]\n)\n\n# Keep the row with the most recent registered_at value for each email\ndf = df.drop_duplicates(subset=[\"email\"], keep=\"first\")\n\n\n# Step 3: Identify and remove fuzzy duplicates\n# -----------------------------------------------------------------------------\n# Helper function to normalize email (strip, lowercase, ignore dots before @)\ndef normalize_email(email):\n    if not isinstance(email, str) or \"@\" not in email:\n        return \"\"\n    parts = email.strip().lower().split(\"@\")\n    prefix = parts[0].replace(\".\", \"\")\n    domain = \"@\".join(parts[1:])\n    return f\"{prefix}@{domain}\"\n\n\n# Helper function to normalize name (lowercase, strip titles, remove middle initials, clean punctuation)\ndef normalize_name(name):\n    if not isinstance(name, str):\n        return \"\"\n    name = name.lower()\n\n    # Common titles/salutations to remove\n    titles = [\n        \"dr. med.\",\n        \"dr.\",\n        \"prof. dr.\",\n        \"prof.\",\n        \"mr.\",\n        \"mrs.\",\n        \"ms.\",\n        \"miss\",\n        \"herr\",\n        \"frau\",\n        \"dipl.-ing.\",\n        \"dipl. ing.\",\n        \"ing.\",\n        \"sir\",\n        \"lady\",\n        \"doktor\",\n        \"professor\",\n    ]\n    for title in sorted(titles, key=len, reverse=True):\n        name = re.sub(r\"\\b\" + re.escape(title) + r\"\\b\", \"\", name)\n\n    # Remove non-alphanumeric characters except spaces\n    name = re.sub(r\"[^\\w\\s]\", \" \", name)\n\n    # Remove single-letter middle initials\n    words = [w for w in name.split() if len(w) > 1]\n    return \" \".join(words)\n\n\n# Helper function to measure similarity ratio between two strings\ndef similarity(s1, s2):\n    if not s1 or not s2:\n        return 0.0\n    return SequenceMatcher(None, s1, s2).ratio()\n\n\n# Reset index to allow positional index manipulation for Union-Find algorithm\ndf_reset = df.reset_index(drop=True)\nn = len(df_reset)\n\n# Prepare normalized representations for comparison\nnorm_emails = [normalize_email(e) for e in df_reset[\"email\"]]\nnorm_names = [normalize_name(n) for n in df_reset[\"full_name\"]]\n\n# Union-Find (Disjoint Set Union) data structure to group duplicates\nparent = list(range(n))\n\n\ndef find(i):\n    if parent[i] == i:\n        return i\n    parent[i] = find(parent[i])\n    return parent[i]\n\n\ndef union(i, j):\n    root_i = find(i)\n    root_j = find(j)\n    if root_i != root_j:\n        # Keep the record with the smaller customer_id as the cluster root\n        cid_i = df_reset.iloc[root_i][\"customer_id\"]\n        cid_j = df_reset.iloc[root_j][\"customer_id\"]\n        if cid_i <= cid_j:\n            parent[root_j] = root_i\n        else:\n            parent[root_i] = root_j\n\n\n# Compare pairs to identify duplicates\nfor i in range(n):\n    for j in range(i + 1, n):\n        e1, e2 = norm_emails[i], norm_emails[j]\n        n1, n2 = norm_names[i], norm_names[j]\n\n        e_sim = similarity(e1, e2)\n        n_sim = similarity(n1, n2)\n\n        # Condition for matching the same person:\n        # 1) Exact match on normalized email and high name similarity / overlap\n        # 2) High email similarity AND high name similarity\n        is_same_email = (e1 == e2) or (e_sim >= 0.88)\n        is_same_name = (\n            (n1 == n2)\n            or (n_sim >= 0.75)\n            or (set(n1.split()) == set(n2.split()))\n        )\n\n        if is_same_email and is_same_name:\n            union(i, j)\n\n# Keep only representative rows (cluster roots with smallest customer_id)\nkeep_indices = [i for i in range(n) if find(i) == i]\ndf_cleaned = df_reset.iloc[keep_indices].copy()\n\n# Sort final dataframe by customer_id\ndf_cleaned = df_cleaned.sort_values(by=\"customer_id\").reset_index(drop=True)\n\n# Step 4: Write output parquet file\n# -----------------------------------------------------------------------------\nos.makedirs(os.path.dirname(output_path), exist_ok=True)\ndf_cleaned.to_parquet(output_path, index=False)",
+  "row_actual": 500,
+  "row_expected": 495
+}

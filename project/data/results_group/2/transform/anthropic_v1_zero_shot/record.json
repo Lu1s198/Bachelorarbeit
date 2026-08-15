@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-08-14T20:19:42.057180+00:00",
+  "provider": "anthropic",
+  "prompt_id": "v1_zero_shot",
+  "prompt_strategy": "zero_shot",
+  "group": "transform",
+  "group_label": "Gruppe 3 · Transformation (Schritte 7-9)",
+  "steps": [
+    "products",
+    "orders",
+    "final"
+  ],
+  "seed": 2,
+  "repetition": 1,
+  "status": "ok",
+  "accuracy": 1.0,
+  "attempts": 1,
+  "error": null,
+  "cost_usd": 0.020934,
+  "prompt_tokens": 1078,
+  "completion_tokens": 1180,
+  "duration_s": 9.68,
+  "llm_s": 8.95,
+  "exec_s": 0.72,
+  "generated_code": "import pandas as pd\nimport re\n\nproducts_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/2/products_raw.csv\"\norders_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/2/orders_raw.csv\"\ncustomers_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/2/_reference/dedup_hard/output.parquet\"\noutput_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_group/2/transform/anthropic_v1_zero_shot/output.parquet\"\n\nproducts = pd.read_csv(products_path)\norders = pd.read_csv(orders_path)\ncustomers = pd.read_parquet(customers_path)\n\n# Step 1: convert price_eur to float\ndef parse_price(val):\n    if pd.isna(val):\n        return None\n    s = str(val)\n    s = re.sub(r'[^0-9,.\\-]', '', s)\n    if ',' in s and '.' in s:\n        if s.rfind(',') > s.rfind('.'):\n            s = s.replace('.', '')\n            s = s.replace(',', '.')\n        else:\n            s = s.replace(',', '')\n    elif ',' in s:\n        s = s.replace(',', '.')\n    try:\n        return float(s)\n    except ValueError:\n        return None\n\nproducts['price_eur'] = products['price_eur'].apply(parse_price)\n\ndef parse_bool(val):\n    if pd.isna(val):\n        return None\n    s = str(val).strip().lower()\n    true_vals = {'ja', 'true', '1', 'yes', 'y', 'wahr'}\n    false_vals = {'nein', 'false', '0', 'no', 'n', 'falsch'}\n    if s in true_vals:\n        return True\n    if s in false_vals:\n        return False\n    return None\n\nproducts['in_stock'] = products['in_stock'].apply(parse_bool)\n\n# Step 2: calculate total_eur, order_year, order_month\norders['total_eur'] = orders['quantity'] * orders['unit_price_eur']\n\norders['ordered_at_parsed'] = pd.to_datetime(orders['ordered_at'], errors='coerce', utc=True)\norders['order_year'] = orders['ordered_at_parsed'].dt.year.astype('Int64')\norders['order_month'] = orders['ordered_at_parsed'].dt.month.astype('Int64')\n\n# Step 3: join tables\ncustomers['country_code'] = customers['country']\n\nmerged = orders.merge(customers, on='customer_id', how='inner')\nmerged = merged.merge(products, on='product_id', how='inner')\n\nmerged = merged.dropna(subset=['country_code', 'category'])\nmerged = merged[merged['country_code'].astype(str).str.strip() != '']\nmerged = merged[merged['category'].astype(str).str.strip() != '']\n\nmerged['revenue'] = merged['quantity'] * merged['unit_price_eur']\n\nresult = merged.groupby(['country_code', 'category'], as_index=False).agg(\n    total_revenue_eur=('revenue', 'sum'),\n    order_count=('order_id', 'count')\n)\n\nresult = result.sort_values('total_revenue_eur', ascending=False).reset_index(drop=True)\n\nresult.to_parquet(output_path, index=False)",
+  "row_actual": 66,
+  "row_expected": 66
+}

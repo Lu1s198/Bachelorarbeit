@@ -1,0 +1,15 @@
+import os
+import pandas as pd
+
+input_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/_reference/dedup_easy/output.parquet"
+output_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/openai_isolated/dedup_medium/output.parquet"
+
+df = pd.read_parquet(input_path)
+
+df["_registered_at_dt"] = pd.to_datetime(df["registered_at"], format="%Y-%m-%d", errors="coerce")
+df = df.sort_values("_registered_at_dt", ascending=False, kind="stable")
+df = df.drop_duplicates(subset=["email"], keep="first")
+df = df.drop(columns=["_registered_at_dt"])
+
+os.makedirs(os.path.dirname(output_path), exist_ok=True)
+df.to_parquet(output_path, index=False)

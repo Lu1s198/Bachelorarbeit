@@ -4,17 +4,27 @@ import numpy as np
 # Load data from Parquet file
 df = pd.read_parquet('C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/ollama/cleaning_medium/output.parquet')
 
-# Define a function to map country names to ISO-3166-1-alpha-2 codes
-def get_iso_code(country):
+# Define a function to map country codes
+def map_country(country):
     iso_codes = {
+        'Deutschland': 'DE',
         'Germany': 'DE',
-        'United States': 'US',
+        'USA': 'US',
         # Add more mappings as needed
     }
-    return iso_codes.get(country, 'UNKNOWN')
+    
+    if country in iso_codes:
+        return iso_codes[country]
+    elif len(country) == 2 and country.isalpha():
+        return country.upper()
+    else:
+        return 'UNKNOWN'
 
-# Apply the function to the country column
-df['country'] = df['country'].apply(get_iso_code)
+# Apply the mapping function to the 'country' column
+df['country'] = df['country'].apply(map_country)
 
-# Write the resulting table to a new Parquet file
+# Ensure key columns are of the same type (int64)
+df['customer_id'] = df['customer_id'].astype(np.int64)
+
+# Write the resulting table as a Parquet file
 df.to_parquet('C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/ollama/cleaning_hard/output.parquet', index=False)

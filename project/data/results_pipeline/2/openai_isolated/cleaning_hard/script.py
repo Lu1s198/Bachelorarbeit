@@ -1,0 +1,247 @@
+import os
+import re
+import unicodedata
+import pandas as pd
+import numpy as np
+
+input_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/2/_reference/cleaning_medium/output.parquet"
+output_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/2/openai_isolated/cleaning_hard/output.parquet"
+
+def normalize_country(value):
+    if pd.isna(value):
+        return ""
+    text = str(value).strip()
+    text = unicodedata.normalize("NFKD", text)
+    text = "".join(c for c in text if not unicodedata.combining(c))
+    text = text.casefold().replace("&", " and ")
+    text = re.sub(r"[\(\)\[\]\{\},.;:_/\\|]+", " ", text)
+    text = re.sub(r"[-]+", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+aliases_by_code = {
+    "AF": "af afghanistan afghanisch",
+    "AL": "al albania albanien",
+    "DZ": "dz algeria algerien",
+    "AD": "ad andorra",
+    "AO": "ao angola",
+    "AG": "ag antigua and barbuda antigua und barbuda",
+    "AR": "ar argentina argentinien",
+    "AM": "am armenia armenien",
+    "AU": "au australia australien commonwealth of australia",
+    "AT": "at austria osterreich austria republic of austria",
+    "AZ": "az azerbaijan aserbaidschan",
+    "BS": "bs bahamas the bahamas",
+    "BH": "bh bahrain bahrain konigreich bahrain",
+    "BD": "bd bangladesh bangladesch",
+    "BB": "bb barbados",
+    "BY": "by belarus weissrussland belarus republic of belarus",
+    "BE": "be belgium belgien belgique belgien konigreich belgien",
+    "BZ": "bz belize",
+    "BJ": "bj benin benin",
+    "BT": "bt bhutan bhutan",
+    "BO": "bo bolivia bolivien plurinational state of bolivia",
+    "BA": "ba bosnia and herzegovina bosnien und herzegowina bosnia herzegovina",
+    "BW": "bw botswana botsuana",
+    "BR": "br brazil brasilien brasil",
+    "BN": "bn brunei brunei darussalam",
+    "BG": "bg bulgaria bulgarien",
+    "BF": "bf burkina faso",
+    "BI": "bi burundi",
+    "CV": "cv cape verde cabo verde kap verde",
+    "KH": "kh cambodia kambodscha kampuchea",
+    "CM": "cm cameroon kamerun",
+    "CA": "ca canada kanada",
+    "CF": "cf central african republic zentralafrikanische republik",
+    "TD": "td chad tschad",
+    "CL": "cl chile",
+    "CN": "cn china prc peoples republic of china volksrepublik china",
+    "CO": "co colombia kolumbien",
+    "KM": "km comoros komoren",
+    "CD": "cd cod democratic republic of the congo democratic republic congo demokratische republik kongo dr congo d r congo congo kinshasa zaire",
+    "CG": "cg cog republic of the congo republic congo republik kongo congo brazzaville",
+    "CR": "cr costa rica kostarika",
+    "CI": "ci cote d ivoire ivory coast elfenbeinkuste elfenbeinkueste",
+    "HR": "hr croatia kroatien",
+    "CU": "cu cuba kuba",
+    "CY": "cy cyprus zypern",
+    "CZ": "cz czech republic czechia tschechien tschechische republik",
+    "DK": "dk denmark danemark",
+    "DJ": "dj djibouti dschibuti",
+    "DM": "dm dominica dominika",
+    "DO": "do dominican republic dominikanische republik",
+    "EC": "ec ecuador ekuador",
+    "EG": "eg egypt agypten",
+    "SV": "sv el salvador",
+    "GQ": "gq equatorial guinea aquatorialguinea",
+    "ER": "er eritrea",
+    "EE": "ee estonia estland",
+    "SZ": "sz eswatini swaziland",
+    "ET": "et ethiopia athiopien",
+    "FJ": "fj fiji fidschi",
+    "FI": "fi finland finnland",
+    "FR": "fr france frankreich",
+    "GA": "ga gabon",
+    "GM": "gm gambia the gambia",
+    "GE": "ge geo georgia georgien sakartvelo",
+    "DE": "de deu ger germany deutschland bundesrepublik deutschland federal republic of germany d land",
+    "GH": "gh ghana",
+    "GR": "gr greece griechenland hellas",
+    "GD": "gd grenada grenada",
+    "GT": "gt guatemala guatemala",
+    "GN": "gn guinea guinee",
+    "GW": "gw guinea bissau guineabissau",
+    "GY": "gy guyana guayana",
+    "HT": "ht haiti haiti",
+    "HN": "hn honduras honduras",
+    "HU": "hu hungary ungarn",
+    "IS": "is iceland island",
+    "IN": "in india indien bharat",
+    "ID": "id indonesia indonesien",
+    "IR": "ir iran islamic republic of iran iran",
+    "IQ": "iq iraq irak",
+    "IE": "ie ireland irland republic of ireland",
+    "IL": "il israel",
+    "IT": "it italy italien",
+    "JM": "jm jamaica",
+    "JP": "jp jpn japan japan",
+    "JO": "jo jordan jordanien",
+    "KZ": "kz kazakhstan kasachstan",
+    "KE": "ke kenya kenia",
+    "KI": "ki kiribati",
+    "KP": "kp prk north korea democratic peoples republic of korea nordkorea nord korea",
+    "KR": "kr kor south korea republic of korea sudkorea sud korea korea south",
+    "KW": "kw kuwait kuwait",
+    "KG": "kg kyrgyzstan kirgisistan kirgistan",
+    "LA": "la lao laos lao peoples democratic republic",
+    "LV": "lv latvia lettland",
+    "LB": "lb lebanon libanon",
+    "LS": "ls lesotho lesoto",
+    "LR": "lr liberia liberia",
+    "LY": "ly libya libyen",
+    "LI": "li liechtenstein",
+    "LT": "lt lithuania litauen",
+    "LU": "lu luxembourg luxemburg",
+    "MG": "mg madagascar madagaskar",
+    "MW": "mw malawi malawi",
+    "MY": "my malaysia malaysien",
+    "MV": "mv maldives malediven",
+    "ML": "ml mali mali",
+    "MT": "mt malta malta",
+    "MH": "mh marshall islands marshallinseln",
+    "MR": "mr mauritania mauretanien",
+    "MU": "mu mauritius mauritius",
+    "MX": "mx mexico mexiko",
+    "FM": "fm micronesia federated states of micronesia mikronesien",
+    "MD": "md moldova moldau republic of moldova",
+    "MC": "mc monaco monaco",
+    "MN": "mn mongolia mongolei",
+    "ME": "me montenegro montenegro",
+    "MA": "ma morocco marokko",
+    "MZ": "mz mozambique mosambik",
+    "MM": "mm myanmar burma birma",
+    "NA": "na namibia namibia",
+    "NR": "nr nauru nauru",
+    "NP": "np nepal nepal",
+    "NL": "nl nld netherlands niederlande holland",
+    "NZ": "nz new zealand neuseeland",
+    "NI": "ni nicaragua nicaragua",
+    "NE": "ne niger niger",
+    "NG": "ng nigeria nigeria",
+    "MK": "mk north macedonia nordmazedonien macedonia mazedonien",
+    "NO": "no norway norwegen",
+    "OM": "om oman oman",
+    "PK": "pk pakistan pakistan",
+    "PW": "pw palau palau",
+    "PS": "ps palestine palestinian territories palestina palastina state of palestine",
+    "PA": "pa panama panama",
+    "PG": "pg papua new guinea papua neuguinea",
+    "PY": "py paraguay paraguay",
+    "PE": "pe peru perú",
+    "PH": "ph philippines philippinen",
+    "PL": "pl pol poland polen",
+    "PT": "pt prt portugal portugal",
+    "QA": "qa qatar katar",
+    "RO": "ro rou romania rumanien",
+    "RU": "ru rus russian federation russia russland russische foderation",
+    "RW": "rw rwanda ruanda",
+    "KN": "kn saint kitts and nevis st kitts and nevis st kitts nevis",
+    "LC": "lc saint lucia st lucia",
+    "VC": "vc saint vincent and the grenadines st vincent and the grenadines",
+    "WS": "ws samoa samoa",
+    "SM": "sm san marino sanmarino",
+    "ST": "st sao tome and principe sao tome principe",
+    "SA": "sa sau saudi arabia saudi arabien",
+    "SN": "sn senegal senegal",
+    "RS": "rs serbia serbien",
+    "SC": "sc seychelles seychellen",
+    "SL": "sl sierra leone sierraleone",
+    "SG": "sg singapore singapur",
+    "SK": "sk slovakia slowakei slowakische republik",
+    "SI": "si slovenia slowenien",
+    "SB": "sb solomon islands salomonen",
+    "SO": "so somalia somalia",
+    "ZA": "za zaf south africa sudafrika südafrika republic of south africa",
+    "SS": "ss south sudan sudsudan south sudan",
+    "ES": "es esp spain spanien espana españa",
+    "LK": "lk sri lanka srilanka",
+    "SD": "sd sudan sudan",
+    "SR": "sr suriname surinam",
+    "SE": "se swe sweden schweden",
+    "CH": "ch che switzerland schweiz suisse svizzera",
+    "SY": "sy syria syrien syrian arab republic",
+    "TW": "tw taiwan taiwan republic of china",
+    "TJ": "tj tajikistan tadschikistan",
+    "TZ": "tz tanzania tansania united republic of tanzania",
+    "TH": "th thailand thailand",
+    "TL": "tl timor leste east timor osttimor",
+    "TG": "tg togo togo",
+    "TO": "to tonga tonga",
+    "TT": "tt trinidad and tobago trinidad und tobago",
+    "TN": "tn tunisia tunesien",
+    "TR": "tr tur turkey turkiye türkiye turkei turkey republic of turkey",
+    "TM": "tm turkmenistan turkmenistan",
+    "TV": "tv tuvalu tuvalu",
+    "UG": "ug uganda uganda",
+    "UA": "ua ukr ukraine ukraine",
+    "AE": "ae uae united arab emirates vereinigte arabische emirate",
+    "GB": "gb uk gbr united kingdom great britain england scotland wales grossbritannien vereinigtes konigreich",
+    "US": "us usa united states united states of america america vereinigte staaten vereinigte staaten von amerika",
+    "UY": "uy uruguay uruguay",
+    "UZ": "uz uzbekistan usbekistan",
+    "VU": "vu vanuatu vanuatu",
+    "VA": "va vatican vatican city holy see vatikan vatikanstadt heiliger stuhl",
+    "VE": "ve venezuela venezuela bolivarian republic of venezuela",
+    "VN": "vn vnm vietnam viet nam",
+    "YE": "ye yemen jemen",
+    "ZM": "zm zambia sambia",
+    "ZW": "zw zimbabwe simbabve",
+    "XK": "xk kosovo republic of kosovo",
+}
+
+country_mapping = {}
+for code, aliases in aliases_by_code.items():
+    for alias in aliases.split("|"):
+        alias = normalize_country(alias)
+        if alias:
+            country_mapping[alias] = code
+
+for code in aliases_by_code:
+    country_mapping[normalize_country(code)] = code
+
+ambiguous = {
+    "", "unknown", "unbekannt", "n a", "na", "none", "null", "nan", "-", "?",
+    "congo", "kongo", "korea", "korea republic", "guinea", "georgia",
+}
+
+def standardize_country(value):
+    normalized = normalize_country(value)
+    if normalized in ambiguous:
+        return "UNKNOWN"
+    return country_mapping.get(normalized, "UNKNOWN")
+
+df = pd.read_parquet(input_path)
+df["country"] = df["country"].map(standardize_country).astype("str")
+
+os.makedirs(os.path.dirname(output_path), exist_ok=True)
+df.to_parquet(output_path, index=False)

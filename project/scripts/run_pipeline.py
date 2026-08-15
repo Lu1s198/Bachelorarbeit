@@ -32,11 +32,27 @@ def main() -> None:
                         help="anthropic openai google ollama baseline "
                              "(Standard: die vier Modelle)")
     parser.add_argument("--seed", type=int, default=1)
+    parser.add_argument("--rep", type=int, default=1,
+                        help="Nummer der Wiederholung. 1 schreibt in den "
+                             "schlichten Ordner, ab 2 in <modell>..._r<N>, sodass "
+                             "sich Wiederholungen nicht ueberschreiben")
     parser.add_argument("--attempts", type=int, default=3,
                         help="max. Code-Erzeugungs-Versuche je Schritt (Standard: 3)")
+    parser.add_argument("--best-of", type=int, default=1, dest="best_of",
+                        help="je Schritt N Kandidaten erzeugen und den mit der höchsten "
+                             "Genauigkeit übernehmen (Oracle-Auswahl, Obergrenze -- "
+                             "nicht mit Standardläufen mischen; Standard: 1)")
+    parser.add_argument("--inputs", choices=["self", "reference"], default="self",
+                        dest="input_source",
+                        help="'self': verkettet (Standard). 'reference': jeder Schritt "
+                             "bekommt die Soll-Ausgabe des Vorgängers, misst also die "
+                             "Schrittleistung ohne Fehlerfortpflanzung (Ergebnisse in "
+                             "<provider>_isolated/)")
     args = parser.parse_args()
 
-    results = run_all_pipelines(args.providers, seed=args.seed, attempts=args.attempts)
+    results = run_all_pipelines(args.providers, seed=args.seed, attempts=args.attempts,
+                                best_of=args.best_of, input_source=args.input_source,
+                                rep=args.rep)
 
     print("\n" + "=" * 60)
     print("ZUSAMMENFASSUNG")

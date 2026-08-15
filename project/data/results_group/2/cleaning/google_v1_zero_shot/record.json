@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-08-14T20:12:10.051280+00:00",
+  "provider": "google",
+  "prompt_id": "v1_zero_shot",
+  "prompt_strategy": "zero_shot",
+  "group": "cleaning",
+  "group_label": "Gruppe 1 · Bereinigung (Schritte 1-3)",
+  "steps": [
+    "cleaning_easy",
+    "cleaning_medium",
+    "cleaning_hard"
+  ],
+  "seed": 2,
+  "repetition": 1,
+  "status": "ok",
+  "accuracy": 0.994815,
+  "attempts": 1,
+  "error": null,
+  "cost_usd": 0.047425,
+  "prompt_tokens": 502,
+  "completion_tokens": 6223,
+  "duration_s": 24.44,
+  "llm_s": 23.22,
+  "exec_s": 1.2,
+  "generated_code": "import os\nimport re\nimport pandas as pd\n\ninput_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/2/customers_raw.csv\"\noutput_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_group/2/cleaning/google_v1_zero_shot/output.parquet\"\n\ndf = pd.read_csv(input_path, dtype=str)\n\nif 'customer_id' in df.columns:\n    df['customer_id'] = pd.to_numeric(df['customer_id'], errors='coerce').astype('int64')\n\ntext_cols = ['full_name', 'email', 'country', 'registered_at']\nfor col in text_cols:\n    if col in df.columns:\n        df[col] = df[col].astype(str).str.strip()\n        df[col] = df[col].replace({'nan': None, 'None': None, '<NA>': None, '': None})\n\ndf['country'] = df['country'].fillna('UNKNOWN')\n\ndef parse_registered_at(val):\n    if pd.isna(val) or val is None or str(val).strip() == '':\n        return None\n    s = str(val).strip()\n    \n    try:\n        num = float(s)\n        if num > 100000000:\n            return pd.to_datetime(num, unit='s', utc=True).strftime('%Y-%m-%d')\n    except ValueError:\n        pass\n\n    if re.match(r'^\\d{1,2}\\.\\d{1,2}\\.\\d{4}$', s):\n        try:\n            return pd.to_datetime(s, format='%d.%m.%Y').strftime('%Y-%m-%d')\n        except Exception:\n            pass\n\n    try:\n        dt = pd.to_datetime(s)\n        return dt.strftime('%Y-%m-%d')\n    except Exception:\n        pass\n\n    return None\n\ndf['registered_at'] = df['registered_at'].apply(parse_registered_at)\n\ncountry_map = {\n    'DE': 'DE', 'DEU': 'DE', 'GERMANY': 'DE', 'DEUTSCHLAND': 'DE', 'GER': 'DE',\n    'AT': 'AT', 'AUT': 'AT', 'AUSTRIA': 'AT', 'ÖSTERREICH': 'AT', 'OESTERREICH': 'AT',\n    'CH': 'CH', 'CHE': 'CH', 'SWITZERLAND': 'CH', 'SCHWEIZ': 'CH',\n    'US': 'US', 'USA': 'US', 'UNITED STATES': 'US', 'UNITED STATES OF AMERICA': 'US', 'VEREINIGTE STAATEN': 'US',\n    'GB': 'GB', 'GBR': 'GB', 'UNITED KINGDOM': 'GB', 'UK': 'GB', 'GROSSBRITANNIEN': 'GB', 'GROßBRITANNIEN': 'GB',\n    'FR': 'FR', 'FRA': 'FR', 'FRANCE': 'FR', 'FRANKREICH': 'FR',\n    'IT': 'IT', 'ITA': 'IT', 'ITALY': 'IT', 'ITALIEN': 'IT',\n    'ES': 'ES', 'ESP': 'ES', 'SPAIN': 'ES', 'SPANIEN': 'ES',\n    'NL': 'NL', 'NLD': 'NL', 'NETHERLANDS': 'NL', 'NIEDERLANDE': 'NL',\n    'BE': 'BE', 'BEL': 'BE', 'BELGIUM': 'BE', 'BELGIEN': 'BE',\n    'PL': 'PL', 'POL': 'PL', 'POLAND': 'PL', 'POLEN': 'PL',\n    'CZ': 'CZ', 'CZE': 'CZ', 'CZECH REPUBLIC': 'CZ', 'CZECHIA': 'CZ', 'TSCHECHIEN': 'CZ',\n    'DK': 'DK', 'DNK': 'DK', 'DENMARK': 'DK', 'DÄNEMARK': 'DK',\n    'SE': 'SE', 'SWE': 'SE', 'SWEDEN': 'SE', 'SCHWEDEN': 'SE',\n    'NO': 'NO', 'NOR': 'NO', 'NORWAY': 'NO', 'NORWEGEN': 'NO',\n    'FI': 'FI', 'FIN': 'FI', 'FINLAND': 'FI', 'FINNLAND': 'FI',\n    'CA': 'CA', 'CAN': 'CA', 'CANADA': 'CA', 'KANADA': 'CA',\n    'AU': 'AU', 'AUS': 'AU', 'AUSTRALIA': 'AU', 'AUSTRALIEN': 'AU',\n    'JP': 'JP', 'JPN': 'JP', 'JAPAN': 'JP',\n    'CN': 'CN', 'CHN': 'CN', 'CHINA': 'CN',\n    'IN': 'IN', 'IND': 'IN', 'INDIA': 'IN', 'INDIEN': 'IN',\n    'BR': 'BR', 'BRA': 'BR', 'BRAZIL': 'BR', 'BRASILIEN': 'BR',\n    'RU': 'RU', 'RUS': 'RU', 'RUSSIA': 'RU', 'RUSSLAND': 'RU',\n    'MX': 'MX', 'MEX': 'MX', 'MEXICO': 'MX', 'MEXIKO': 'MX',\n    'PT': 'PT', 'PRT': 'PT', 'PORTUGAL': 'PT',\n    'GR': 'GR', 'GRC': 'GR', 'GREECE': 'GR', 'GRIECHENLAND': 'GR',\n    'IE': 'IE', 'IRL': 'IE', 'IRELAND': 'IE', 'IRLAND': 'IE',\n    'TR': 'TR', 'TUR': 'TR', 'TURKEY': 'TR', 'TÜRKEI': 'TR',\n}\n\ndef map_country(val):\n    if pd.isna(val) or not val or val == 'UNKNOWN':\n        return 'UNKNOWN'\n    val_clean = str(val).strip().upper()\n    if val_clean in country_map:\n        return country_map[val_clean]\n    try:\n        import pycountry\n        c = pycountry.countries.get(alpha_2=val_clean) or pycountry.countries.get(alpha_3=val_clean) or pycountry.countries.get(name=val_clean)\n        if c:\n            return c.alpha_2\n        res = pycountry.countries.search_fuzzy(val_clean)\n        if res:\n            return res[0].alpha_2\n    except Exception:\n        pass\n    return 'UNKNOWN'\n\ndf['country'] = df['country'].apply(map_country)\n\nos.makedirs(os.path.dirname(output_path), exist_ok=True)\ndf.to_parquet(output_path, index=False)",
+  "row_actual": 540,
+  "row_expected": 540
+}

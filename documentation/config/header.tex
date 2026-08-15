@@ -16,7 +16,7 @@
 \usepackage{xstring}		            % für Stringvergleich
 \usepackage[utf8]{inputenc}         	% Quelldateicodierung
 \usepackage[T1]{fontenc}	            % Fontmap-Kodierung, diese wird von der pdflatex-Engine benötigt
-\usepackage[ngerman, english]{babel}	% Sprache
+\usepackage[english, ngerman]{babel}	% Sprache (Hauptsprache: Deutsch)
 
 %% ifDocType Befehlsdefinition
 \newcommand{\ifDocType}[3]{%
@@ -92,6 +92,7 @@
 \usepackage{pdfpages}               % PDF Dateien / Seiten
 \usepackage{float}                  % Floating Darstellung
 \usepackage{xcolor}                 % Farben
+\usepackage{textcomp}               % Textsymbole (u.a. Euro-Zeichen, sichtbares Leerzeichen)
 \usepackage{acronym}                % Abkürzungen
 \usepackage{amsfonts}               % Mathematische Schriftart der American Mathematical Society
 \usepackage{amsmath}                % Mathematische Schriftzeichen der American Mathematical Society
@@ -167,6 +168,7 @@
 }
 \lstloadlanguages{PHP,python,java,C,C++,bash}
 \renewcommand\lstlistingname{Skript}
+\renewcommand\lstlistlistingname{Skriptverzeichnis}
 \def\lstlistingautorefname{Skript}
 
 %% Chapter Style

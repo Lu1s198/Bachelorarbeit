@@ -3,46 +3,50 @@ import numpy as np
 import re
 from difflib import SequenceMatcher
 
-input_path = "C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/anthropic/dedup_medium/output.parquet"
-output_path = "C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/anthropic/dedup_hard/output.parquet"
+input_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/anthropic/dedup_medium/output.parquet"
+output_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/anthropic/dedup_hard/output.parquet"
 
 df = pd.read_parquet(input_path)
 
-df['customer_id'] = df['customer_id'].astype(str)
+df['customer_id'] = df['customer_id'].astype('int64')
+df['full_name'] = df['full_name'].astype(str)
+df['email'] = df['email'].astype(str)
+df['country'] = df['country'].astype(str)
+df['registered_at'] = df['registered_at'].astype(str)
 
 TITLES = {
-    'mr', 'mrs', 'ms', 'miss', 'mx', 'dr', 'prof', 'professor',
-    'herr', 'frau', 'fr', 'hr', 'mag', 'ing', 'sir', 'madam',
-    'dr.', 'prof.', 'mr.', 'mrs.', 'ms.'
+    'dr', 'dr.', 'mr', 'mr.', 'mrs', 'mrs.', 'ms', 'ms.', 'prof', 'prof.',
+    'herr', 'frau', 'miss', 'mx', 'mx.', 'sir', 'madam', 'sr', 'sr.', 'jr', 'jr.'
 }
 
+def strip_titles(name):
+    tokens = name.split()
+    cleaned = [t for t in tokens if t.lower().strip('.') not in {ti.strip('.') for ti in TITLES}]
+    return ' '.join(cleaned)
+
+def remove_middle_initials(name):
+    tokens = name.split()
+    cleaned = [t for t in tokens if len(t.strip('.')) > 1]
+    return ' '.join(cleaned)
+
 def normalize_name(name):
-    if pd.isna(name):
-        return ""
-    s = str(name).strip().lower()
-    s = re.sub(r'[.,]', ' ', s)
-    tokens = s.split()
-    tokens = [t for t in tokens if t not in TITLES]
-    tokens = [t for t in tokens if len(t) > 1]
-    return " ".join(tokens)
+    name = strip_titles(name)
+    name = remove_middle_initials(name)
+    name = name.lower().strip()
+    name = re.sub(r'[^a-z\s]', '', name)
+    name = re.sub(r'\s+', ' ', name)
+    return name.strip()
 
 def normalize_email(email):
-    if pd.isna(email):
-        return ""
-    s = str(email).strip().lower()
-    if '@' not in s:
-        return s
-    local, domain = s.split('@', 1)
+    email = email.strip().lower()
+    if '@' not in email:
+        return email
+    local, domain = email.split('@', 1)
     local = local.replace('.', '')
     return f"{local}@{domain}"
 
-df['_norm_name'] = df['full_name'].apply(normalize_name)
-df['_norm_email'] = df['email'].apply(normalize_email)
-
-def name_similarity(a, b):
-    if a == b:
-        return 1.0
-    return SequenceMatcher(None, a, b).ratio()
+df['norm_name'] = df['full_name'].apply(normalize_name)
+df['norm_email'] = df['email'].apply(normalize_email)
 
 n = len(df)
 parent = list(range(n))
@@ -53,45 +57,35 @@ def find(x):
         x = parent[x]
     return x
 
-def union(x, y):
-    rx, ry = find(x), find(y)
-    if rx != ry:
-        parent[rx] = ry
+def union(a, b):
+    ra, rb = find(a), find(b)
+    if ra != rb:
+        parent[rb] = ra
 
-groups = {}
-for idx, email in enumerate(df['_norm_email']):
-    groups.setdefault(email, []).append(idx)
+names = df['norm_name'].tolist()
+emails = df['norm_email'].tolist()
 
-for email, idxs in groups.items():
-    if len(idxs) < 2:
-        continue
-    for i in range(len(idxs)):
-        for j in range(i + 1, len(idxs)):
-            a_idx, b_idx = idxs[i], idxs[j]
-            name_a = df.at[a_idx, '_norm_name']
-            name_b = df.at[b_idx, '_norm_name']
-            if name_a == name_b:
-                union(a_idx, b_idx)
-            elif name_a and name_b:
-                sim = name_similarity(name_a, name_b)
-                if sim >= 0.82:
-                    union(a_idx, b_idx)
+NAME_SIM_THRESHOLD = 0.82
 
-df['_cluster'] = [find(i) for i in range(n)]
+for i in range(n):
+    for j in range(i + 1, n):
+        if find(i) == find(j):
+            continue
+        if emails[i] != emails[j]:
+            continue
+        if names[i] == names[j]:
+            union(i, j)
+            continue
+        ratio = SequenceMatcher(None, names[i], names[j]).ratio()
+        if ratio >= NAME_SIM_THRESHOLD:
+            union(i, j)
 
-def sort_key(cid):
-    try:
-        return (0, int(cid))
-    except (ValueError, TypeError):
-        return (1, str(cid))
+df['cluster'] = [find(i) for i in range(n)]
 
-df['_sort_key'] = df['customer_id'].apply(sort_key)
+df_sorted = df.sort_values('customer_id')
+keep_idx = df_sorted.groupby('cluster')['customer_id'].idxmin()
 
-df_sorted = df.sort_values('_sort_key')
-result = df_sorted.drop_duplicates(subset='_cluster', keep='first')
-
-result = result.drop(columns=['_norm_name', '_norm_email', '_cluster', '_sort_key'])
-
-result = result.reset_index(drop=True)
+result = df.loc[keep_idx, ['customer_id', 'full_name', 'email', 'country', 'registered_at']].copy()
+result = result.sort_values('customer_id').reset_index(drop=True)
 
 result.to_parquet(output_path, index=False)

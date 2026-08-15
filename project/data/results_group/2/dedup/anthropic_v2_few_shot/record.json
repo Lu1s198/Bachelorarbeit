@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-08-14T20:14:13.305792+00:00",
+  "provider": "anthropic",
+  "prompt_id": "v2_few_shot",
+  "prompt_strategy": "few_shot",
+  "group": "dedup",
+  "group_label": "Gruppe 2 · Deduplizierung (Schritte 4-6)",
+  "steps": [
+    "dedup_easy",
+    "dedup_medium",
+    "dedup_hard"
+  ],
+  "seed": 2,
+  "repetition": 1,
+  "status": "ok",
+  "accuracy": 0.982,
+  "attempts": 2,
+  "error": null,
+  "cost_usd": 0.10296,
+  "prompt_tokens": 2990,
+  "completion_tokens": 6266,
+  "duration_s": 56.24,
+  "llm_s": 54.78,
+  "exec_s": 1.44,
+  "generated_code": "import pandas as pd\nimport re\nimport os\nfrom difflib import SequenceMatcher\n\ninput_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/2/_reference/cleaning_hard/output.parquet\"\noutput_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_group/2/dedup/anthropic_v2_few_shot/output.parquet\"\n\ndf = pd.read_parquet(input_path)\n\n# Step 1: remove exact duplicate rows, keep first occurrence\ndf = df.drop_duplicates(keep=\"first\").reset_index(drop=True)\n\n# Step 2: remove rows with duplicate email, keep the one with the newest registered_at\ndf[\"_registered_at_dt\"] = pd.to_datetime(df[\"registered_at\"])\ndf = df.sort_values(\"_registered_at_dt\", ascending=False)\ndf = df.drop_duplicates(subset=\"email\", keep=\"first\")\ndf = df.drop(columns=[\"_registered_at_dt\"]).reset_index(drop=True)\n\n# Step 3: fuzzy dedup on name (typos, case, middle initial, titles) and email (dots, case)\nTITLES = {\n    \"dr\", \"dr.\", \"mr\", \"mr.\", \"mrs\", \"mrs.\", \"ms\", \"ms.\", \"miss\",\n    \"mx\", \"prof\", \"prof.\", \"herr\", \"frau\", \"herrn\", \"frl\", \"frl.\"\n}\n\ndef normalize_name(name):\n    name = str(name).lower()\n    name = re.sub(r\"[.,]\", \"\", name)\n    tokens = name.split()\n    tokens = [t for t in tokens if t not in TITLES]\n    tokens = [t for t in tokens if len(t) > 1]  # drop middle initials\n    return \" \".join(tokens)\n\ndef normalize_email(email):\n    email = str(email).strip().lower()\n    if \"@\" not in email:\n        return email\n    local, domain = email.split(\"@\", 1)\n    local = local.replace(\".\", \"\")\n    return f\"{local}@{domain}\"\n\ndf[\"_norm_name\"] = df[\"full_name\"].apply(normalize_name)\ndf[\"_norm_email\"] = df[\"email\"].apply(normalize_email)\n\ndef name_similar(n1, n2, threshold=0.8):\n    if n1 == n2:\n        return True\n    if not n1 or not n2:\n        return False\n    return SequenceMatcher(None, n1, n2).ratio() >= threshold\n\nparent = {idx: idx for idx in df.index}\n\ndef find(x):\n    while parent[x] != x:\n        parent[x] = parent[parent[x]]\n        x = parent[x]\n    return x\n\ndef union(x, y):\n    px, py = find(x), find(y)\n    if px != py:\n        if px < py:\n            parent[py] = px\n        else:\n            parent[px] = py\n\nfor _, group in df.groupby(\"_norm_email\"):\n    idxs = list(group.index)\n    for i in range(len(idxs)):\n        for j in range(i + 1, len(idxs)):\n            ni = df.loc[idxs[i], \"_norm_name\"]\n            nj = df.loc[idxs[j], \"_norm_name\"]\n            if name_similar(ni, nj):\n                union(idxs[i], idxs[j])\n\ndf[\"_group\"] = df.index.map(find)\n\nresult = df.loc[df.groupby(\"_group\")[\"customer_id\"].idxmin()]\nresult = result[[\"customer_id\", \"full_name\", \"email\", \"country\", \"registered_at\"]]\nresult = result.sort_values(\"customer_id\").reset_index(drop=True)\n\nos.makedirs(os.path.dirname(output_path), exist_ok=True)\nresult.to_parquet(output_path, index=False)",
+  "row_actual": 500,
+  "row_expected": 495
+}

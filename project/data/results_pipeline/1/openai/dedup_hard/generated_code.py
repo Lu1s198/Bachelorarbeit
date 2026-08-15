@@ -1,10 +1,8 @@
 import os
 import re
 import unicodedata
-from collections import defaultdict
-from functools import lru_cache
+from difflib import SequenceMatcher
 
-import numpy as np
 import pandas as pd
 
 input_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/1/openai/dedup_medium/output.parquet"
@@ -12,136 +10,87 @@ output_path = r"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_
 
 df = pd.read_parquet(input_path)
 
-required_columns = ["customer_id", "full_name", "email", "country", "registered_at"]
-missing_columns = [col for col in required_columns if col not in df.columns]
-if missing_columns:
-    raise ValueError(f"Missing required columns: {missing_columns}")
-
-df = df.reset_index(drop=True)
-n = len(df)
-
-title_tokens = {
-    "herr", "frau", "mr", "mrs", "ms", "miss", "mx",
-    "dr", "prof", "professor", "doktor", "doctor",
-    "sir", "dame", "lord", "lady", "rev", "reverend",
-    "fr", "sr", "br", "schwester", "bruder",
-    "ing", "dipl", "mba", "msc", "bsc", "ma", "ba",
-    "phd", "md", "dds", "dvm", "jd", "esq"
+TITLE_TOKENS = {
+    "dr", "doctor", "prof", "professor", "mr", "mrs", "ms", "miss", "mx",
+    "sir", "dame", "herr", "frau", "fr", "hr", "ing", "dipl", "diplom",
+    "mag", "med", "jur", "rev", "frater", "sister"
+}
+SUFFIX_TOKENS = {
+    "jr", "sr", "junior", "senior", "phd", "md", "dds", "esq", "mba",
+    "msc", "bsc"
 }
 
-suffix_tokens = {
-    "jr", "junior", "sr", "senior", "ii", "iii", "iv", "v",
-    "phd", "md", "dds", "dvm", "esq", "mba", "msc", "bsc"
-}
-
-def ascii_fold(value):
-    value = unicodedata.normalize("NFKD", value)
-    return "".join(ch for ch in value if not unicodedata.combining(ch))
-
-def normalize_email(value):
+def to_ascii_text(value):
     if pd.isna(value):
         return ""
-    value = str(value).strip().casefold()
-    if not value or "@" not in value:
+    text = str(value).strip().casefold()
+    text = (
+        text.replace("ß", "ss")
+        .replace("æ", "ae")
+        .replace("œ", "oe")
+        .replace("ø", "o")
+        .replace("ð", "d")
+        .replace("þ", "th")
+        .replace("ł", "l")
+    )
+    text = unicodedata.normalize("NFKD", text)
+    return "".join(ch for ch in text if not unicodedata.combining(ch))
+
+def normalized_email(value):
+    if pd.isna(value):
         return ""
-    local, domain = value.rsplit("@", 1)
-    local = re.sub(r"\s+", "", local)
-    domain = re.sub(r"\s+", "", domain)
+    email = to_ascii_text(value).replace(" ", "")
+    if email.count("@") != 1:
+        return ""
+    local, domain = email.split("@", 1)
     if not local or not domain:
         return ""
-    local = local.replace(".", "")
-    return f"{local}@{domain}"
+    return local.replace(".", "") + "@" + domain
 
-def normalize_name(value):
-    if pd.isna(value):
-        return ()
-    value = ascii_fold(str(value)).casefold().strip()
-    if not value:
-        return ()
-    value = re.sub(r"['`´’\-]", "", value)
-    value = re.sub(r"[^a-z0-9]+", " ", value)
-    tokens = [token for token in value.split() if token]
-    while tokens and tokens[0] in title_tokens:
+def normalized_name_tokens(value):
+    text = to_ascii_text(value)
+    text = re.sub(r"[^a-z0-9]+", " ", text).strip()
+    tokens = text.split()
+
+    while tokens and tokens[0] in TITLE_TOKENS:
         tokens.pop(0)
-    while tokens and tokens[-1] in suffix_tokens:
+    while tokens and tokens[-1] in SUFFIX_TOKENS:
         tokens.pop()
-    tokens = [token for token in tokens if token not in title_tokens]
-    tokens = [token for token in tokens if len(token) > 1 or token.isdigit()]
-    return tuple(tokens)
 
-@lru_cache(maxsize=250000)
-def levenshtein_distance(a, b):
-    if a == b:
-        return 0
-    if not a:
-        return len(b)
-    if not b:
-        return len(a)
-    if len(a) < len(b):
-        a, b = b, a
-    previous = list(range(len(b) + 1))
-    for i, char_a in enumerate(a, start=1):
-        current = [i]
-        for j, char_b in enumerate(b, start=1):
-            cost = 0 if char_a == char_b else 1
-            current.append(min(
-                current[-1] + 1,
-                previous[j] + 1,
-                previous[j - 1] + cost
-            ))
-        previous = current
-    return previous[-1]
+    tokens = [token for token in tokens if len(token) > 1]
+    return tokens
 
-def token_close(a, b):
-    if a == b:
-        return True
-    if not a or not b:
-        return False
-    max_len = max(len(a), len(b))
-    min_len = min(len(a), len(b))
-    distance = levenshtein_distance(a, b)
-    if max_len <= 2:
-        return False
-    if max_len <= 4:
-        return distance <= 1 and min_len >= 3
-    return distance <= max(1, int(max_len * 0.20))
+def ratio(left, right):
+    return SequenceMatcher(None, left, right, autojunk=False).ratio()
 
-def names_compatible(tokens_a, tokens_b):
+def names_match(tokens_a, tokens_b):
     if not tokens_a or not tokens_b:
         return False
 
-    if tokens_a == tokens_b:
+    if tokens_a == tokens_b or sorted(tokens_a) == sorted(tokens_b):
         return True
 
-    compact_a = "".join(tokens_a)
-    compact_b = "".join(tokens_b)
-    if compact_a == compact_b:
-        return True
-
-    if len(tokens_a) == len(tokens_b) and sorted(tokens_a) == sorted(tokens_b):
-        return True
+    name_a = "".join(tokens_a)
+    name_b = "".join(tokens_b)
 
     if len(tokens_a) == 1 or len(tokens_b) == 1:
-        if len(tokens_a) == 1 and len(tokens_b) == 1:
-            return token_close(tokens_a[0], tokens_b[0])
-        return False
+        return ratio(name_a, name_b) >= 0.90
 
-    first_a, last_a = tokens_a[0], tokens_a[-1]
-    first_b, last_b = tokens_b[0], tokens_b[-1]
+    first_score = ratio(tokens_a[0], tokens_b[0])
+    last_score = ratio(tokens_a[-1], tokens_b[-1])
+    full_score = ratio(name_a, name_b)
 
-    direct_match = token_close(first_a, first_b) and token_close(last_a, last_b)
-    reversed_match = token_close(first_a, last_b) and token_close(last_a, first_b)
-
-    if direct_match or reversed_match:
+    if first_score >= 0.80 and last_score >= 0.80 and full_score >= 0.84:
         return True
 
-    if len(compact_a) >= 6 and len(compact_b) >= 6:
-        distance = levenshtein_distance(compact_a, compact_b)
-        allowed = max(1, int(max(len(compact_a), len(compact_b)) * 0.16))
-        return distance <= allowed
+    reversed_first_score = ratio(tokens_a[0], tokens_b[-1])
+    reversed_last_score = ratio(tokens_a[-1], tokens_b[0])
+    if reversed_first_score >= 0.90 and reversed_last_score >= 0.90 and full_score >= 0.84:
+        return True
 
     return False
 
+n = len(df)
 parent = list(range(n))
 rank = [0] * n
 
@@ -164,67 +113,51 @@ def union(a, b):
         parent[root_b] = root_a
         rank[root_a] += 1
 
-email_values = df["email"].tolist()
-name_values = df["full_name"].tolist()
+email_groups = {}
+name_tokens = []
 
-normalized_emails = [normalize_email(value) for value in email_values]
-normalized_names = [normalize_name(value) for value in name_values]
+for position, (_, row) in enumerate(df.iterrows()):
+    email_key = normalized_email(row["email"])
+    tokens = normalized_name_tokens(row["full_name"])
+    name_tokens.append(tokens)
+    if email_key:
+        email_groups.setdefault(email_key, []).append(position)
 
-email_groups = defaultdict(list)
-for idx, email in enumerate(normalized_emails):
-    if email and normalized_names[idx]:
-        email_groups[email].append(idx)
-
-for indices in email_groups.values():
-    if len(indices) < 2:
+for positions in email_groups.values():
+    group_size = len(positions)
+    if group_size < 2:
         continue
 
-    exact_name_groups = defaultdict(list)
-    for idx in indices:
-        exact_name_groups[normalized_names[idx]].append(idx)
+    for i in range(group_size - 1):
+        left_position = positions[i]
+        left_tokens = name_tokens[left_position]
+        if not left_tokens:
+            continue
 
-    for same_name_indices in exact_name_groups.values():
-        if len(same_name_indices) > 1:
-            anchor = same_name_indices[0]
-            for idx in same_name_indices[1:]:
-                union(anchor, idx)
+        for j in range(i + 1, group_size):
+            right_position = positions[j]
+            if names_match(left_tokens, name_tokens[right_position]):
+                union(left_position, right_position)
 
-    for pos_a in range(len(indices)):
-        idx_a = indices[pos_a]
-        name_a = normalized_names[idx_a]
-        for pos_b in range(pos_a + 1, len(indices)):
-            idx_b = indices[pos_b]
-            if find(idx_a) == find(idx_b):
-                continue
-            if names_compatible(name_a, normalized_names[idx_b]):
-                union(idx_a, idx_b)
+customer_ids = pd.to_numeric(df["customer_id"], errors="coerce")
+best_position_by_root = {}
 
-def customer_id_key(value, position):
-    if pd.isna(value):
-        return (2, "", position)
-    try:
-        numeric_value = float(value)
-        if np.isfinite(numeric_value):
-            return (0, numeric_value, position)
-    except (TypeError, ValueError):
-        pass
-    return (1, str(value), position)
+for position in range(n):
+    root = find(position)
+    if root not in best_position_by_root:
+        best_position_by_root[root] = position
+        continue
 
-components = defaultdict(list)
-customer_ids = df["customer_id"].tolist()
+    current_best = best_position_by_root[root]
+    current_id = customer_ids.iloc[position]
+    best_id = customer_ids.iloc[current_best]
 
-for idx in range(n):
-    components[find(idx)].append(idx)
+    if pd.isna(best_id) or (not pd.isna(current_id) and current_id < best_id):
+        best_position_by_root[root] = position
 
-keep_indices = []
-for component_indices in components.values():
-    keep_indices.append(min(
-        component_indices,
-        key=lambda idx: customer_id_key(customer_ids[idx], idx)
-    ))
-
-keep_indices.sort(key=lambda idx: customer_id_key(customer_ids[idx], idx))
-result = df.iloc[keep_indices].copy()
+selected_positions = sorted(best_position_by_root.values())
+result = df.iloc[selected_positions].copy()
+result = result.sort_values("customer_id", kind="stable").reset_index(drop=True)
 
 os.makedirs(os.path.dirname(output_path), exist_ok=True)
 result.to_parquet(output_path, index=False)

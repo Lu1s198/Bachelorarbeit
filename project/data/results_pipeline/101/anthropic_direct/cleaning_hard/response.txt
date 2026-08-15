@@ -1,0 +1,273 @@
+```csv
+customer_id,full_name,email,country,registered_at
+427,Jost Haase,otlustek@example.com,PL,2025-03-30
+496,Walburga Kobelt,wwulff@example.net,BE,2021-09-07
+456,Prof. Ina Dowerg,bernhard84@example.net,BE,2024-05-19
+489,Margarethe Liebelt-Grein Groth,helfriedconradi@example.net,FR,2023-11-05
+85,Alexa Gehringer B.A.,kuehnertewa@example.net,GB,2022-05-06
+37,Willy Hethur,rosa49@example.net,PL,2020-12-21
+52,Timm Haering-Faust,zahnmaik@example.net,PL,2025-09-19
+432,Herr Adam Bolzmann,gnatzkarl-heinrich@example.org,ES,2023-12-01
+66,Ronny Hermighausen,hethurjenny@example.org,NL,2021-03-08
+256,Adelbert Beer,meik09@example.org,CH,2024-10-02
+130,Roderich Nerger B.Sc.,rupert30@example.net,GB,2024-07-10
+130,Roderich Nerger B.Sc.,rupert30@example.net,GB,2024-07-10
+442,Janko Segebahn-Budig,zhess@example.com,DE,2020-04-14
+448,Ing. Sebastiano Schleich,ypeukert@example.net,IT,2025-09-07
+397,Herr Mattias Kusch,alexandre21@example.org,IT,2024-12-29
+212,Domenico Römer-Bachmann,cweller@example.com,AT,2021-10-27
+406,Wolf-Dietrich Otto,ernst-otto44@example.org,FR,2024-10-22
+204,Gitte Weiß-Gieß,konstantinostroest@example.org,UNKNOWN,2022-12-16
+213,Rotraut Vollbrecht-Renner,sevim31@example.org,IT,2025-10-07
+97,Herr Emmerich Kuhl,agathemende@example.com,FR,2021-06-07
+513,herlinde stadelmann-gerlach,bertha51@example.com,NL,2025-08-24
+362,Hubertus Jockel,leokadia43@example.org,AT,2025-11-12
+170,Lorenz Jäntsch,istoll@example.org,AT,2020-08-18
+122,Victor Sager,eimerbenedikt@example.net,NL,2024-03-09
+469,Univ.Prof. Tülay Gehringer,phande@example.com,UNKNOWN,2024-09-28
+150,Richard Werner B.Eng.,adobes@example.net,IT,2025-08-04
+198,Gerlind Fechner,jens45@example.com,FR,2022-05-17
+359,Dipl.-Ing. Gislinde Klapp,hans-joergzobel@example.org,NL,2021-12-13
+512,GOTTHILF SCHOMBER,heinz-ottohornig@example.net,FR,2020-09-08
+456,Prof. Ina Dowerg,bernhard84@example.net,BE,2024-05-19
+428,Dr. Georgios Geißler,fridakuhl@example.com,CH,2024-02-28
+357,Herr Stanislav Schenk B.Eng.,barkholzsteve@example.net,ES,2022-05-27
+226,Lena Zimmer,bruderines@example.org,BE,2022-04-10
+335,Stefano Heinz-Täsche,selma65@example.net,AT,2020-05-26
+344,Madeleine Benthin-Steckel,hofmannsibilla@example.net,IT,2024-01-26
+181,Götz Steinberg,peukerth-dieter@example.net,FR,2025-06-19
+133,Jurij Dussen van,angelique58@example.net,BE,2024-11-12
+320,Herr Hans-Ludwig Siering,doerthe93@example.org,AT,2020-07-23
+190,Dr. Hans-H. Sauer,peukertheinz-guenther@example.com,CH,2022-01-02
+6,Univ.Prof. Emanuel Wesack MBA.,susan06@example.net,BE,2025-06-18
+482,Frau Rita Schwital MBA.,qharloff@example.org,IT,2022-05-25
+45,Gerhart Gumprich B.A.,danny41@example.com,UNKNOWN,2020-10-08
+514,Ing.  Herlinde  Kensy  B.Sc.,vad.im90@example.org,NL,2025-05-28
+227,Frau Bianka Holzapfel,horst-guenter31@example.com,CH,2024-02-01
+147,Sven Krebs,staudetimo@example.com,DE,2025-10-19
+483,Folkert Zahn,girschnerellinor@example.com,NL,2023-10-26
+245,Gregor Dussen van,eckbauerlidwina@example.net,BE,2022-07-03
+358,Dipl.-Ing. Ilonka Börner B.A.,kristinstiebitz@example.org,BE,2025-06-01
+119,Herta Huhn,nikolaos45@example.net,UNKNOWN,2024-06-03
+238,Frau Uta Döhn MBA.,mikhail16@example.org,GB,2025-12-19
+117,Karolin Römer B.Sc.,josephine23@example.com,ES,2023-04-24
+264,Willy Zimmer,tatianahoerle@example.net,ES,2022-02-22
+439,Claas Hörle,kseidel@example.net,FR,2023-12-28
+127,Stanislaus Briemer,francoisegerlach@example.net,DE,2023-09-04
+19,Ing. Jose Geisler,friederike47@example.net,IT,2022-09-27
+466,Ing. Paula Holzapfel B.Sc.,scheibeanni@example.org,ES,2021-06-15
+408,Dipl.-Ing. Hans-Gerd Kuhl,estiebitz@example.net,DE,2025-08-24
+267,Theresia Gieß,henckclaudius@example.com,PL,2022-05-10
+258,Dr. Hans-Michael Bonbach,wibkeroehricht@example.net,NL,2023-11-07
+268,Tülay Käster,sabri75@example.com,FR,2022-09-08
+26,Prof. Elisa Ehlert,roerrichtpriska@example.org,DE,2025-01-08
+421,Dr. Birger Kraus B.Sc.,cetindehmel@example.com,BE,2024-09-02
+423,Hans Georg Scheibe MBA.,kambsroswitha@example.com,AT,2023-04-02
+281,Darius Neureuther,hans-eberhard05@example.org,IT,2025-03-09
+48,Evangelos Hartmann,henkrolf-peter@example.org,CH,2022-04-12
+322,Dr. Beate Reinhardt,katerinakarge@example.org,IT,2023-03-12
+429,Melanie Zahn,reichmannconstantin@example.org,CH,2023-02-17
+101,Catharina Werner-Seidel,lonibecker@example.org,GB,2023-04-18
+384,Tülay Keudel,kenan00@example.org,AT,2025-05-01
+282,Univ.Prof. Nico Hahn B.Sc.,pseifert@example.org,ES,2025-02-12
+332,Wilfriede Rogner,hans-michaelbolzmann@example.org,GB,2022-01-09
+450,Hendrik Christoph,spiessbela@example.net,PL,2022-05-23
+126,Michelle Döring,johnboerner@example.net,ES,2024-11-09
+488,Dipl.-Ing. Mirco Bähr B.Sc.,nwieloch@example.org,UNKNOWN,2020-06-14
+307,Dipl.-Ing. Silvio Juncken MBA.,ricarda16@example.org,GB,2023-12-25
+275,Dittmar Kohl,hillerreinhild@example.net,PL,2021-10-14
+409,Karl-Otto Niemeier,steckelantonius@example.org,FR,2020-02-28
+31,Hubertine Hamann,gundula16@example.net,UNKNOWN,2022-12-04
+167,Kunibert Pechel,gertzilias@example.org,ES,2023-09-12
+35,Hansjürgen Briemer,jzirme@example.org,UNKNOWN,2022-11-25
+22,Herr Hans-Ulrich Fiebig B.Sc.,tilmanntlustek@example.net,AT,2025-10-08
+215,Sigmund Pechel MBA.,hans-rainer35@example.net,CH,2024-12-25
+229,Gerti Hübel,arifmargraf@example.com,PL,2020-04-25
+153,Prof. Magarete Scheuermann,reichmannmarta@example.net,AT,2024-05-01
+236,Prof. Gundi Junk MBA.,gudediana@example.org,GB,2021-08-05
+342,Muharrem Söding,adlerangelique@example.com,NL,2021-12-29
+517,Gitte X. Weiß-Gieß,konstantinostroest@example.org,UNKNOWN,2022-12-16
+483,Folkert Zahn,girschnerellinor@example.com,NL,2023-10-26
+222,Nevenka Rohleder,schweitzerpavel@example.net,DE,2020-08-18
+464,Leila Jüttner,lkarz@example.net,DE,2022-03-10
+44,Beate Hermann B.A.,wspeer@example.com,DE,2021-07-23
+467,Prof. Heinz-Peter Hornig MBA.,ascholtz@example.org,UNKNOWN,2023-05-18
+292,Herr Pavel Boucsein B.Sc.,eroskoth@example.net,PL,2022-10-13
+471,Ivanka Eimer,hkade@example.com,NL,2021-10-17
+413,Hans-Rudolf Benthin,marekadolph@example.com,PL,2024-07-30
+32,Prof. Edeltraud Bolzmann B.Sc.,eimerguntram@example.org,DE,2024-07-30
+330,Rudolf Winkler,kuhlmehdi@example.org,FR,2023-10-15
+80,Ismet Weinhage,filizseip@example.com,BE,2025-05-10
+405,Kay-Uwe Geisel-Losekann,irena73@example.com,AT,2023-04-07
+420,Ing. Raymond Schacht,adeline02@example.com,BE,2020-12-09
+9,Herlinde Stadelmann-Gerlach,bertha51@example.com,NL,2025-08-24
+160,Herr Pedro Hauffer B.Eng.,julius98@example.com,CH,2020-03-12
+176,Senol Dörschner,annettepechel@example.com,FR,2024-09-07
+350,Henryk Bender-Matthäi,kvollbrecht@example.com,FR,2024-08-10
+125,Prof. Cemal Dowerg B.A.,nvogt@example.org,NL,2020-11-04
+124,Katharina Patberg,angelofinke@example.com,ES,2025-11-05
+341,Antonios Häring,egbert15@example.org,NL,2021-08-31
+257,Horst-Günter Gute B.Eng.,constance88@example.com,ES,2021-12-26
+151,Ursula Trommler,birger87@example.com,FR,2020-11-09
+86,Deborah Rädel,hueseyinkade@example.com,GB,2020-07-31
+30,Tatiana Holzapfel-Bähr,hans-willijunken@example.net,UNKNOWN,2021-02-23
+166,Prof. Hertha Reising MBA.,roswita34@example.net,BE,2021-02-17
+178,Karl-Ludwig Klemt,ericwulf@example.org,AT,2025-12-27
+112,Timo Kroker-Wiek,vbarth@example.net,PL,2022-04-18
+313,Natali Trub,franka96@example.com,ES,2022-06-18
+100,Stavros Naser,ricarda69@example.com,ES,2021-08-31
+83,Carmela Misicher,zbigniew27@example.net,DE,2020-05-21
+489,Margarethe Liebelt-Grein Groth,helfriedconradi@example.net,FR,2023-11-05
+186,Frau Resi Bauer,gnatzvalentin@example.com,DE,2025-09-03
+439,Claas Hörle,kseidel@example.net,FR,2023-12-28
+364,Dipl.-Ing. Mariusz Dippel B.Eng.,hgute@example.com,ES,2020-11-01
+272,Ing. Anneliese Lorch B.A.,renata71@example.org,CH,2025-10-27
+478,Romy Steckel,monicazorbach@example.com,GB,2022-06-17
+494,Leif Hartmann,qhesse@example.org,ES,2025-05-27
+416,Gerlinde Rosemann B.Sc.,mudemarlene@example.net,DE,2023-07-26
+62,Catharina Pergande,ludgerhuhn@example.net,GB,2022-07-19
+266,Ortrud Sorgatz MBA.,bcichorius@example.org,BE,2024-02-29
+443,Catharina Schulz,reinald41@example.com,ES,2020-01-28
+210,Maria-Theresia Nerger-Ritter,juanbender@example.net,IT,2021-06-05
+361,Murat Tlustek-Pölitz,edoering@example.net,NL,2025-03-16
+70,Leonore Bärer B.Sc.,martinahess@example.org,PL,2021-06-21
+89,Christiane Nette-Zobel,nuray95@example.net,CH,2021-11-21
+309,Katy Loos-Schmiedecke,jpaertzelt@example.com,FR,2021-03-29
+121,Henner Holt,xmetz@example.net,PL,2023-03-28
+402,Annelie Bauer,fschaaf@example.org,GB,2023-12-01
+399,Steffi Hauffer-Bolnbach,mijopatberg@example.com,UNKNOWN,2024-03-13
+211,Dipl.-Ing. Yilmaz Höfig MBA.,fheydrich@example.org,AT,2025-09-10
+435,Frithjof Kaul,taescheelsbeth@example.com,PL,2022-09-12
+243,Hans Georg Ziegert,hermighausenkaroline@example.net,IT,2020-06-16
+12,Juri Rogge B.A.,wpieper@example.net,BE,2023-01-02
+343,Gerhart Neuschäfer,ruppersbergerstavros@example.net,PL,2022-07-15
+15,Ing. Herlinde Kensy B.Sc.,vadim90@example.org,NL,2025-05-28
+53,Dietmar Jacob MBA.,benedikttrueb@example.net,NL,2022-02-07
+265,Dr. Miriam Beckmann,kornelia35@example.com,UNKNOWN,2023-01-14
+269,Wanda Mude-Pergande,koch-iiferdinand@example.com,AT,2021-06-06
+27,Wolfgang Roskoth MBA.,mariolazahn@example.net,UNKNOWN,2025-04-19
+82,Herr Rupert Wulf,keudelsiglinde@example.com,BE,2023-07-01
+451,Lili Scholtz,valentin61@example.net,CH,2021-11-25
+132,Frau Giovanna Mielcarek,grein-grothvictoria@example.com,ES,2025-12-02
+355,Branko Röhricht,katarzyna32@example.net,UNKNOWN,2021-04-11
+84,Josephine Dippel,wbohnbach@example.org,UNKNOWN,2025-08-02
+28,Hans-Henning Gute,eckart39@example.net,DE,2023-09-07
+437,Silva Striebitz B.Sc.,vlachmann@example.org,IT,2024-10-22
+42,Massimo Junck B.Sc.,atzlerlilly@example.com,BE,2025-01-27
+194,Wladimir Jockel,uholsten@example.com,PL,2021-06-01
+515,Prof.  Gertraud  Heintze,SEIFERTHILDEGUND@example.net,DE,2021-07-22
+111,Gert Benthin,anniebeckmann@example.com,PL,2025-08-25
+67,Helge Hendriks,zloewer@example.org,NL,2022-10-08
+162,Hakan Buchholz,van-der-dussenedward@example.com,UNKNOWN,2022-09-11
+297,Frau Leni Heintze B.Sc.,ksoelzer@example.net,AT,2021-10-09
+1,Karsten Wieloch-Bolnbach,erkan77@example.com,CH,2025-07-17
+317,David Hendriks B.A.,bernd-dieterzahn@example.com,AT,2025-04-09
+116,Josefine Ziegert,esauer@example.org,UNKNOWN,2021-02-07
+398,Dipl.-Ing. Waltraud Gertz,carolinmosemann@example.net,FR,2020-11-30
+81,Hansjürgen Ullmann,evelinwulff@example.com,DE,2022-04-19
+452,Manuela Stadelmann,anettotto@example.net,DE,2020-03-15
+246,Prof. Gertraud Heintze,seiferthildegund@example.net,DE,2021-07-22
+191,Volkmar Plath,hildegundpaertzelt@example.net,BE,2025-03-16
+463,Herr Heino Stroh B.Eng.,katarina31@example.org,BE,2023-05-03
+316,Krystyna Scheel,fjunitz@example.net,PL,2023-05-09
+403,Luigi Seifert,ulikiller@example.net,GB,2020-10-10
+209,Rudolph Trubin-Sager,isabelle01@example.org,UNKNOWN,2024-10-14
+349,Frau Sabine Klingelhöfer B.Eng.,lisbeth84@example.org,AT,2020-11-27
+344,Madeleine Benthin-Steckel,hofmannsibilla@example.net,IT,2024-01-26
+23,Prof. Sarah Hartmann,hhauffer@example.net,ES,2020-04-05
+200,Jörg-Peter Lorch B.A.,birtemies@example.com,DE,2021-08-31
+135,Felicitas Eigenwillig MBA.,bettinawirth@example.org,DE,2022-02-24
+380,Regina Dowerg-Thies,kaethi34@example.net,UNKNOWN,2025-07-17
+6,Univ.Prof. Emanuel Wesack MBA.,susan06@example.net,BE,2025-06-18
+477,Prof. Attila Beckmann B.Eng.,soedingtibor@example.org,CH,2021-06-07
+36,Leonid Schaaf,kbuchholz@example.net,BE,2021-11-26
+157,Dipl.-Ing. Genoveva Drubin B.A.,hildburghertrampf@example.org,IT,2020-09-30
+8,Gereon Hölzenbecher MBA.,cschacht@example.com,BE,2022-01-24
+155,Ing. Lina Möchlichen B.A.,hanns92@example.net,CH,2024-12-08
+216,Götz Birnbaum,nbeyer@example.org,NL,2021-04-03
+168,Klara Bärer,augusta48@example.com,BE,2024-01-10
+366,Dipl.-Ing. Kornelia Linke,schomberroderich@example.org,BE,2023-08-15
+490,Silja Stadelmann,hans-joachim89@example.com,BE,2023-04-22
+64,Christl Förster-Hermann,kharloff@example.net,BE,2020-06-10
+485,Carl Berger MBA.,rosenowalmut@example.com,NL,2020-01-09
+382,Änne Schinke B.A.,iloewer@example.org,AT,2021-08-20
+63,Centa Tintzmann,fscheibe@example.org,DE,2025-02-26
+77,Frau Marga Kostolzin MBA.,brigitteadler@example.com,PL,2025-05-28
+102,Thaddäus Stadelmann-Riehl,rosemannraik@example.com,ES,2021-02-07
+468,Paolo Schaaf-Hänel,zsteckel@example.com,IT,2020-11-03
+228,Paul-Gerhard Peukert,lilo38@example.org,GB,2024-09-07
+476,Veli Atzler-Kaul,emmaklapp@example.net,GB,2023-09-12
+501,hans-henning gute,ECKART39@example.net,DE,2023-09-07
+20,Dipl.-Ing. Beatrix Barth B.Eng.,akarz@example.org,FR,2022-03-13
+195,Karl-Ludwig Trommler-Junck,zotto@example.com,FR,2024-09-16
+10,Reinhard Fröhlich,fkoch-ii@example.net,FR,2020-04-01
+140,Gudrun Eckbauer,ulla64@example.net,CH,2022-06-11
+312,Vanessa Holt,yaustermuehle@example.com,IT,2023-10-15
+109,Fedor Gierschner,flantzbranko@example.org,PL,2023-08-23
+474,Univ.Prof. Christa Kraus B.Sc.,saeuberlichharold@example.com,DE,2020-06-07
+39,Bartholomäus Lehmann,zobelarnulf@example.org,ES,2022-01-14
+288,Angelique Drub,nlosekann@example.org,GB,2022-05-14
+311,Bernd-Dieter Thanel-Dobes,dbirnbaum@example.org,AT,2023-03-09
+498,Hans-Martin Bolander-Boucsein,constantin73@example.com,FR,2022-08-13
+351,Bianca Trub,rennerhans-wolfgang@example.com,ES,2025-04-18
+250,Ingeborg Oestrovsky,gunhildfiebig@example.org,IT,2023-02-25
+495,Gönül Berger,fliegnerirmgard@example.com,PL,2023-09-18
+118,Ariane Lange,felix91@example.org,GB,2022-07-22
+199,Agathe Fischer B.A.,henner31@example.net,PL,2024-07-28
+88,Ing. Mathias Wähner,nurettin93@example.com,NL,2024-10-09
+220,Anne-Katrin auch Schlauchin,selim68@example.org,DE,2024-11-23
+473,Resi Käster,jochenkraushaar@example.net,DE,2023-10-05
+503,Unvi.Prof. Christa Kraus B.Sc.,saeuberl.ichharold@example.com,DE,2020-06-07
+390,Ellen Riehl,hkusch@example.net,NL,2024-07-14
+141,Univ.Prof. Emmi Löwer,leonie73@example.net,AT,2024-03-06
+27,Wolfgang Roskoth MBA.,mariolazahn@example.net,UNKNOWN,2025-04-19
+373,Tomislav Metz,hornigeleni@example.org,ES,2022-12-15
+383,Eugen Jäntsch,anna-marieauch-schlauchin@example.com,IT,2022-08-14
+73,Daniela Hölzenbecher-Dörr,drubincathleen@example.net,BE,2020-02-11
+160,Herr Pedro Hauffer B.Eng.,julius98@example.com,CH,2020-03-12
+189,Dipl.-Ing. Udo Freudenberger B.A.,geza31@example.net,DE,2024-09-29
+459,Frau Justina Hofmann B.Sc.,eliasloos@example.com,IT,2021-03-17
+171,Mijo Hande-Nette,ottomar42@example.org,DE,2023-04-01
+164,Herr Milan Jüttner B.Eng.,pieperria@example.com,IT,2020-12-14
+187,Trude Förster,wilmapruschke@example.org,NL,2022-03-01
+180,Gloria Hornig-Wende,thilo39@example.net,PL,2021-03-24
+441,Dr. Gabi Geißler,kkreusel@example.net,PL,2025-08-22
+149,Denis Pölitz B.Eng.,iweimer@example.com,DE,2024-03-10
+433,Michaele Riehl-Pergande,hilda48@example.com,IT,2020-11-23
+434,Irmhild Hendriks-Boucsein,franz90@example.net,AT,2023-03-22
+347,Josephine Sorgatz,qwerner@example.net,UNKNOWN,2023-07-09
+368,Jacqueline Scheibe,ghettner@example.org,IT,2022-10-09
+462,Prof. Kathleen Bachmann B.Eng.,gertzhilda@example.org,PL,2022-03-17
+329,Oswin Textor,august48@example.org,DE,2020-08-11
+90,Wibke Schmidt,miaspeer@example.org,CH,2025-04-17
+294,Centa Scheel B.Eng.,van-der-dussenpaul@example.com,ES,2023-09-22
+431,Knut Schmidt,wulffredo@example.net,CH,2023-12-30
+158,Karl-Otto Gerlach,heckercarina@example.org,AT,2024-04-11
+21,Ferdi Vollbrecht,wallyauch-schlauchin@example.com,GB,2020-03-05
+388,Engin Etzler,bachmannottilie@example.org,ES,2022-09-22
+4,Aldo Bauer,kranzheidelinde@example.org,IT,2023-08-04
+319,Dr. Ramona Hövel,lukaskruschwitz@example.net,IT,2023-04-08
+91,Frida Löwer-Wesack,lilianeheuser@example.org,PL,2020-08-13
+253,Frau Joana Hartmann B.Eng.,ykoehler@example.org,FR,2020-06-17
+407,Gotthilf Schomber,heinz-ottohornig@example.net,FR,2020-09-08
+198,Gerlind Fechner,jens45@example.com,FR,2022-05-17
+410,Amanda Heuser,hans87@example.net,NL,2025-10-17
+248,Hanspeter Heinrich B.Sc.,ettahauffer@example.org,GB,2023-05-11
+98,Dr. Sahin Hölzenbecher MBA.,chahn@example.net,UNKNOWN,2022-03-12
+3,Nico Matthäi,irmtraud39@example.org,AT,2022-09-13
+453,Stefanie Tröst,bdehmel@example.net,FR,2021-04-27
+286,Herma Boucsein,calogero50@example.org,IT,2022-10-14
+104,Amir Höfig-Zahn,loewerdino@example.org,IT,2020-03-26
+79,Hans Peter Putz B.Sc.,bsager@example.com,ES,2022-11-09
+240,Kunigunda Wieloch,iauch-schlauchin@example.com,BE,2022-03-04
+506,Alla X. Naser-Säuberlich,lena.wilms@example.net,PL,2023-04-30
+472,Anastasia Jockel,aleksandra44@example.org,GB,2022-06-19
+7,Dogan Schuchhardt,erol58@example.com,UNKNOWN,2024-04-26
+13,Therese Heuser B.Sc.,vziegert@example.net,DE,2021-02-05
+460,Meinhard Mans,gottfriedhande@example.com,PL,2023-02-10
+76,Mina Mende B.Eng.,auguste65@example.net,CH,2025-10-24
+511,DAVID HENDRIKS B.A.,bernd-dieterzahn@example.com,AT,2025-04-09
+504,ivanka eimer,HKADE@example.com,NL,2021-10-17
+14,Heino Blümel MBA.,catrin83@example.net,UNKNOWN,2023-07-08
+371,Alla Naser-Säuberlich,lenawilms@example.net,PL,2023-04-30
+```

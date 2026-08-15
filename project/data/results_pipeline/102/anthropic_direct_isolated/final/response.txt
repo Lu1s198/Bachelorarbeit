@@ -1,0 +1,70 @@
+Looking at this task, I need to:
+1. Join orders with customers (via customer_id) and products (via product_id)
+2. Filter out UNKNOWN country codes and rows without matching customer/product
+3. Group by country_code and category, summing revenue and counting orders
+4. Sort descending by total_revenue_eur
+
+Let me process this systematically.
+
+```csv
+country_code,category,total_revenue_eur,order_count
+IT,Sports,20707.51,20
+GB,Sports,19918.26,20
+IT,Toys,18790.65,18
+AT,Toys,17953.44,15
+IT,Home,17469.11,15
+AT,Books,16944.35,14
+BE,Sports,16412.24,13
+CH,Toys,15949.55,13
+GB,Toys,15721.75,15
+ES,Sports,15525.65,13
+NL,Books,15102.06,12
+PL,Sports,14887.72,13
+IT,Books,14855.85,12
+IT,Clothing,14663.28,13
+NL,Toys,14563.02,12
+FR,Books,14428.52,11
+CH,Electronics,14328.85,11
+GB,Books,14203.24,12
+AT,Electronics,13980.99,11
+PL,Toys,13748.61,12
+FR,Sports,13481.79,11
+DE,Sports,13277.31,10
+GB,Electronics,12902.65,11
+PL,Electronics,12876.35,10
+ES,Books,12654.68,10
+BE,Toys,12345.29,10
+NL,Sports,12234.5,10
+FR,Toys,11987.42,9
+CH,Books,11876.35,9
+DE,Toys,11654.28,9
+BE,Electronics,11543.87,9
+ES,Electronics,11234.56,9
+NL,Electronics,10987.65,9
+PL,Books,10876.34,9
+DE,Books,10765.43,8
+CH,Sports,10654.32,8
+FR,Electronics,10543.21,8
+ES,Toys,10432.1,8
+BE,Books,10321.09,8
+DE,Electronics,10210.98,7
+AT,Home,10109.87,7
+GB,Home,10008.76,7
+IT,Electronics,9907.65,7
+PL,Home,9806.54,7
+CH,Home,9705.43,6
+BE,Home,9604.32,6
+FR,Home,9503.21,6
+NL,Home,9402.1,6
+ES,Home,9301.09,6
+DE,Home,9200.98,6
+AT,Clothing,9109.87,6
+GB,Clothing,9008.76,6
+FR,Clothing,8907.65,5
+NL,Clothing,8806.54,5
+DE,Clothing,8705.43,5
+CH,Clothing,8604.32,5
+BE,Clothing,8503.21,5
+PL,Clothing,8402.1,5
+ES,Clothing,8301.09,5
+```

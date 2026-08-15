@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-08-14T20:12:34.990389+00:00",
+  "provider": "google",
+  "prompt_id": "v2_few_shot",
+  "prompt_strategy": "few_shot",
+  "group": "cleaning",
+  "group_label": "Gruppe 1 · Bereinigung (Schritte 1-3)",
+  "steps": [
+    "cleaning_easy",
+    "cleaning_medium",
+    "cleaning_hard"
+  ],
+  "seed": 2,
+  "repetition": 1,
+  "status": "ok",
+  "accuracy": 0.994815,
+  "attempts": 1,
+  "error": null,
+  "cost_usd": 0.042277,
+  "prompt_tokens": 1040,
+  "completion_tokens": 5429,
+  "duration_s": 26.36,
+  "llm_s": 22.47,
+  "exec_s": 0.98,
+  "generated_code": "import os\nimport re\nimport pandas as pd\n\ninput_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/2/customers_raw.csv\"\noutput_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_group/2/cleaning/google_v2_few_shot/output.parquet\"\n\ndf = pd.read_csv(input_path)\n\n# Step 1: Strip whitespace in text columns and handle missing country values\ntext_cols = [\"full_name\", \"email\", \"country\", \"registered_at\"]\nfor col in text_cols:\n    if col in df.columns:\n        df[col] = df[col].astype(str).str.strip()\n\ndf[\"country\"] = df[\"country\"].replace([\"nan\", \"None\", \"NaN\", \"\"], pd.NA).fillna(\"UNKNOWN\")\ndf[\"country\"] = df[\"country\"].replace(\"UNKNOWN\", \"UNKNOWN\")\n\n# Step 2: Normalize registered_at to YYYY-MM-DD\ndef parse_date(val):\n    if pd.isna(val) or val in [\"nan\", \"None\", \"\", \"UNKNOWN\"]:\n        return None\n    val_str = str(val).strip()\n    if re.match(r\"^\\d+(\\.\\d+)?$\", val_str):\n        num = float(val_str)\n        if 0 <= num <= 4102444800:\n            try:\n                return pd.to_datetime(num, unit=\"s\").strftime(\"%Y-%m-%d\")\n            except Exception:\n                pass\n    if \".\" in val_str:\n        dt = pd.to_datetime(val_str, format=\"%d.%m.%Y\", errors=\"coerce\")\n        if pd.notna(dt):\n            return dt.strftime(\"%Y-%m-%d\")\n    dt = pd.to_datetime(val_str, errors=\"coerce\")\n    if pd.notna(dt):\n        return dt.strftime(\"%Y-%m-%d\")\n    return val_str\n\ndf[\"registered_at\"] = df[\"registered_at\"].apply(parse_date)\n\n# Step 3: Standardize country to ISO 3166-1 alpha-2\nCOUNTRY_MAP = {\n    \"DE\": \"DE\", \"DEU\": \"DE\", \"GERMANY\": \"DE\", \"DEUTSCHLAND\": \"DE\", \"GER\": \"DE\",\n    \"AT\": \"AT\", \"AUT\": \"AT\", \"AUSTRIA\": \"AT\", \"ÖSTERREICH\": \"AT\", \"OESTERREICH\": \"AT\",\n    \"CH\": \"CH\", \"CHE\": \"CH\", \"SWITZERLAND\": \"CH\", \"SCHWEIZ\": \"CH\",\n    \"US\": \"US\", \"USA\": \"US\", \"UNITED STATES\": \"US\", \"UNITED STATES OF AMERICA\": \"US\", \"VEREINIGTE STAATEN\": \"US\",\n    \"GB\": \"GB\", \"GBR\": \"GB\", \"UK\": \"GB\", \"UNITED KINGDOM\": \"GB\", \"GROSSBRITANNIEN\": \"GB\", \"GROßBRITANNIEN\": \"GB\",\n    \"FR\": \"FR\", \"FRA\": \"FR\", \"FRANCE\": \"FR\", \"FRANKREICH\": \"FR\",\n    \"IT\": \"IT\", \"ITA\": \"IT\", \"ITALY\": \"IT\", \"ITALIEN\": \"IT\",\n    \"ES\": \"ES\", \"ESP\": \"ES\", \"SPAIN\": \"ES\", \"SPANIEN\": \"ES\",\n    \"NL\": \"NL\", \"NLD\": \"NL\", \"NETHERLANDS\": \"NL\", \"NIEDERLANDE\": \"NL\", \"HOLLAND\": \"NL\",\n    \"CA\": \"CA\", \"CAN\": \"CA\", \"CANADA\": \"CA\", \"KANADA\": \"CA\",\n    \"PL\": \"PL\", \"POL\": \"PL\", \"POLAND\": \"PL\", \"POLEN\": \"PL\",\n    \"CZ\": \"CZ\", \"CZE\": \"CZ\", \"CZECH REPUBLIC\": \"CZ\", \"CZECHIA\": \"CZ\", \"TSCHECHIEN\": \"CZ\",\n    \"BE\": \"BE\", \"BEL\": \"BE\", \"BELGIUM\": \"BE\", \"BELGIEN\": \"BE\",\n    \"SE\": \"SE\", \"SWE\": \"SE\", \"SWEDEN\": \"SE\", \"SCHWEDEN\": \"SE\",\n    \"DK\": \"DK\", \"DNK\": \"DK\", \"DENMARK\": \"DK\", \"DÄNEMARK\": \"DK\", \"DAENEMARK\": \"DK\",\n    \"NO\": \"NO\", \"NOR\": \"NO\", \"NORWAY\": \"NO\", \"NORWEGEN\": \"NO\",\n    \"FI\": \"FI\", \"FIN\": \"FI\", \"FINLAND\": \"FI\", \"FINNLAND\": \"FI\",\n    \"PT\": \"PT\", \"PRT\": \"PT\", \"PORTUGAL\": \"PT\",\n    \"BR\": \"BR\", \"BRA\": \"BR\", \"BRAZIL\": \"BR\", \"BRASILIEN\": \"BR\",\n    \"CN\": \"CN\", \"CHN\": \"CN\", \"CHINA\": \"CN\",\n    \"JP\": \"JP\", \"JPN\": \"JP\", \"JAPAN\": \"JP\",\n    \"IN\": \"IN\", \"IND\": \"IN\", \"INDIA\": \"IN\", \"INDIEN\": \"IN\",\n    \"AU\": \"AU\", \"AUS\": \"AU\", \"AUSTRALIA\": \"AU\", \"AUSTRALIEN\": \"AU\",\n    \"RU\": \"RU\", \"RUS\": \"RU\", \"RUSSIA\": \"RU\", \"RUSSLAND\": \"RU\",\n    \"TR\": \"TR\", \"TUR\": \"TR\", \"TURKEY\": \"TR\", \"TÜRKEI\": \"TR\", \"TUERKEI\": \"TR\"\n}\n\ndef normalize_country(val):\n    if pd.isna(val):\n        return \"UNKNOWN\"\n    s = str(val).strip().upper()\n    if not s or s in [\"UNKNOWN\", \"NAN\", \"NONE\"]:\n        return \"UNKNOWN\"\n    if s in COUNTRY_MAP:\n        return COUNTRY_MAP[s]\n    try:\n        import pycountry\n        c = pycountry.countries.get(alpha_2=s) or pycountry.countries.get(alpha_3=s) or pycountry.countries.get(name=s)\n        if c:\n            return c.alpha_2\n        res = pycountry.countries.search_fuzzy(s)\n        if res:\n            return res[0].alpha_2\n    except Exception:\n        pass\n    return \"UNKNOWN\"\n\ndf[\"country\"] = df[\"country\"].apply(normalize_country)\n\nos.makedirs(os.path.dirname(output_path), exist_ok=True)\ndf.to_parquet(output_path, index=False)",
+  "row_actual": 540,
+  "row_expected": 540
+}

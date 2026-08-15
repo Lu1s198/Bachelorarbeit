@@ -1,0 +1,120 @@
+import pandas as pd
+import numpy as np
+
+input_path = "C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/2/anthropic_r2/cleaning_medium/output.parquet"
+output_path = "C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/2/anthropic_r2/cleaning_hard/output.parquet"
+
+df = pd.read_parquet(input_path)
+
+country_map = {
+    "DE": "DE", "DEU": "DE", "GERMANY": "DE", "DEUTSCHLAND": "DE", "GER": "DE", "D": "DE",
+    "AT": "AT", "AUT": "AT", "AUSTRIA": "AT", "OESTERREICH": "AT", "ÖSTERREICH": "AT",
+    "CH": "CH", "CHE": "CH", "SWITZERLAND": "CH", "SCHWEIZ": "CH", "SUISSE": "CH",
+    "US": "US", "USA": "US", "UNITEDSTATES": "US", "UNITEDSTATESOFAMERICA": "US", "VEREINIGTESTAATEN": "US",
+    "GB": "GB", "UK": "GB", "GBR": "GB", "UNITEDKINGDOM": "GB", "GROSSBRITANNIEN": "GB", "GROßBRITANNIEN": "GB", "VEREINIGTESKOENIGREICH": "GB", "VEREINIGTESKÖNIGREICH": "GB",
+    "FR": "FR", "FRA": "FR", "FRANCE": "FR", "FRANKREICH": "FR",
+    "IT": "IT", "ITA": "IT", "ITALY": "IT", "ITALIEN": "IT",
+    "ES": "ES", "ESP": "ES", "SPAIN": "ES", "SPANIEN": "ES",
+    "PT": "PT", "PRT": "PT", "PORTUGAL": "PT",
+    "NL": "NL", "NLD": "NL", "NETHERLANDS": "NL", "NIEDERLANDE": "NL", "HOLLAND": "NL",
+    "BE": "BE", "BEL": "BE", "BELGIUM": "BE", "BELGIEN": "BE",
+    "LU": "LU", "LUX": "LU", "LUXEMBOURG": "LU", "LUXEMBURG": "LU",
+    "PL": "PL", "POL": "PL", "POLAND": "PL", "POLEN": "PL",
+    "CZ": "CZ", "CZE": "CZ", "CZECHREPUBLIC": "CZ", "TSCHECHIEN": "CZ", "TSCHECHISCHEREPUBLIK": "CZ",
+    "SK": "SK", "SVK": "SK", "SLOVAKIA": "SK", "SLOWAKEI": "SK",
+    "HU": "HU", "HUN": "HU", "HUNGARY": "HU", "UNGARN": "HU",
+    "DK": "DK", "DNK": "DK", "DENMARK": "DK", "DAENEMARK": "DK", "DÄNEMARK": "DK",
+    "SE": "SE", "SWE": "SE", "SWEDEN": "SE", "SCHWEDEN": "SE",
+    "NO": "NO", "NOR": "NO", "NORWAY": "NO", "NORWEGEN": "NO",
+    "FI": "FI", "FIN": "FI", "FINLAND": "FI", "FINNLAND": "FI",
+    "IS": "IS", "ISL": "IS", "ICELAND": "IS", "ISLAND": "IS",
+    "IE": "IE", "IRL": "IE", "IRELAND": "IE", "IRLAND": "IE",
+    "GR": "GR", "GRC": "GR", "GREECE": "GR", "GRIECHENLAND": "GR",
+    "TR": "TR", "TUR": "TR", "TURKEY": "TR", "TUERKEI": "TR", "TÜRKEI": "TR",
+    "RU": "RU", "RUS": "RU", "RUSSIA": "RU", "RUSSLAND": "RU",
+    "UA": "UA", "UKR": "UA", "UKRAINE": "UA",
+    "RO": "RO", "ROU": "RO", "ROMANIA": "RO", "RUMAENIEN": "RO", "RUMÄNIEN": "RO",
+    "BG": "BG", "BGR": "BG", "BULGARIA": "BG", "BULGARIEN": "BG",
+    "HR": "HR", "HRV": "HR", "CROATIA": "HR", "KROATIEN": "HR",
+    "SI": "SI", "SVN": "SI", "SLOVENIA": "SI", "SLOWENIEN": "SI",
+    "RS": "RS", "SRB": "RS", "SERBIA": "RS", "SERBIEN": "RS",
+    "CN": "CN", "CHN": "CN", "CHINA": "CN",
+    "JP": "JP", "JPN": "JP", "JAPAN": "JP",
+    "KR": "KR", "KOR": "KR", "SOUTHKOREA": "KR", "SUEDKOREA": "KR", "SÜDKOREA": "KR",
+    "IN": "IN", "IND": "IN", "INDIA": "IN", "INDIEN": "IN",
+    "AU": "AU", "AUS": "AU", "AUSTRALIA": "AU", "AUSTRALIEN": "AU",
+    "NZ": "NZ", "NZL": "NZ", "NEWZEALAND": "NZ", "NEUSEELAND": "NZ",
+    "CA": "CA", "CAN": "CA", "CANADA": "CA", "KANADA": "CA",
+    "MX": "MX", "MEX": "MX", "MEXICO": "MX", "MEXIKO": "MX",
+    "BR": "BR", "BRA": "BR", "BRAZIL": "BR", "BRASILIEN": "BR",
+    "AR": "AR", "ARG": "AR", "ARGENTINA": "AR", "ARGENTINIEN": "AR",
+    "ZA": "ZA", "ZAF": "ZA", "SOUTHAFRICA": "ZA", "SUEDAFRIKA": "ZA", "SÜDAFRIKA": "ZA",
+    "EG": "EG", "EGY": "EG", "EGYPT": "EG", "AEGYPTEN": "EG", "ÄGYPTEN": "EG",
+    "IL": "IL", "ISR": "IL", "ISRAEL": "IL",
+    "SA": "SA", "SAU": "SA", "SAUDIARABIA": "SA", "SAUDIARABIEN": "SA",
+    "AE": "AE", "ARE": "AE", "UAE": "AE", "UNITEDARABEMIRATES": "AE", "VEREINIGTEARABISCHEEMIRATE": "AE",
+    "TH": "TH", "THA": "TH", "THAILAND": "TH",
+    "VN": "VN", "VNM": "VN", "VIETNAM": "VN",
+    "ID": "ID", "IDN": "ID", "INDONESIA": "ID", "INDONESIEN": "ID",
+    "MY": "MY", "MYS": "MY", "MALAYSIA": "MY",
+    "SG": "SG", "SGP": "SG", "SINGAPORE": "SG", "SINGAPUR": "SG",
+    "PH": "PH", "PHL": "PH", "PHILIPPINES": "PH", "PHILIPPINEN": "PH",
+    "PK": "PK", "PAK": "PK", "PAKISTAN": "PK",
+    "BD": "BD", "BGD": "BD", "BANGLADESH": "BD",
+    "CL": "CL", "CHL": "CL", "CHILE": "CL",
+    "CO": "CO", "COL": "CO", "COLOMBIA": "CO", "KOLUMBIEN": "CO",
+    "PE": "PE", "PER": "PE", "PERU": "PE",
+    "VE": "VE", "VEN": "VE", "VENEZUELA": "VE",
+    "EC": "EC", "ECU": "EC", "ECUADOR": "EC",
+    "CU": "CU", "CUB": "CU", "CUBA": "CU", "KUBA": "CU",
+    "MA": "MA", "MAR": "MA", "MOROCCO": "MA", "MAROKKO": "MA",
+    "DZ": "DZ", "DZA": "DZ", "ALGERIA": "DZ", "ALGERIEN": "DZ",
+    "TN": "TN", "TUN": "TN", "TUNISIA": "TN", "TUNESIEN": "TN",
+    "NG": "NG", "NGA": "NG", "NIGERIA": "NG",
+    "KE": "KE", "KEN": "KE", "KENYA": "KE", "KENIA": "KE",
+    "ET": "ET", "ETH": "ET", "ETHIOPIA": "ET", "AETHIOPIEN": "ET", "ÄTHIOPIEN": "ET",
+    "GH": "GH", "GHA": "GH", "GHANA": "GH",
+    "IR": "IR", "IRN": "IR", "IRAN": "IR",
+    "IQ": "IQ", "IRQ": "IQ", "IRAQ": "IQ", "IRAK": "IQ",
+    "AF": "AF", "AFG": "AF", "AFGHANISTAN": "AF",
+    "NP": "NP", "NPL": "NP", "NEPAL": "NP",
+    "LK": "LK", "LKA": "LK", "SRILANKA": "LK",
+    "MM": "MM", "MMR": "MM", "MYANMAR": "MM", "BURMA": "MM",
+    "KH": "KH", "KHM": "KH", "CAMBODIA": "KH", "KAMBODSCHA": "KH",
+    "LA": "LA", "LAO": "LA", "LAOS": "LA",
+    "MN": "MN", "MNG": "MN", "MONGOLIA": "MN", "MONGOLEI": "MN",
+    "KZ": "KZ", "KAZ": "KZ", "KAZAKHSTAN": "KZ", "KASACHSTAN": "KZ",
+    "BY": "BY", "BLR": "BY", "BELARUS": "BY", "WEISSRUSSLAND": "BY", "WEIßRUSSLAND": "BY",
+    "LT": "LT", "LTU": "LT", "LITHUANIA": "LT", "LITAUEN": "LT",
+    "LV": "LV", "LVA": "LV", "LATVIA": "LV", "LETTLAND": "LV",
+    "EE": "EE", "EST": "EE", "ESTONIA": "EE", "ESTLAND": "EE",
+    "MD": "MD", "MDA": "MD", "MOLDOVA": "MD", "MOLDAWIEN": "MD",
+    "GE": "GE", "GEO": "GE", "GEORGIA": "GE", "GEORGIEN": "GE",
+    "AM": "AM", "ARM": "AM", "ARMENIA": "AM", "ARMENIEN": "AM",
+    "AZ": "AZ", "AZE": "AZ", "AZERBAIJAN": "AZ", "ASERBAIDSCHAN": "AZ",
+    "CY": "CY", "CYP": "CY", "CYPRUS": "CY", "ZYPERN": "CY",
+    "MT": "MT", "MLT": "MT", "MALTA": "MT",
+    "AL": "AL", "ALB": "AL", "ALBANIA": "AL", "ALBANIEN": "AL",
+    "MK": "MK", "MKD": "MK", "MACEDONIA": "MK", "MAZEDONIEN": "MK", "NORDMAZEDONIEN": "MK",
+    "BA": "BA", "BIH": "BA", "BOSNIA": "BA", "BOSNIEN": "BA",
+    "ME": "ME", "MNE": "ME", "MONTENEGRO": "ME",
+    "XK": "XK", "KOSOVO": "XK",
+    "LI": "LI", "LIE": "LI", "LIECHTENSTEIN": "LI",
+    "MC": "MC", "MCO": "MC", "MONACO": "MC",
+    "SM": "SM", "SMR": "SM", "SANMARINO": "SM",
+    "VA": "VA", "VAT": "VA", "VATICAN": "VA", "VATIKAN": "VA",
+    "AD": "AD", "AND": "AD", "ANDORRA": "AD",
+}
+
+def clean_country(val):
+    if pd.isna(val):
+        return "UNKNOWN"
+    s = str(val).strip().upper()
+    s = s.replace(".", "").replace("-", "").replace(" ", "").replace("_", "")
+    if s in country_map:
+        return country_map[s]
+    return "UNKNOWN"
+
+df["country"] = df["country"].apply(clean_country)
+
+df.to_parquet(output_path, index=False)

@@ -10,55 +10,33 @@ customers = pd.read_parquet(customers_path)
 products = pd.read_parquet(products_path)
 orders = pd.read_parquet(orders_path)
 
-orders = orders.dropna(subset=['customer_id', 'product_id']).copy()
-customers = customers.dropna(subset=['customer_id']).copy()
-products = products.dropna(subset=['product_id']).copy()
+customers["customer_id"] = customers["customer_id"].astype("int64")
+products["product_id"] = products["product_id"].astype("int64")
+orders["customer_id"] = orders["customer_id"].astype("int64")
+orders["product_id"] = orders["product_id"].astype("int64")
 
-orders['customer_id'] = orders['customer_id'].astype(str)
-customers['customer_id'] = customers['customer_id'].astype(str)
+merged = orders.merge(customers, on="customer_id", how="inner")
+merged = merged.merge(products, on="product_id", how="inner")
 
-orders['product_id'] = orders['product_id'].astype(str)
-products['product_id'] = products['product_id'].astype(str)
+merged["country_code"] = merged["country"]
 
-merged = orders.merge(customers, on='customer_id', how='inner')
-merged = merged.merge(products, on='product_id', how='inner')
+merged = merged.dropna(subset=["country_code", "category"])
+merged = merged[
+    (merged["country_code"].astype(str).str.strip() != "") &
+    (merged["country_code"].astype(str).str.lower() != "nan") &
+    (merged["category"].astype(str).str.strip() != "") &
+    (merged["category"].astype(str).str.lower() != "nan")
+]
 
-if 'country_code' not in merged.columns and 'country' in merged.columns:
-    merged['country_code'] = merged['country']
-
-valid_mask = (
-    merged['country_code'].notna() &
-    (merged['country_code'].astype(str).str.strip() != '') &
-    (merged['country_code'].astype(str).str.lower() != 'nan') &
-    merged['category'].notna() &
-    (merged['category'].astype(str).str.strip() != '') &
-    (merged['category'].astype(str).str.lower() != 'nan')
-)
-merged = merged[valid_mask].copy()
-
-if 'unit_price_eur' in merged.columns:
-    unit_price = merged['unit_price_eur']
-elif 'unit_price_eur_x' in merged.columns:
-    unit_price = merged['unit_price_eur_x'].fillna(merged['unit_price_eur_y'])
-elif 'unit_price_eur_y' in merged.columns:
-    unit_price = merged['unit_price_eur_y']
-
-if 'quantity' in merged.columns:
-    quantity = merged['quantity']
-elif 'quantity_x' in merged.columns:
-    quantity = merged['quantity_x'].fillna(merged['quantity_y'])
-elif 'quantity_y' in merged.columns:
-    quantity = merged['quantity_y']
-
-merged['revenue'] = quantity * unit_price
+merged["line_total"] = merged["quantity"] * merged["unit_price_eur"]
 
 result = (
-    merged.groupby(['country_code', 'category'], as_index=False)
+    merged.groupby(["country_code", "category"], as_index=False)
     .agg(
-        total_revenue_eur=('revenue', 'sum'),
-        order_count=('revenue', 'count')
+        total_revenue_eur=("line_total", "sum"),
+        order_count=("order_id", "count")
     )
-    .sort_values(by='total_revenue_eur', ascending=False)
+    .sort_values(by="total_revenue_eur", ascending=False)
     .reset_index(drop=True)
 )
 

@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-08-14T20:21:21.279219+00:00",
+  "provider": "google",
+  "prompt_id": "v3_chain_of_thought",
+  "prompt_strategy": "chain_of_thought",
+  "group": "transform",
+  "group_label": "Gruppe 3 · Transformation (Schritte 7-9)",
+  "steps": [
+    "products",
+    "orders",
+    "final"
+  ],
+  "seed": 2,
+  "repetition": 1,
+  "status": "ok",
+  "accuracy": 1.0,
+  "attempts": 1,
+  "error": null,
+  "cost_usd": 0.023471,
+  "prompt_tokens": 747,
+  "completion_tokens": 2980,
+  "duration_s": 13.35,
+  "llm_s": 12.61,
+  "exec_s": 0.73,
+  "generated_code": "# Step 1: Define file paths and load raw data\nimport os\nimport pandas as pd\n\nproducts_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/2/products_raw.csv\"\norders_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/2/orders_raw.csv\"\ncustomers_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/2/_reference/dedup_hard/output.parquet\"\noutput_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_group/2/transform/google_v3_chain_of_thought/output.parquet\"\n\nproducts_df = pd.read_csv(products_path)\norders_df = pd.read_csv(orders_path)\ncustomers_df = pd.read_parquet(customers_path)\n\n# Transformation Step 1: Clean and convert price_eur to float and in_stock to boolean\n# Remove currency symbols/text, strip spaces, replace comma with dot, convert to float\nproducts_df['price_eur'] = (\n    products_df['price_eur']\n    .astype(str)\n    .str.replace('€', '', regex=False)\n    .str.replace('EUR', '', regex=False)\n    .str.strip()\n    .str.replace(',', '.', regex=False)\n)\nproducts_df['price_eur'] = pd.to_numeric(products_df['price_eur'], errors='coerce')\n\n# Map string representations of booleans in in_stock\nbool_mapping = {\n    'ja': True, 'nein': False,\n    'true': True, 'false': False,\n    '1': True, '0': False\n}\nproducts_df['in_stock'] = (\n    products_df['in_stock']\n    .astype(str)\n    .str.strip()\n    .str.lower()\n    .map(bool_mapping)\n    .astype('boolean')\n)\n\n# Transformation Step 2: Calculate total_eur and extract year/month from ordered_at in orders\norders_df['total_eur'] = orders_df['quantity'] * orders_df['unit_price_eur']\n\nordered_at_dt = pd.to_datetime(orders_df['ordered_at'], errors='coerce')\norders_df['order_year'] = ordered_at_dt.dt.year.astype('Int64')\norders_df['order_month'] = ordered_at_dt.dt.month.astype('Int64')\n\n# Transformation Step 3: Join datasets, aggregate per country_code & category, sort and save\n# Inner join orders with products and customers (discarding unmapped orders)\nmerged_df = orders_df.merge(products_df, on='product_id', how='inner').merge(customers_df, on='customer_id', how='inner')\n\n# Assign ISO country code from customer country\nmerged_df['country_code'] = merged_df['country']\n\n# Filter out rows with missing or empty country_code or category\nvalid_mask = (\n    merged_df['country_code'].notna() & \n    (merged_df['country_code'].astype(str).str.strip() != '') &\n    merged_df['category'].notna() & \n    (merged_df['category'].astype(str).str.strip() != '')\n)\nmerged_df = merged_df[valid_mask]\n\n# Aggregate total revenue and count of orders\nresult_df = merged_df.groupby(['country_code', 'category'], as_index=False).agg(\n    total_revenue_eur=('total_eur', 'sum'),\n    order_count=('order_id', 'count')\n)\n\n# Sort descending by total_revenue_eur\nresult_df = result_df.sort_values(by='total_revenue_eur', ascending=False).reset_index(drop=True)\n\n# Save result to specified Parquet output file\nos.makedirs(os.path.dirname(output_path), exist_ok=True)\nresult_df.to_parquet(output_path, index=False)",
+  "row_actual": 66,
+  "row_expected": 66
+}

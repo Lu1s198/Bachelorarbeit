@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-08-17T07:30:06.790839+00:00",
+  "provider": "openai",
+  "prompt_id": "d1_zero_shot",
+  "prompt_strategy": "zero_shot",
+  "mode": "direct",
+  "seed": 2,
+  "repetition": 2,
+  "task": "composite_explicit",
+  "status": "ok",
+  "accuracy": 0.060606,
+  "attempts": 1,
+  "error": null,
+  "cost_usd": 0.17454,
+  "prompt_tokens": 54666,
+  "completion_tokens": 2525,
+  "duration_s": 32.69,
+  "llm_s": 32.67,
+  "generated_code": null,
+  "row_actual": 66,
+  "row_expected": 66,
+  "n_country_codes": 11
+}

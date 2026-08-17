@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-08-17T07:43:33.204354+00:00",
+  "provider": "google",
+  "prompt_id": "v2_few_shot",
+  "prompt_strategy": "few_shot",
+  "group": "dedup",
+  "group_label": "Gruppe 2 · Deduplizierung (Schritte 4-6)",
+  "steps": [
+    "dedup_easy",
+    "dedup_medium",
+    "dedup_hard"
+  ],
+  "seed": 2,
+  "repetition": 2,
+  "status": "ok",
+  "accuracy": 0.99,
+  "attempts": 1,
+  "error": null,
+  "cost_usd": 0.048433,
+  "prompt_tokens": 1039,
+  "completion_tokens": 6250,
+  "duration_s": 39.54,
+  "llm_s": 33.16,
+  "exec_s": 6.35,
+  "generated_code": "import os\nimport re\nimport difflib\nimport pandas as pd\n\ninput_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/2/_reference/cleaning_hard/output.parquet\"\nif not os.path.exists(input_path):\n    input_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/2/output.parquet\"\n\noutput_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_group/2/dedup/google_v2_few_shot_r2/output.parquet\"\n\ndf = pd.read_parquet(input_path)\n\n# 1. Entferne exakte Duplikate\ndf = df.drop_duplicates(keep=\"first\")\n\n# 2. Entferne Zeilen mit mehrfach vorkommender email (behalte jüngsten registered_at-Wert)\ndf = df.sort_values(\"registered_at\", ascending=False).drop_duplicates(\"email\", keep=\"first\")\n\n# 3. Erkenne und entferne unscharfe Duplikate\ndef clean_name(s):\n    if not isinstance(s, str):\n        return \"\"\n    s = re.sub(\n        r\"\\b(dr|prof|mr|mrs|ms|miss|herr|frau|dipl|ing|doktor|professor|phd|msc|bsc)\\b\\.?\",\n        \"\",\n        s,\n        flags=re.IGNORECASE,\n    )\n    s = re.sub(r\"\\b[a-zA-Z]\\b\\.?\", \"\", s)\n    s = re.sub(r\"[^a-zA-Z0-9\\s]\", \"\", s)\n    return \" \".join(s.lower().split())\n\ndef clean_email(s):\n    if not isinstance(s, str):\n        return \"\"\n    s = s.lower().strip()\n    if \"@\" in s:\n        parts = s.split(\"@\")\n        return parts[0].replace(\".\", \"\") + \"@\" + \"@\".join(parts[1:])\n    return s\n\ndef is_similar(r1, r2):\n    n1, n2 = r1[\"_c_name\"], r2[\"_c_name\"]\n    e1, e2 = r1[\"_c_email\"], r2[\"_c_email\"]\n    \n    e_ratio = difflib.SequenceMatcher(None, e1, e2).ratio()\n    e_match = (e1 == e2) or (e_ratio >= 0.85)\n    \n    n_ratio = difflib.SequenceMatcher(None, n1, n2).ratio()\n    n1_tokens, n2_tokens = set(n1.split()), set(n2.split())\n    jaccard = len(n1_tokens & n2_tokens) / len(n1_tokens | n2_tokens) if (n1_tokens or n2_tokens) else 0\n    \n    n_match = (n1 == n2) or (n_ratio >= 0.75) or (jaccard >= 0.5 and n_ratio > 0.6)\n    \n    return e_match and n_match\n\ndf[\"_c_name\"] = df[\"full_name\"].apply(clean_name)\ndf[\"_c_email\"] = df[\"email\"].apply(clean_email)\n\nrows = df.to_dict(\"records\")\nn = len(rows)\nparent = list(range(n))\n\ndef find(i):\n    if parent[i] == i:\n        return i\n    parent[i] = find(parent[i])\n    return parent[i]\n\ndef union(i, j):\n    root_i, root_j = find(i), find(j)\n    if root_i != root_j:\n        parent[root_i] = root_j\n\nfor i in range(n):\n    for j in range(i + 1, n):\n        if is_similar(rows[i], rows[j]):\n            union(i, j)\n\ngroups = {}\nfor i in range(n):\n    root = find(i)\n    if root not in groups:\n        groups[root] = []\n    groups[root].append(rows[i])\n\nkept_rows = [min(group, key=lambda r: r[\"customer_id\"]) for group in groups.values()]\nres_df = pd.DataFrame(kept_rows).drop(columns=[\"_c_name\", \"_c_email\"])\n\nos.makedirs(os.path.dirname(output_path), exist_ok=True)\nres_df.to_parquet(output_path, index=False)",
+  "row_actual": 500,
+  "row_expected": 495
+}

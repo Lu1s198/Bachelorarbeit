@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-08-17T07:42:38.628334+00:00",
+  "provider": "google",
+  "prompt_id": "v1_zero_shot",
+  "prompt_strategy": "zero_shot",
+  "group": "dedup",
+  "group_label": "Gruppe 2 · Deduplizierung (Schritte 4-6)",
+  "steps": [
+    "dedup_easy",
+    "dedup_medium",
+    "dedup_hard"
+  ],
+  "seed": 2,
+  "repetition": 2,
+  "status": "ok",
+  "accuracy": 0.99,
+  "attempts": 1,
+  "error": null,
+  "cost_usd": 0.034854,
+  "prompt_tokens": 501,
+  "completion_tokens": 4547,
+  "duration_s": 54.13,
+  "llm_s": 49.37,
+  "exec_s": 4.73,
+  "generated_code": "import os\nimport re\nfrom difflib import SequenceMatcher\nimport pandas as pd\n\ninput_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/2/_reference/cleaning_hard/output.parquet\"\noutput_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_group/2/dedup/google_v1_zero_shot_r2/output.parquet\"\n\ndf = pd.read_parquet(input_path)\n\n# Step 1: Remove exact duplicates, keeping the first occurrence\ndf = df.drop_duplicates(keep=\"first\")\n\n# Step 2: Remove duplicate emails, keeping the youngest registered_at date\ndf = df.sort_values(by=\"registered_at\", ascending=False)\ndf = df.drop_duplicates(subset=[\"email\"], keep=\"first\")\n\n\n# Step 3: Fuzzy duplicate detection\ndef normalize_name(name):\n  if not isinstance(name, str):\n    return \"\"\n  name = name.lower()\n  name = re.sub(\n      r\"\\b(mr|mrs|ms|miss|dr|prof|sir|lady|herr|frau|dipl|-ing)\\.?\\b\", \"\", name\n  )\n  name = re.sub(r\"\\b[a-z]\\.\\b\", \"\", name)\n  words = re.findall(r\"[a-zA-Z]+\", name)\n  words = [w.lower() for w in words if len(w) > 1]\n  return \" \".join(sorted(words))\n\n\ndef normalize_email(email):\n  if not isinstance(email, str):\n    return \"\"\n  email = email.lower().strip()\n  if \"@\" in email:\n    local, domain = email.split(\"@\", 1)\n    local = local.replace(\".\", \"\").replace(\"_\", \"\")\n    return local + \"@\" + domain\n  return email\n\n\ndf = df.reset_index(drop=True)\ndf[\"norm_name\"] = df[\"full_name\"].apply(normalize_name)\ndf[\"norm_email\"] = df[\"email\"].apply(normalize_email)\n\nn = len(df)\nparent = list(range(n))\n\n\ndef find(i):\n  if parent[i] == i:\n    return i\n  parent[i] = find(parent[i])\n  return parent[i]\n\n\ndef union(i, j):\n  root_i = find(i)\n  root_j = find(j)\n  if root_i != root_j:\n    parent[root_i] = root_j\n\n\nnorm_names = df[\"norm_name\"].values\nnorm_emails = df[\"norm_email\"].values\n\nfor i in range(n):\n  for j in range(i + 1, n):\n    name_match = (\n        norm_names[i] == norm_names[j] and len(norm_names[i]) > 0\n    ) or (\n        SequenceMatcher(None, norm_names[i], norm_names[j]).quick_ratio() > 0.75\n        and SequenceMatcher(None, norm_names[i], norm_names[j]).ratio() >= 0.8\n    )\n\n    email_match = (\n        norm_emails[i] == norm_emails[j] and len(norm_emails[i]) > 0\n    ) or (\n        SequenceMatcher(None, norm_emails[i], norm_emails[j]).quick_ratio()\n        > 0.75\n        and SequenceMatcher(None, norm_emails[i], norm_emails[j]).ratio() >= 0.8\n    )\n\n    if name_match and email_match:\n      union(i, j)\n\ndf[\"cluster\"] = [find(i) for i in range(n)]\n\n# Keep smallest customer_id per cluster\ndf = df.sort_values(by=\"customer_id\", ascending=True)\ndf = df.drop_duplicates(subset=[\"cluster\"], keep=\"first\")\n\noutput_cols = [\"customer_id\", \"full_name\", \"email\", \"country\", \"registered_at\"]\ndf = df[output_cols]\n\nos.makedirs(os.path.dirname(output_path), exist_ok=True)\ndf.to_parquet(output_path, index=False)",
+  "row_actual": 500,
+  "row_expected": 495
+}

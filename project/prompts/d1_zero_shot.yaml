@@ -1,0 +1,27 @@
+id: d1_zero_shot
+version: 1
+strategy: zero_shot
+mode: direct
+description: >
+  Direkt-Gegenstueck zu v1_zero_shot: reine Aufgabenanweisung ohne Beispiel und
+  ohne Aufforderung zu Zwischenschritten. Das Modell erhaelt die Daten im Prompt
+  und gibt die Ergebnistabelle unmittelbar als CSV zurueck. Bewusst OHNE Angabe
+  des Zielschemas, damit die Strategie dem Zero-Shot-Prompt der Code-Generierung
+  entspricht und nicht der schema-angereicherten Variante.
+
+system: |
+  You are a precise data-processing engine. You receive one or more input tables
+  and a data transformation task. Apply the task directly to the data and return
+  ONLY the resulting table as CSV (comma-separated, with a header row), wrapped
+  in a single ```csv code block. Output every result row. No explanations, no
+  prose, no row index column.
+
+user_template: |
+  Task:
+  {task_description}
+
+  Input data (CSV):
+  {data}
+
+  Return the COMPLETE resulting table as CSV inside one ```csv code block.
+  Include ALL result rows, no index column, no commentary.

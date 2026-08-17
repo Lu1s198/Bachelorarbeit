@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-08-17T06:53:27.171637+00:00",
+  "provider": "google",
+  "prompt_id": "v2_few_shot",
+  "prompt_strategy": "few_shot",
+  "mode": "codegen",
+  "seed": 2,
+  "repetition": 1,
+  "task": "composite_explicit",
+  "status": "ok",
+  "accuracy": 0.545455,
+  "attempts": 1,
+  "error": null,
+  "cost_usd": 0.045555,
+  "prompt_tokens": 1155,
+  "completion_tokens": 5843,
+  "duration_s": 29.1,
+  "llm_s": 28.1,
+  "generated_code": "import os\nimport pandas as pd\n\ninput_dir = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/2\"\noutput_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_composite/2/codegen/google_v2_few_shot/output.parquet\"\n\ncustomers = pd.read_csv(f\"{input_dir}/customers_raw.csv\")\nproducts = pd.read_csv(f\"{input_dir}/products_raw.csv\")\norders = pd.read_csv(f\"{input_dir}/orders_raw.csv\")\n\nfor col in customers.select_dtypes(include=\"object\").columns:\n    customers[col] = customers[col].str.strip()\n\n\ndef map_country(val):\n    if pd.isna(val) or not str(val).strip():\n        return \"UNKNOWN\"\n    s = str(val).strip().lower()\n    mapping = {\n        \"de\": \"DE\",\n        \"germany\": \"DE\",\n        \"deutschland\": \"DE\",\n        \"ger\": \"DE\",\n        \"deutshcland\": \"DE\",\n        \"at\": \"AT\",\n        \"austria\": \"AT\",\n        \"österreich\": \"AT\",\n        \"oesterreich\": \"AT\",\n        \"aut\": \"AT\",\n        \"ch\": \"CH\",\n        \"switzerland\": \"CH\",\n        \"schweiz\": \"CH\",\n        \"suisse\": \"CH\",\n        \"che\": \"CH\",\n        \"fr\": \"FR\",\n        \"france\": \"FR\",\n        \"frankreich\": \"FR\",\n        \"fra\": \"FR\",\n        \"gb\": \"GB\",\n        \"uk\": \"GB\",\n        \"united kingdom\": \"GB\",\n        \"great britain\": \"GB\",\n        \"gbr\": \"GB\",\n        \"england\": \"GB\",\n        \"us\": \"US\",\n        \"usa\": \"US\",\n        \"united states\": \"US\",\n        \"united states of america\": \"US\",\n        \"it\": \"IT\",\n        \"italy\": \"IT\",\n        \"italien\": \"IT\",\n        \"ita\": \"IT\",\n        \"es\": \"ES\",\n        \"spain\": \"ES\",\n        \"spanien\": \"ES\",\n        \"esp\": \"ES\",\n        \"nl\": \"NL\",\n        \"netherlands\": \"NL\",\n        \"niederlande\": \"NL\",\n        \"nld\": \"NL\",\n    }\n    if s in mapping:\n        return mapping[s]\n    if \"deut\" in s or \"germ\" in s:\n        return \"DE\"\n    if \"öster\" in s or \"oester\" in s or \"austr\" in s:\n        return \"AT\"\n    if \"schweiz\" in s or \"switz\" in s or \"suiss\" in s:\n        return \"CH\"\n    if \"frank\" in s or \"franc\" in s:\n        return \"FR\"\n    if \"span\" in s or \"spai\" in s:\n        return \"ES\"\n    if \"ital\" in s:\n        return \"IT\"\n    if \"nieder\" in s or \"nether\" in s:\n        return \"NL\"\n    if \"kingd\" in s or \"brit\" in s or \"engl\" in s:\n        return \"GB\"\n    if \"stat\" in s or \"americ\" in s:\n        return \"US\"\n    if len(s) == 2 and s.isalpha():\n        return s.upper()\n    return \"UNKNOWN\"\n\n\ncustomers[\"country_code\"] = customers[\"country\"].apply(map_country)\n\ncustomers = customers.drop_duplicates(subset=[\"customer_id\"], keep=\"first\")\n\nproducts[\"price_eur\"] = (\n    products[\"price_eur\"]\n    .astype(str)\n    .str.replace(\"EUR\", \"\", regex=False)\n    .str.replace(\"€\", \"\", regex=False)\n    .str.replace(\",\", \".\", regex=False)\n    .str.strip()\n    .astype(float)\n)\n\nproducts[\"in_stock\"] = (\n    products[\"in_stock\"]\n    .astype(str)\n    .str.strip()\n    .str.lower()\n    .isin([\"true\", \"ja\", \"yes\", \"1\", \"t\", \"wahr\"])\n)\n\nmerged = orders.merge(customers, on=\"customer_id\", how=\"left\").merge(\n    products, on=\"product_id\", how=\"left\"\n)\n\nmerged[\"country_code\"] = merged[\"country_code\"].fillna(\"UNKNOWN\")\nmerged[\"category\"] = merged[\"category\"].fillna(\"UNKNOWN\")\nmerged[\"revenue\"] = merged[\"quantity\"] * merged[\"unit_price_eur\"]\n\naggregated = (\n    merged.groupby([\"country_code\", \"category\"], as_index=False)\n    .agg(\n        total_revenue_eur=(\"revenue\", lambda x: round(x.sum(), 2)),\n        order_count=(\"order_id\", \"count\"),\n    )\n    .sort_values(by=\"total_revenue_eur\", ascending=False)\n)\n\nos.makedirs(os.path.dirname(output_path), exist_ok=True)\naggregated.to_parquet(output_path, index=False)",
+  "row_actual": 66,
+  "row_expected": 66,
+  "n_country_codes": 11
+}

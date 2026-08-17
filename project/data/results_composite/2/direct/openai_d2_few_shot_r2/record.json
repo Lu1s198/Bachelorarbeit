@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-08-17T07:30:39.707621+00:00",
+  "provider": "openai",
+  "prompt_id": "d2_few_shot",
+  "prompt_strategy": "few_shot",
+  "mode": "direct",
+  "seed": 2,
+  "repetition": 2,
+  "task": "composite_explicit",
+  "status": "ok",
+  "accuracy": 0.007576,
+  "attempts": 1,
+  "error": null,
+  "cost_usd": 0.16403,
+  "prompt_tokens": 54962,
+  "completion_tokens": 1775,
+  "duration_s": 26.06,
+  "llm_s": 26.04,
+  "generated_code": null,
+  "row_actual": 65,
+  "row_expected": 66,
+  "n_country_codes": 11
+}

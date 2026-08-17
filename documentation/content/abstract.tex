@@ -1,7 +1,56 @@
 %!TEX root = ../main.tex
 
-\chapter*{Abstract}
+\addchap{Abstract}
 
-deutsch \\
-\\
-\textit{englisch}
+Klassische \ac{ETL}-Prozesse sind regelbasiert und setzen voraus, dass jede
+Verarbeitungsvorschrift zuvor vollständig formuliert wird. Die vorliegende
+Arbeit untersucht experimentell, inwieweit \acp{LLM} diese Aufgabe übernehmen
+können. Auf einem synthetischen Datensatz mit kontrolliert eingebauten
+Qualitätsproblemen werden vier Modelle, drei Prompting-Strategien und neun
+\ac{ETL}-Aufgaben gegen eine regelbasiert implementierte Vergleichspipeline
+gemessen, ergänzt um eine verkettete Ausführung, einen isolierten Durchlauf zur
+Trennung von eigener Schrittleistung und geerbtem Fehler, einen Vergleich zweier
+Ausführungsformen sowie zwei Ebenen zum Zuschnitt der Aufgabenstellung.
+Insgesamt liegen 711 Modellaufrufe zugrunde.
+
+Die Ergebnisqualität hängt weit stärker vom Aufgabentyp ab als vom Modell:
+Zwischen dem besten und dem schwächsten kommerziellen Modell liegen rund acht
+Prozentpunkte, zwischen der am besten und der am schlechtesten gelösten Aufgabe
+nahezu hundert. Als zweite Einflussgröße erweist sich die Ausführungsform. Der
+erwartete Vorteil bei semantisch geprägten Aufgaben tritt allein in der direkten
+Verarbeitung ein, während die Code-Generierung zuverlässiger rechnet und je
+Zeile rund ein Fünfzehntel kostet. Am stärksten wirkt der Zuschnitt der
+Aufgabe: Dieselbe Verarbeitung bleibt als eine zusammengesetzte Aufgabe
+ungelöst und wird in Teilschritte zerlegt fehlerfrei bewältigt, wobei der
+messbare Unterschied zwischen den Prompting-Strategien dabei vollständig
+verschwindet. Die Arbeit leitet daraus eine hybride Architektur ab, die
+regelbasierte und modellgestützte Schritte je nach Aufgabentyp kombiniert und
+nach jedem Schritt inhaltlich prüft.
+
+\vspace{1em}
+\noindent
+\textit{Classical \ac{ETL} processes are rule-based and require every
+transformation rule to be specified in advance. This thesis experimentally
+evaluates to what extent \acp{LLM} can take over that task. Using a synthetic
+dataset with deliberately injected quality defects, four models, three prompting
+strategies and nine \ac{ETL} tasks are measured against a rule-based reference
+pipeline, complemented by a chained execution, an isolated run separating a
+step's own performance from inherited error, a comparison of two execution
+modes, and two levels addressing how the task itself is framed. The evaluation
+rests on 711 model calls.}
+
+\vspace{0.6em}
+\noindent
+\textit{Result quality depends far more on the type of task than on the model:
+roughly eight percentage points separate the best from the weakest commercial
+model, whereas nearly a hundred separate the best-solved from the worst-solved
+task. The execution mode emerges as a second decisive factor. The expected
+advantage on semantically demanding tasks materialises only under direct
+processing, while code generation computes more reliably at about one fifteenth
+of the cost per row. The strongest lever, however, is task framing: the same
+transformation remains unsolved when posed as one composite task and is
+completed without error once decomposed into individual steps, at which point
+the measurable difference between prompting strategies disappears entirely. On
+this basis the thesis derives a hybrid architecture that combines rule-based and
+model-based steps according to task type and validates the result after every
+step.}

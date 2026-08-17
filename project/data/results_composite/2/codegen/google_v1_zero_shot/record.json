@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-08-17T06:51:12.850267+00:00",
+  "provider": "google",
+  "prompt_id": "v1_zero_shot",
+  "prompt_strategy": "zero_shot",
+  "mode": "codegen",
+  "seed": 2,
+  "repetition": 1,
+  "task": "composite_explicit",
+  "status": "ok",
+  "accuracy": 0.454545,
+  "attempts": 3,
+  "error": null,
+  "cost_usd": 0.161678,
+  "prompt_tokens": 1851,
+  "completion_tokens": 21187,
+  "duration_s": 133.9,
+  "llm_s": 132.17,
+  "generated_code": "import os\nimport re\nimport pandas as pd\n\ninput_dir = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/2\"\noutput_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_composite/2/codegen/google_v1_zero_shot/output.parquet\"\n\ncustomers = pd.read_csv(os.path.join(input_dir, \"customers_raw.csv\"))\nproducts = pd.read_csv(os.path.join(input_dir, \"products_raw.csv\"))\norders = pd.read_csv(os.path.join(input_dir, \"orders_raw.csv\"))\n\nfor col in customers.columns:\n    if customers[col].dtype == \"object\" or isinstance(customers[col].dtype, pd.StringDtype):\n        customers[col] = customers[col].apply(lambda x: x.strip() if isinstance(x, str) else x)\n\ndef map_country_code(val):\n    if pd.isna(val) or val is None:\n        return \"UNKNOWN\"\n    val_str = str(val).strip()\n    if not val_str:\n        return \"UNKNOWN\"\n    \n    clean = re.sub(r\"[^A-Z]\", \"\", val_str.upper())\n    \n    if clean in [\"DEUTSCHLAND\", \"GERMANY\", \"GER\", \"DEUTSHCLAND\", \"DEUTSCLAND\", \"DEUTSCHLND\", \"DE\", \"DEU\", \"ALLEMAGNE\"]:\n        return \"DE\"\n    if clean in [\"OESTERREICH\", \"OSTERREICH\", \"AUSTRIA\", \"AUT\", \"AT\"]:\n        return \"AT\"\n    if clean in [\"SCHWEIZ\", \"SWITZERLAND\", \"SUISSE\", \"SVIZZERA\", \"CH\", \"CHE\"]:\n        return \"CH\"\n    if clean in [\"FRANKREICH\", \"FRANCE\", \"FR\", \"FRA\"]:\n        return \"FR\"\n    if clean in [\"ITALIEN\", \"ITALY\", \"IT\", \"ITA\"]:\n        return \"IT\"\n    if clean in [\"SPANIEN\", \"SPAIN\", \"ES\", \"ESP\"]:\n        return \"ES\"\n    if clean in [\"UK\", \"GB\", \"GBR\", \"GREATBRITAIN\", \"UNITEDKINGDOM\"]:\n        return \"GB\"\n    if clean in [\"USA\", \"US\", \"UNITEDSTATES\", \"UNITEDSTATESOFAMERICA\"]:\n        return \"US\"\n    if clean in [\"NIEDERLANDE\", \"NETHERLANDS\", \"HOLLAND\", \"NL\", \"NLD\"]:\n        return \"NL\"\n        \n    if \"DEUTSH\" in clean or \"DEUTSC\" in clean or \"GERMAN\" in clean:\n        return \"DE\"\n    if \"OEST\" in clean or \"AUSTR\" in clean:\n        return \"AT\"\n    if \"SCHWEIZ\" in clean or \"SWITZ\" in clean:\n        return \"CH\"\n    if \"FRANK\" in clean or \"FRANC\" in clean:\n        return \"FR\"\n    if \"ITALI\" in clean or \"ITALY\" in clean:\n        return \"IT\"\n    if \"SPAN\" in clean or \"SPAI\" in clean:\n        return \"ES\"\n\n    if len(clean) == 2:\n        return clean\n\n    return \"UNKNOWN\"\n\ncustomers[\"country_code\"] = customers[\"country\"].apply(map_country_code)\n\ncustomers = customers.drop_duplicates(subset=[\"customer_id\"], keep=\"first\")\n\ndef clean_price(val):\n    if pd.isna(val) or val is None:\n        return None\n    s = str(val).replace(\"EUR\", \"\").replace(\"eur\", \"\").replace(\"€\", \"\").strip()\n    s = s.replace(\",\", \".\")\n    try:\n        return float(s)\n    except ValueError:\n        return None\n\ndef clean_bool(val):\n    if pd.isna(val) or val is None:\n        return False\n    if isinstance(val, bool):\n        return val\n    s = str(val).strip().lower()\n    return s in [\"true\", \"1\", \"t\", \"ja\", \"yes\", \"y\", \"wahr\"]\n\nproducts[\"price_eur\"] = products[\"price_eur\"].apply(clean_price)\nproducts[\"in_stock\"] = products[\"in_stock\"].apply(clean_bool)\n\nmerged = orders.merge(customers, on=\"customer_id\", how=\"left\")\nmerged = merged.merge(products, on=\"product_id\", how=\"left\")\n\nmerged[\"country_code\"] = merged[\"country_code\"].fillna(\"UNKNOWN\")\nmerged[\"line_revenue\"] = merged[\"quantity\"] * merged[\"unit_price_eur\"]\n\nresult = (\n    merged.groupby([\"country_code\", \"category\"], as_index=False)\n    .agg(\n        total_revenue_eur=(\"line_revenue\", \"sum\"),\n        order_count=(\"order_id\", \"count\")\n    )\n)\n\nresult[\"total_revenue_eur\"] = result[\"total_revenue_eur\"].round(2)\nresult = result.sort_values(by=\"total_revenue_eur\", ascending=False)\n\nos.makedirs(os.path.dirname(output_path), exist_ok=True)\nresult.to_parquet(output_path, index=False)",
+  "row_actual": 66,
+  "row_expected": 66,
+  "n_country_codes": 11
+}

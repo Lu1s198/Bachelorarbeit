@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-08-17T07:34:14.061146+00:00",
+  "provider": "anthropic",
+  "prompt_id": "v2_few_shot",
+  "prompt_strategy": "few_shot",
+  "group": "cleaning",
+  "group_label": "Gruppe 1 · Bereinigung (Schritte 1-3)",
+  "steps": [
+    "cleaning_easy",
+    "cleaning_medium",
+    "cleaning_hard"
+  ],
+  "seed": 2,
+  "repetition": 2,
+  "status": "ok",
+  "accuracy": 0.973333,
+  "attempts": 1,
+  "error": null,
+  "cost_usd": 0.057408,
+  "prompt_tokens": 1511,
+  "completion_tokens": 3525,
+  "duration_s": 26.7,
+  "llm_s": 25.73,
+  "exec_s": 0.94,
+  "generated_code": "import pandas as pd\nimport numpy as np\nimport re\n\ninput_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/2/customers_raw.csv\"\noutput_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_group/2/cleaning/anthropic_v2_few_shot_r2/output.parquet\"\n\ndf = pd.read_csv(input_path)\n\n# Step 1: trim whitespace in text columns, fillna country with UNKNOWN\ntext_cols = df.select_dtypes(include=\"object\").columns\nfor column in text_cols:\n    df[column] = df[column].str.strip()\n\ndf[\"country\"] = df[\"country\"].replace(\"\", np.nan)\ndf[\"country\"] = df[\"country\"].fillna(\"UNKNOWN\")\n\n# Step 2: normalize registered_at to ISO format YYYY-MM-DD\ndef parse_date(val):\n    if pd.isna(val):\n        return None\n    s = str(val).strip()\n    if s == \"\":\n        return None\n\n    # Unix timestamp (seconds) - all digits, possibly long number\n    if re.fullmatch(r\"\\d{9,10}\", s):\n        try:\n            dt = pd.to_datetime(int(s), unit=\"s\")\n            return dt.strftime(\"%Y-%m-%d\")\n        except Exception:\n            pass\n\n    # ISO format YYYY-MM-DD\n    if re.fullmatch(r\"\\d{4}-\\d{2}-\\d{2}\", s):\n        try:\n            dt = pd.to_datetime(s, format=\"%Y-%m-%d\")\n            return dt.strftime(\"%Y-%m-%d\")\n        except Exception:\n            pass\n\n    # German format DD.MM.YYYY\n    if re.fullmatch(r\"\\d{2}\\.\\d{2}\\.\\d{4}\", s):\n        try:\n            dt = pd.to_datetime(s, format=\"%d.%m.%Y\")\n            return dt.strftime(\"%Y-%m-%d\")\n        except Exception:\n            pass\n\n    # US format \"Month DD YYYY\"\n    try:\n        dt = pd.to_datetime(s, format=\"%B %d %Y\")\n        return dt.strftime(\"%Y-%m-%d\")\n    except Exception:\n        pass\n\n    # Fallback generic parse\n    try:\n        dt = pd.to_datetime(s)\n        return dt.strftime(\"%Y-%m-%d\")\n    except Exception:\n        return None\n\ndf[\"registered_at\"] = df[\"registered_at\"].apply(parse_date)\n\n# Step 3: normalize country to ISO alpha-2 codes\ncountry_map = {\n    \"germany\": \"DE\", \"deutschland\": \"DE\", \"de\": \"DE\", \"ger\": \"DE\", \"deu\": \"DE\",\n    \"usa\": \"US\", \"united states\": \"US\", \"united states of america\": \"US\", \"us\": \"US\",\n    \"vereinigte staaten\": \"US\", \"america\": \"US\", \"usa.\": \"US\",\n    \"uk\": \"GB\", \"united kingdom\": \"GB\", \"great britain\": \"GB\", \"gb\": \"GB\",\n    \"grossbritannien\": \"GB\", \"großbritannien\": \"GB\", \"england\": \"GB\",\n    \"france\": \"FR\", \"frankreich\": \"FR\", \"fr\": \"FR\",\n    \"spain\": \"ES\", \"spanien\": \"ES\", \"es\": \"ES\",\n    \"italy\": \"IT\", \"italien\": \"IT\", \"it\": \"IT\",\n    \"netherlands\": \"NL\", \"niederlande\": \"NL\", \"nl\": \"NL\", \"holland\": \"NL\",\n    \"austria\": \"AT\", \"österreich\": \"AT\", \"oesterreich\": \"AT\", \"at\": \"AT\",\n    \"switzerland\": \"CH\", \"schweiz\": \"CH\", \"ch\": \"CH\",\n    \"belgium\": \"BE\", \"belgien\": \"BE\", \"be\": \"BE\",\n    \"poland\": \"PL\", \"polen\": \"PL\", \"pl\": \"PL\",\n    \"portugal\": \"PT\", \"pt\": \"PT\",\n    \"sweden\": \"SE\", \"schweden\": \"SE\", \"se\": \"SE\",\n    \"norway\": \"NO\", \"norwegen\": \"NO\", \"no\": \"NO\",\n    \"denmark\": \"DK\", \"dänemark\": \"DK\", \"daenemark\": \"DK\", \"dk\": \"DK\",\n    \"finland\": \"FI\", \"finnland\": \"FI\", \"fi\": \"FI\",\n    \"ireland\": \"IE\", \"irland\": \"IE\", \"ie\": \"IE\",\n    \"greece\": \"GR\", \"griechenland\": \"GR\", \"gr\": \"GR\",\n    \"czech republic\": \"CZ\", \"tschechien\": \"CZ\", \"cz\": \"CZ\",\n    \"canada\": \"CA\", \"kanada\": \"CA\", \"ca\": \"CA\",\n    \"australia\": \"AU\", \"australien\": \"AU\", \"au\": \"AU\",\n    \"china\": \"CN\", \"cn\": \"CN\",\n    \"japan\": \"JP\", \"jp\": \"JP\",\n    \"india\": \"IN\", \"indien\": \"IN\", \"in\": \"IN\",\n    \"brazil\": \"BR\", \"brasilien\": \"BR\", \"br\": \"BR\",\n    \"russia\": \"RU\", \"russland\": \"RU\", \"ru\": \"RU\",\n    \"mexico\": \"MX\", \"mexiko\": \"MX\", \"mx\": \"MX\",\n    \"hungary\": \"HU\", \"ungarn\": \"HU\", \"hu\": \"HU\",\n    \"romania\": \"RO\", \"rumänien\": \"RO\", \"rumaenien\": \"RO\", \"ro\": \"RO\",\n    \"turkey\": \"TR\", \"türkei\": \"TR\", \"tuerkei\": \"TR\", \"tr\": \"TR\",\n    \"unknown\": \"UNKNOWN\",\n}\n\nvalid_iso_codes = set(v for v in country_map.values() if v != \"UNKNOWN\")\n\ndef normalize_country(val):\n    if pd.isna(val):\n        return \"UNKNOWN\"\n    s = str(val).strip().lower()\n    if s == \"\" or s == \"unknown\":\n        return \"UNKNOWN\"\n    if s in country_map:\n        return country_map[s]\n    # already a valid 2-letter code (case-insensitive) that's in our known set\n    upper = str(val).strip().upper()\n    if len(upper) == 2 and upper in valid_iso_codes:\n        return upper\n    return \"UNKNOWN\"\n\ndf[\"country\"] = df[\"country\"].apply(normalize_country)\n\ndf.to_parquet(output_path, index=False)",
+  "row_actual": 540,
+  "row_expected": 540
+}

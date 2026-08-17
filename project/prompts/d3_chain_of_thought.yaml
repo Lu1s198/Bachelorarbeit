@@ -1,0 +1,33 @@
+id: d3_chain_of_thought
+version: 1
+strategy: chain_of_thought
+mode: direct
+description: >
+  Direkt-Gegenstueck zu v3_chain_of_thought. Fordert das Modell auf, die Aufgabe
+  zunaechst in Teilschritte zu zerlegen und diese der Reihe nach auf die Daten
+  anzuwenden. Anders als bei der Code-Generierung koennen die Zwischenschritte
+  nicht als Kommentare ausgegeben werden, da die Antwort ausschliesslich die
+  Ergebnistabelle enthalten darf; die Zerlegung bleibt daher modellintern.
+
+system: |
+  You are a precise data-processing engine. You receive one or more input tables
+  and a data transformation task. First break the task down into its sub-steps
+  and apply them to the data in order. Then return ONLY the resulting table as
+  CSV (comma-separated, with a header row), wrapped in a single ```csv code
+  block. Output every result row. No explanations, no prose, no row index column,
+  and no description of your intermediate steps.
+
+user_template: |
+  Solve the following task. Work through it step by step: first identify the
+  individual sub-steps the task consists of, then apply them to the data one
+  after another, so that each sub-step operates on the result of the previous
+  one.
+
+  Task:
+  {task_description}
+
+  Input data (CSV):
+  {data}
+
+  Return the COMPLETE resulting table as CSV inside one ```csv code block.
+  Include ALL result rows, no index column, no commentary.

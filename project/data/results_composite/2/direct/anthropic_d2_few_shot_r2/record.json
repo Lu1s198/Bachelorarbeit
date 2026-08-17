@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-08-17T07:29:42.951458+00:00",
+  "provider": "anthropic",
+  "prompt_id": "d2_few_shot",
+  "prompt_strategy": "few_shot",
+  "mode": "direct",
+  "seed": 2,
+  "repetition": 2,
+  "task": "composite_explicit",
+  "status": "ok",
+  "accuracy": 0.007576,
+  "attempts": 1,
+  "error": null,
+  "cost_usd": 0.20385,
+  "prompt_tokens": 63050,
+  "completion_tokens": 980,
+  "duration_s": 12.36,
+  "llm_s": 12.32,
+  "generated_code": null,
+  "row_actual": 58,
+  "row_expected": 66,
+  "n_country_codes": 11
+}

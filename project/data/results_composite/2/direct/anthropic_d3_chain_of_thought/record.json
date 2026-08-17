@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-08-17T06:54:49.897592+00:00",
+  "provider": "anthropic",
+  "prompt_id": "d3_chain_of_thought",
+  "prompt_strategy": "chain_of_thought",
+  "mode": "direct",
+  "seed": 2,
+  "repetition": 1,
+  "task": "composite_explicit",
+  "status": "ok",
+  "accuracy": 0.007576,
+  "attempts": 1,
+  "error": null,
+  "cost_usd": 0.19947,
+  "prompt_tokens": 62685,
+  "completion_tokens": 761,
+  "duration_s": 10.16,
+  "llm_s": 10.13,
+  "generated_code": null,
+  "row_actual": 50,
+  "row_expected": 66,
+  "n_country_codes": 9
+}

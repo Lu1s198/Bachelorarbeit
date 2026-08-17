@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-08-17T07:28:13.435723+00:00",
+  "provider": "google",
+  "prompt_id": "v3_chain_of_thought",
+  "prompt_strategy": "chain_of_thought",
+  "mode": "codegen",
+  "seed": 2,
+  "repetition": 2,
+  "task": "composite_explicit",
+  "status": "ok",
+  "accuracy": 0.454545,
+  "attempts": 2,
+  "error": null,
+  "cost_usd": 0.089874,
+  "prompt_tokens": 1256,
+  "completion_tokens": 11732,
+  "duration_s": 75.53,
+  "llm_s": 74.14,
+  "generated_code": "import os\nimport pandas as pd\n\n# Define input and output file paths\ninput_dir = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/2\"\noutput_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_composite/2/codegen/google_v3_chain_of_thought_r2/output.parquet\"\n\n# Read raw datasets\ncustomers_raw = pd.read_csv(os.path.join(input_dir, \"customers_raw.csv\"))\nproducts_raw = pd.read_csv(os.path.join(input_dir, \"products_raw.csv\"))\norders_raw = pd.read_csv(os.path.join(input_dir, \"orders_raw.csv\"))\n\n# Step 1: Strip leading and trailing whitespace from all text columns in customers_raw.csv\nfor col in customers_raw.select_dtypes(include=[\"object\"]).columns:\n    customers_raw[col] = customers_raw[col].astype(str).str.strip()\n\n# Step 2: Harmonize the 'country' column in customers_raw.csv to ISO-3166-1-alpha-2 codes (country_code)\n# Define mapping dictionary for common country names, abbreviations, and typos\ncountry_mapping = {\n    'deutschland': 'DE', 'germany': 'DE', 'ger': 'DE', 'deutshcland': 'DE', 'deutchland': 'DE', 'de': 'DE',\n    'österreich': 'AT', 'oesterreich': 'AT', 'austria': 'AT', 'aut': 'AT', 'at': 'AT',\n    'schweiz': 'CH', 'switzerland': 'CH', 'che': 'CH', 'ch': 'CH',\n    'frankreich': 'FR', 'france': 'FR', 'fra': 'FR', 'fr': 'FR',\n    'italien': 'IT', 'italy': 'IT', 'ita': 'IT', 'it': 'IT',\n    'spanien': 'ES', 'spain': 'ES', 'esp': 'ES', 'es': 'ES',\n    'niederlande': 'NL', 'netherlands': 'NL', 'nld': 'NL', 'nl': 'NL',\n    'vereinigtes koenigreich': 'GB', 'vereinigtes königreich': 'GB', 'united kingdom': 'GB', 'uk': 'GB', 'gbr': 'GB', 'gb': 'GB',\n    'usa': 'US', 'united states': 'US', 'united states of america': 'US', 'us': 'US'\n}\n\ndef clean_country(val):\n    if pd.isna(val) or val is None:\n        return 'UNKNOWN'\n    s = str(val).strip().lower()\n    return country_mapping.get(s, 'UNKNOWN')\n\ncustomers_raw['country_code'] = customers_raw['country'].apply(clean_country)\n\n# Step 3: Remove duplicate customer_id in customers_raw.csv, keeping the first occurrence\ncustomers_cleaned = customers_raw.drop_duplicates(subset=['customer_id'], keep='first')\n\n# Step 4: Convert price_eur to float and in_stock to boolean in products_raw.csv\ndef parse_price(val):\n    if pd.isna(val):\n        return None\n    s = str(val).replace('EUR', '').replace('eur', '').replace(',', '.').strip()\n    try:\n        return float(s)\n    except ValueError:\n        return None\n\ndef parse_bool(val):\n    if pd.isna(val):\n        return False\n    if isinstance(val, bool):\n        return val\n    s = str(val).strip().lower()\n    return s in ['true', '1', 't', 'yes', 'ja', 'wahr']\n\nproducts_raw['price_eur'] = products_raw['price_eur'].apply(parse_price)\nproducts_raw['in_stock'] = products_raw['in_stock'].apply(parse_bool)\n\n# Step 5: Join orders_raw.csv with customers_cleaned on customer_id and products_raw on product_id\n# All order rows from orders_raw.csv must be retained (left join)\nmerged_df = orders_raw.merge(customers_cleaned, on='customer_id', how='left')\nmerged_df = merged_df.merge(products_raw, on='product_id', how='left')\n\n# Step 6: Calculate total revenue and order count aggregated by country_code and category\n# total_revenue_eur = sum(quantity * unit_price_eur) using columns from orders_raw.csv\nmerged_df['revenue'] = merged_df['quantity'] * merged_df['unit_price_eur']\n\naggregated = merged_df.groupby(['country_code', 'category'], as_index=False).agg(\n    total_revenue_eur=('revenue', 'sum'),\n    order_count=('order_id', 'count')\n)\n\n# Round total_revenue_eur to two decimal places\naggregated['total_revenue_eur'] = aggregated['total_revenue_eur'].round(2)\n\n# Sort descending by total_revenue_eur\naggregated = aggregated.sort_values(by='total_revenue_eur', ascending=False).reset_index(drop=True)\n\n# Save result as Parquet file to the required directory\nos.makedirs(os.path.dirname(output_path), exist_ok=True)\naggregated.to_parquet(output_path, index=False)",
+  "row_actual": 54,
+  "row_expected": 66,
+  "n_country_codes": 9
+}

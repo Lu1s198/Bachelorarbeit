@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-08-17T07:27:10.859861+00:00",
+  "provider": "google",
+  "prompt_id": "v1_zero_shot",
+  "prompt_strategy": "zero_shot",
+  "mode": "codegen",
+  "seed": 2,
+  "repetition": 2,
+  "task": "composite_explicit",
+  "status": "ok",
+  "accuracy": 0.636364,
+  "attempts": 1,
+  "error": null,
+  "cost_usd": 0.057667,
+  "prompt_tokens": 620,
+  "completion_tokens": 7565,
+  "duration_s": 34.83,
+  "llm_s": 33.89,
+  "generated_code": "import os\nimport re\nimport pandas as pd\n\ninput_dir = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/2\"\noutput_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_composite/2/codegen/google_v1_zero_shot_r2/output.parquet\"\n\ncustomers_df = pd.read_csv(os.path.join(input_dir, \"customers_raw.csv\"))\n\nfor col in customers_df.select_dtypes(include=['object', 'string']).columns:\n    customers_df[col] = customers_df[col].apply(lambda x: x.strip() if isinstance(x, str) else x)\n\ncountry_map = {\n    'DEUTSCHLAND': 'DE', 'GERMANY': 'DE', 'GER': 'DE', 'DEUTSHCLAND': 'DE', 'DE': 'DE', 'ALLEMAGNE': 'DE', 'DEUTSCHLANDS': 'DE',\n    'OESTERREICH': 'AT', 'ÖSTERREICH': 'AT', 'AUSTRIA': 'AT', 'AUT': 'AT', 'AT': 'AT', 'AUTRICHE': 'AT',\n    'SCHWEIZ': 'CH', 'SWITZERLAND': 'CH', 'CHE': 'CH', 'CH': 'CH', 'SUISSE': 'CH', 'SVIZZERA': 'CH',\n    'FRANKREICH': 'FR', 'FRANCE': 'FR', 'FRA': 'FR', 'FR': 'FR',\n    'ITALIEN': 'IT', 'ITALY': 'IT', 'ITA': 'IT', 'IT': 'IT', 'ITALIA': 'IT',\n    'SPANIEN': 'ES', 'SPAIN': 'ES', 'ESP': 'ES', 'ES': 'ES', 'ESPAÑA': 'ES', 'ESPANA': 'ES',\n    'GROSSBRITANNIEN': 'GB', 'UNITED KINGDOM': 'GB', 'UK': 'GB', 'GB': 'GB', 'GBR': 'GB', 'ENGLAND': 'GB',\n    'VEREINIGTE STAATEN': 'US', 'UNITED STATES': 'US', 'USA': 'US', 'US': 'US',\n    'NIEDERLANDE': 'NL', 'NETHERLANDS': 'NL', 'NL': 'NL', 'NLD': 'NL', 'NEDERLAND': 'NL',\n    'POLEN': 'PL', 'POLAND': 'PL', 'PL': 'PL', 'POL': 'PL'\n}\n\ndef map_country(val):\n    if pd.isna(val):\n        return 'UNKNOWN'\n    val_str = str(val).strip()\n    if not val_str or val_str.upper() in ('NAN', 'NONE', 'NULL', 'UNKNOWN'):\n        return 'UNKNOWN'\n    val_upper = val_str.upper()\n    if val_upper in country_map:\n        return country_map[val_upper]\n    if 'DEUTSH' in val_upper or 'GERM' in val_upper or 'DEUTSCH' in val_upper:\n        return 'DE'\n    if 'OEST' in val_upper or 'ÖST' in val_upper or 'AUST' in val_upper:\n        return 'AT'\n    if 'SCHWEIZ' in val_upper or 'SWIT' in val_upper:\n        return 'CH'\n    if len(val_upper) == 2 and val_upper.isalpha():\n        return val_upper\n    return 'UNKNOWN'\n\ncustomers_df['country_code'] = customers_df['country'].apply(map_country)\n\ncustomers_df = customers_df.drop_duplicates(subset=['customer_id'], keep='first')\n\nproducts_df = pd.read_csv(os.path.join(input_dir, \"products_raw.csv\"))\n\ndef clean_price(val):\n    if pd.isna(val):\n        return None\n    val_str = str(val).strip()\n    cleaned = re.sub(r'[^0-9.,]', '', val_str)\n    if ',' in cleaned and '.' in cleaned:\n        if cleaned.find(',') < cleaned.find('.'):\n            cleaned = cleaned.replace(',', '')\n        else:\n            cleaned = cleaned.replace('.', '').replace(',', '.')\n    elif ',' in cleaned:\n        cleaned = cleaned.replace(',', '.')\n    try:\n        return float(cleaned)\n    except ValueError:\n        return None\n\nproducts_df['price_eur'] = products_df['price_eur'].apply(clean_price)\n\ndef clean_bool(val):\n    if pd.isna(val):\n        return False\n    val_str = str(val).strip().lower()\n    return val_str in ('true', '1', 't', 'yes', 'ja', 'wahr')\n\nproducts_df['in_stock'] = products_df['in_stock'].apply(clean_bool)\n\norders_df = pd.read_csv(os.path.join(input_dir, \"orders_raw.csv\"))\n\nmerged_df = orders_df.merge(customers_df, on='customer_id', how='left')\nmerged_df = merged_df.merge(products_df, on='product_id', how='left')\n\nmerged_df['country_code'] = merged_df['country_code'].fillna('UNKNOWN')\n\nmerged_df['line_revenue'] = merged_df['quantity'] * merged_df['unit_price_eur']\n\nagg_df = merged_df.groupby(['country_code', 'category'], as_index=False).agg(\n    total_revenue_eur=('line_revenue', 'sum'),\n    order_count=('order_id', 'count')\n)\n\nagg_df['total_revenue_eur'] = agg_df['total_revenue_eur'].round(2)\nagg_df = agg_df.sort_values(by='total_revenue_eur', ascending=False).reset_index(drop=True)\n\nos.makedirs(os.path.dirname(output_path), exist_ok=True)\nagg_df.to_parquet(output_path, index=False)",
+  "row_actual": 66,
+  "row_expected": 66,
+  "n_country_codes": 11
+}

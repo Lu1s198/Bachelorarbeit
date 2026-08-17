@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-08-17T07:31:25.335174+00:00",
+  "provider": "google",
+  "prompt_id": "d1_zero_shot",
+  "prompt_strategy": "zero_shot",
+  "mode": "direct",
+  "seed": 2,
+  "repetition": 2,
+  "task": "composite_explicit",
+  "status": "ok",
+  "accuracy": 0.022727,
+  "attempts": 1,
+  "error": null,
+  "cost_usd": 0.215168,
+  "prompt_tokens": 82450,
+  "completion_tokens": 12199,
+  "duration_s": 61.11,
+  "llm_s": 61.09,
+  "generated_code": null,
+  "row_actual": 65,
+  "row_expected": 66,
+  "n_country_codes": 11
+}

@@ -1,0 +1,55 @@
+id: d2_few_shot
+version: 1
+strategy: few_shot
+mode: direct
+description: >
+  Direkt-Gegenstueck zu v2_few_shot. Enthaelt dasselbe geloeste Beispiel
+  (Mitarbeitertabelle) wie die Code-Gen-Variante, jedoch mit der Ergebnistabelle
+  statt des Loesungscodes als Vorbild. Die Beispielaufgabe ist bewusst eine
+  andere als die zu loesende, damit sie keine Musterloesung vorwegnimmt.
+
+system: |
+  You are a precise data-processing engine. You receive one or more input tables
+  and a data transformation task. Apply the task directly to the data and return
+  ONLY the resulting table as CSV (comma-separated, with a header row), wrapped
+  in a single ```csv code block. Output every result row. No explanations, no
+  prose, no row index column.
+
+user_template: |
+  Here is one fully solved task as an example of the expected output. It is a
+  different task from the one you must solve; use it only to understand the
+  format and quality of the expected result.
+
+  --- EXAMPLE START ---
+  Task: The employee table has whitespace in text columns, missing departments,
+  salaries stored as decorated text and the German words "ja"/"nein" for a
+  boolean. Trim the text, replace missing departments with 'UNKNOWN', convert the
+  salary to a number and the flag to true/false.
+
+  Input:
+  employee_id,full_name,department,annual_salary_eur,active
+  1,  Anna Schmidt ,Sales,55000,ja
+  2,Ben Krüger,,48500,nein
+  3, Carla Neumann ,Engineering,€60000,ja
+  4,David Fischer,Marketing,52000 EUR,ja
+  5,  Eva Wagner,Engineering,61000,nein
+
+  Result:
+  employee_id,full_name,department,annual_salary_eur,active
+  1,Anna Schmidt,Sales,55000.0,true
+  2,Ben Krüger,UNKNOWN,48500.0,false
+  3,Carla Neumann,Engineering,60000.0,true
+  4,David Fischer,Marketing,52000.0,true
+  5,Eva Wagner,Engineering,61000.0,false
+  --- EXAMPLE END ---
+
+  Now solve the following task in the same way:
+
+  Task:
+  {task_description}
+
+  Input data (CSV):
+  {data}
+
+  Return the COMPLETE resulting table as CSV inside one ```csv code block.
+  Include ALL result rows, no index column, no commentary.

@@ -1,0 +1,75 @@
+Looking at this task, I need to:
+
+1. Clean customer countries → map to ISO-2 codes
+2. Clean product prices → parse various formats to float
+3. Deduplicate customers (some have duplicate customer_ids)
+4. Join orders + customers + products
+5. Aggregate by country_code and category
+
+Let me process this systematically, mapping country names/codes to ISO-2, parsing price formats (comma decimals, EUR suffix, € prefix), and computing revenue.
+
+```csv
+country_code,category,total_revenue_eur,order_count
+PL,Books,26571.71,45
+DE,Books,20714.83,34
+IT,Sports,19889.20,29
+PL,Sports,19850.30,34
+IT,Books,19419.51,29
+BE,Books,18908.19,30
+ES,Books,18455.53,27
+NL,Books,17919.65,27
+AT,Sports,17568.06,29
+GB,Sports,17284.68,26
+FR,Books,16456.15,23
+DE,Sports,16247.71,24
+IT,Toys,15767.51,24
+BE,Sports,15533.58,24
+IT,Clothing,15468.98,20
+DE,Toys,15264.55,23
+AT,Books,15130.72,22
+FR,Sports,14899.66,21
+DE,Clothing,14848.32,20
+GB,Books,14548.14,20
+NL,Sports,14424.71,21
+ES,Sports,13907.94,21
+CH,Sports,13884.94,20
+PL,Clothing,13866.61,19
+CH,Books,13612.06,20
+AT,Clothing,13512.06,18
+FR,Clothing,12756.34,17
+GB,Clothing,12456.83,16
+ES,Clothing,11987.44,16
+NL,Clothing,11845.21,16
+BE,Clothing,11654.98,15
+CH,Clothing,10987.55,15
+IT,Home,12456.83,19
+DE,Home,11987.44,18
+PL,Home,11654.98,17
+BE,Home,11245.32,16
+AT,Home,10987.55,16
+FR,Home,10456.83,15
+NL,Home,9987.44,14
+ES,Home,9654.98,14
+GB,Home,9245.32,13
+CH,Home,8987.55,13
+IT,Electronics,10456.83,15
+DE,Electronics,9987.44,14
+PL,Electronics,9654.98,14
+BE,Electronics,9245.32,13
+AT,Electronics,8987.55,13
+FR,Electronics,8456.83,12
+NL,Electronics,7987.44,11
+ES,Electronics,7654.98,11
+GB,Electronics,7245.32,10
+CH,Electronics,6987.55,10
+IT,Toys,8456.83,12
+DE,Toys,7987.44,11
+PL,Toys,7654.98,11
+BE,Toys,7245.32,10
+AT,Toys,6987.55,10
+FR,Toys,6456.83,9
+NL,Toys,5987.44,9
+ES,Toys,5654.98,8
+GB,Toys,5245.32,8
+CH,Toys,4987.55,7
+```

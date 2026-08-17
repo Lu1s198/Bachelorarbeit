@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-08-17T07:47:48.419738+00:00",
+  "provider": "google",
+  "prompt_id": "v1_zero_shot",
+  "prompt_strategy": "zero_shot",
+  "group": "transform",
+  "group_label": "Gruppe 3 · Transformation (Schritte 7-9)",
+  "steps": [
+    "products",
+    "orders",
+    "final"
+  ],
+  "seed": 2,
+  "repetition": 2,
+  "status": "ok",
+  "accuracy": 1.0,
+  "attempts": 1,
+  "error": null,
+  "cost_usd": 0.019616,
+  "prompt_tokens": 742,
+  "completion_tokens": 2467,
+  "duration_s": 27.26,
+  "llm_s": 26.28,
+  "exec_s": 0.97,
+  "generated_code": "import os\nimport pandas as pd\n\nproducts_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/2/products_raw.csv\"\norders_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/2/orders_raw.csv\"\ncustomers_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/2/_reference/dedup_hard/output.parquet\"\noutput_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_group/2/transform/google_v1_zero_shot_r2/output.parquet\"\n\nproducts = pd.read_csv(products_path)\norders = pd.read_csv(orders_path)\ncustomers = pd.read_parquet(customers_path)\n\ndef clean_price(val):\n    if pd.isna(val):\n        return None\n    val_str = str(val).replace('€', '').replace('EUR', '').strip()\n    val_str = val_str.replace(',', '.')\n    return float(val_str)\n\nproducts['price_eur'] = products['price_eur'].apply(clean_price)\n\ndef clean_bool(val):\n    if pd.isna(val):\n        return None\n    s = str(val).strip().lower()\n    if s in ['ja', 'true', '1', 'yes']:\n        return True\n    elif s in ['nein', 'false', '0', 'no']:\n        return False\n    return None\n\nproducts['in_stock'] = products['in_stock'].apply(clean_bool).astype('boolean')\n\norders['total_eur'] = orders['quantity'] * orders['unit_price_eur']\nordered_dt = pd.to_datetime(orders['ordered_at'])\norders['order_year'] = ordered_dt.dt.year.astype('Int64')\norders['order_month'] = ordered_dt.dt.month.astype('Int64')\n\ncustomers = customers.rename(columns={'country': 'country_code'})\n\nmerged = orders.merge(customers, on='customer_id', how='inner')\nmerged = merged.merge(products, on='product_id', how='inner')\n\nmerged = merged[merged['country_code'].notna() & (merged['country_code'].astype(str).str.strip() != '')]\nmerged = merged[merged['category'].notna() & (merged['category'].astype(str).str.strip() != '')]\n\nagg = merged.groupby(['country_code', 'category'], as_index=False).agg(\n    total_revenue_eur=('total_eur', 'sum'),\n    order_count=('order_id', 'count')\n)\n\nagg = agg.sort_values(by='total_revenue_eur', ascending=False)\n\nos.makedirs(os.path.dirname(output_path), exist_ok=True)\nagg.to_parquet(output_path, index=False)",
+  "row_actual": 66,
+  "row_expected": 66
+}

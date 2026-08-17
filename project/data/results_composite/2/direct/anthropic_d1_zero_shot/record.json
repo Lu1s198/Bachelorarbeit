@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-08-17T06:54:22.304980+00:00",
+  "provider": "anthropic",
+  "prompt_id": "d1_zero_shot",
+  "prompt_strategy": "zero_shot",
+  "mode": "direct",
+  "seed": 2,
+  "repetition": 1,
+  "task": "composite_explicit",
+  "status": "ok",
+  "accuracy": 0.015152,
+  "attempts": 1,
+  "error": null,
+  "cost_usd": 0.204012,
+  "prompt_tokens": 62594,
+  "completion_tokens": 1082,
+  "duration_s": 12.59,
+  "llm_s": 12.56,
+  "generated_code": null,
+  "row_actual": 65,
+  "row_expected": 66,
+  "n_country_codes": 11
+}

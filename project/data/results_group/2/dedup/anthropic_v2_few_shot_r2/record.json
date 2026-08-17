@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-08-17T07:39:09.420439+00:00",
+  "provider": "anthropic",
+  "prompt_id": "v2_few_shot",
+  "prompt_strategy": "few_shot",
+  "group": "dedup",
+  "group_label": "Gruppe 2 · Deduplizierung (Schritte 4-6)",
+  "steps": [
+    "dedup_easy",
+    "dedup_medium",
+    "dedup_hard"
+  ],
+  "seed": 2,
+  "repetition": 2,
+  "status": "ok",
+  "accuracy": 0.982,
+  "attempts": 1,
+  "error": null,
+  "cost_usd": 0.047529,
+  "prompt_tokens": 1498,
+  "completion_tokens": 2869,
+  "duration_s": 27.28,
+  "llm_s": 26.3,
+  "exec_s": 0.95,
+  "generated_code": "import pandas as pd\nimport re\nfrom difflib import SequenceMatcher\n\ninput_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/2/_reference/cleaning_hard/output.parquet\"\noutput_path = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_group/2/dedup/anthropic_v2_few_shot_r2/output.parquet\"\n\ndf = pd.read_parquet(input_path)\n\n# Step 1: remove exact duplicates\ndf = df.drop_duplicates(keep=\"first\").reset_index(drop=True)\n\n# Step 2: remove rows with duplicate email, keep newest registered_at\ndf[\"registered_at\"] = pd.to_datetime(df[\"registered_at\"])\ndf = df.sort_values(\"registered_at\", ascending=False)\ndf = df.drop_duplicates(subset=\"email\", keep=\"first\")\ndf = df.reset_index(drop=True)\n\n# Step 3: fuzzy duplicate detection\n\nTITLES = [\n    \"mr\", \"mrs\", \"ms\", \"miss\", \"dr\", \"prof\", \"herr\", \"frau\",\n    \"mag\", \"ing\", \"sir\", \"madam\"\n]\ntitle_pattern = re.compile(\n    r\"^(?:\" + \"|\".join(TITLES) + r\")\\.?\\s+\", flags=re.IGNORECASE\n)\nmiddle_initial_pattern = re.compile(r\"\\b[a-zA-Z]\\.\\s*\")\nwhitespace_pattern = re.compile(r\"\\s+\")\n\n\ndef normalize_name(name):\n    if pd.isna(name):\n        return \"\"\n    n = str(name).strip().lower()\n    n = title_pattern.sub(\"\", n)\n    n = middle_initial_pattern.sub(\"\", n)\n    n = whitespace_pattern.sub(\" \", n)\n    n = n.strip()\n    return n\n\n\ndef normalize_email(email):\n    if pd.isna(email):\n        return \"\"\n    e = str(email).strip().lower()\n    if \"@\" in e:\n        local, domain = e.split(\"@\", 1)\n        local = local.replace(\".\", \"\")\n        e = local + \"@\" + domain\n    return e\n\n\ndf[\"name_norm\"] = df[\"full_name\"].apply(normalize_name)\ndf[\"email_norm\"] = df[\"email\"].apply(normalize_email)\n\nn = len(df)\nparent = list(range(n))\n\n\ndef find(x):\n    while parent[x] != x:\n        parent[x] = parent[parent[x]]\n        x = parent[x]\n    return x\n\n\ndef union(x, y):\n    rx, ry = find(x), find(y)\n    if rx != ry:\n        parent[max(rx, ry)] = min(rx, ry)\n\n\ndef name_similar(a, b):\n    if not a or not b:\n        return False\n    if a == b:\n        return True\n    ratio = SequenceMatcher(None, a, b).ratio()\n    return ratio >= 0.85\n\n\n# Group by email_norm; within each group, connect rows whose names are similar\nemail_groups = df.groupby(\"email_norm\").groups\n\nfor email_key, idxs in email_groups.items():\n    idxs = list(idxs)\n    if len(idxs) < 2:\n        continue\n    for i in range(len(idxs)):\n        for j in range(i + 1, len(idxs)):\n            a_idx, b_idx = idxs[i], idxs[j]\n            name_a = df.loc[a_idx, \"name_norm\"]\n            name_b = df.loc[b_idx, \"name_norm\"]\n            if email_key != \"\" and name_similar(name_a, name_b):\n                union(a_idx, b_idx)\n\ndf[\"cluster\"] = [find(i) for i in range(n)]\n\ndf = df.sort_values(\"customer_id\", ascending=True)\ndf = df.drop_duplicates(subset=\"cluster\", keep=\"first\")\n\ndf = df.drop(columns=[\"name_norm\", \"email_norm\", \"cluster\"])\ndf[\"registered_at\"] = df[\"registered_at\"].dt.strftime(\"%Y-%m-%d\")\n\ndf = df.sort_values(\"customer_id\").reset_index(drop=True)\n\ndf.to_parquet(output_path, index=False)",
+  "row_actual": 500,
+  "row_expected": 495
+}

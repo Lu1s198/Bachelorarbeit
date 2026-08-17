@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-08-17T07:48:27.695455+00:00",
+  "provider": "google",
+  "prompt_id": "v3_chain_of_thought",
+  "prompt_strategy": "chain_of_thought",
+  "group": "transform",
+  "group_label": "Gruppe 3 · Transformation (Schritte 7-9)",
+  "steps": [
+    "products",
+    "orders",
+    "final"
+  ],
+  "seed": 2,
+  "repetition": 2,
+  "status": "ok",
+  "accuracy": 1.0,
+  "attempts": 1,
+  "error": null,
+  "cost_usd": 0.01917,
+  "prompt_tokens": 750,
+  "completion_tokens": 2406,
+  "duration_s": 12.18,
+  "llm_s": 11.18,
+  "exec_s": 0.98,
+  "generated_code": "import os\nimport pandas as pd\n\n# Define input file paths\nproducts_path = (\n    \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/2/\"\n    \"products_raw.csv\"\n)\norders_path = (\n    \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/2/\"\n    \"orders_raw.csv\"\n)\ncustomers_path = (\n    \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/\"\n    \"2/_reference/dedup_hard/output.parquet\"\n)\noutput_path = (\n    \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_group/2/\"\n    \"transform/google_v3_chain_of_thought_r2/output.parquet\"\n)\n\n# Step 1: Read and convert 'products' dataset\n# - Read products CSV\nproducts = pd.read_csv(products_path)\n\n# - Convert price_eur to float: remove currency symbols/text, swap comma to dot, convert to float\nprice_clean = (\n    products[\"price_eur\"]\n    .astype(str)\n    .str.replace(\"€\", \"\", regex=False)\n    .str.replace(\"EUR\", \"\", regex=False)\n    .str.strip()\n    .str.replace(\",\", \".\", regex=False)\n)\nproducts[\"price_eur\"] = pd.to_numeric(price_clean, errors=\"coerce\")\n\n# - Convert in_stock to boolean: map standard true/false representations\nin_stock_clean = products[\"in_stock\"].astype(str).str.strip().str.lower()\ntrue_values = {\"ja\", \"true\", \"1\", \"yes\", \"t\"}\nfalse_values = {\"nein\", \"false\", \"0\", \"no\", \"f\"}\nproducts[\"in_stock\"] = in_stock_clean.map(\n    lambda val: (\n        True if val in true_values else (False if val in false_values else None)\n    )\n).astype(\"boolean\")\n\n# Step 2: Read and transform 'orders' dataset\n# - Read orders CSV\norders = pd.read_csv(orders_path)\n\n# - Calculate total_eur = quantity * unit_price_eur\norders[\"total_eur\"] = orders[\"quantity\"] * orders[\"unit_price_eur\"]\n\n# - Parse ordered_at and extract order_year and order_month\nordered_at_dt = pd.to_datetime(orders[\"ordered_at\"], errors=\"coerce\")\norders[\"order_year\"] = ordered_at_dt.dt.year.astype(\"Int64\")\norders[\"order_month\"] = ordered_at_dt.dt.month.astype(\"Int64\")\n\n# Step 3: Read 'customers' dataset, join, aggregate and format final result\n# - Read customers Parquet file\ncustomers = pd.read_parquet(customers_path)\n\n# - Rename 'country' column to 'country_code'\ncustomers = customers.rename(columns={\"country\": \"country_code\"})\n\n# - Merge orders with customers and products (inner join to drop unmatched records)\nmerged = orders.merge(customers, on=\"customer_id\", how=\"inner\").merge(\n    products, on=\"product_id\", how=\"inner\"\n)\n\n# - Filter out invalid / missing country_code and category\nmerged = merged.dropna(subset=[\"country_code\", \"category\"])\nmerged = merged[\n    (merged[\"country_code\"].astype(str).str.strip() != \"\")\n    & (merged[\"category\"].astype(str).str.strip() != \"\")\n]\n\n# - Compute revenue per row (quantity * unit_price_eur)\nmerged[\"revenue\"] = merged[\"quantity\"] * merged[\"unit_price_eur\"]\n\n# - Aggregate per country_code and category\naggregated = (\n    merged.groupby([\"country_code\", \"category\"], as_index=False)\n    .agg(total_revenue_eur=(\"revenue\", \"sum\"), order_count=(\"order_id\", \"count\"))\n    .sort_values(by=\"total_revenue_eur\", ascending=False)\n    .reset_index(drop=True)\n)\n\n# Step 4: Write result to Parquet file\nos.makedirs(os.path.dirname(output_path), exist_ok=True)\naggregated.to_parquet(output_path, index=False)",
+  "row_actual": 66,
+  "row_expected": 66
+}

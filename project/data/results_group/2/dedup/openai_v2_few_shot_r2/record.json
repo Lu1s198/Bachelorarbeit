@@ -1,0 +1,28 @@
+{
+  "timestamp": "2026-08-17T07:41:26.109292+00:00",
+  "provider": "openai",
+  "prompt_id": "v2_few_shot",
+  "prompt_strategy": "few_shot",
+  "group": "dedup",
+  "group_label": "Gruppe 2 · Deduplizierung (Schritte 4-6)",
+  "steps": [
+    "dedup_easy",
+    "dedup_medium",
+    "dedup_hard"
+  ],
+  "seed": 2,
+  "repetition": 2,
+  "status": "ok",
+  "accuracy": 0.99,
+  "attempts": 2,
+  "error": null,
+  "cost_usd": 0.068595,
+  "prompt_tokens": 1848,
+  "completion_tokens": 4265,
+  "duration_s": 49.15,
+  "llm_s": 47.2,
+  "exec_s": 1.92,
+  "generated_code": "import os\nimport re\nimport unicodedata\nfrom difflib import SequenceMatcher\n\nimport pandas as pd\n\ninput_path = r\"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_pipeline/2/_reference/cleaning_hard/output.parquet\"\nsynthetic_dir = r\"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/2\"\noutput_path = r\"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_group/2/dedup/openai_v2_few_shot_r2/output.parquet\"\n\nif not os.path.isfile(input_path):\n    candidates = []\n    for root, _, files in os.walk(synthetic_dir):\n        for file in files:\n            if file.lower().endswith(\".parquet\"):\n                candidates.append(os.path.join(root, file))\n    preferred = [path for path in candidates if os.path.basename(path).lower() == \"input.parquet\"]\n    if preferred:\n        input_path = preferred[0]\n    elif candidates:\n        input_path = candidates[0]\n    else:\n        raise FileNotFoundError(\"No input Parquet file found.\")\n\ndf = pd.read_parquet(input_path)\n\ndf = df.drop_duplicates(keep=\"first\").copy()\ndf[\"_original_order\"] = range(len(df))\n\ndf[\"_registered_at_sort\"] = pd.to_datetime(df[\"registered_at\"], errors=\"coerce\")\ndf = df.sort_values(\n    [\"email\", \"_registered_at_sort\", \"_original_order\"],\n    ascending=[True, False, True],\n    na_position=\"last\",\n    kind=\"stable\",\n)\ndf = df.drop_duplicates(subset=[\"email\"], keep=\"first\").copy()\ndf = df.sort_values(\"_original_order\", kind=\"stable\").reset_index(drop=True)\n\ntitles = {\n    \"dr\", \"prof\", \"professor\", \"herr\", \"frau\", \"mr\", \"mrs\", \"ms\",\n    \"miss\", \"sir\", \"madam\", \"mme\", \"mlle\", \"ing\", \"dipl\", \"phd\",\n    \"md\", \"jr\", \"sr\"\n}\n\ndef normalize_text(value):\n    value = \"\" if pd.isna(value) else str(value)\n    value = unicodedata.normalize(\"NFKD\", value)\n    value = \"\".join(char for char in value if not unicodedata.combining(char))\n    return value.casefold()\n\ndef normalize_name(value):\n    text = normalize_text(value)\n    text = re.sub(r\"[^a-z0-9\\s]\", \" \", text)\n    tokens = [token for token in text.split() if token not in titles and len(token) > 1]\n    return tokens\n\ndef normalize_email(value):\n    value = \"\" if pd.isna(value) else str(value)\n    value = value.strip().casefold()\n    if \"@\" not in value:\n        return value\n    local, domain = value.rsplit(\"@\", 1)\n    return local.replace(\".\", \"\") + \"@\" + domain\n\ndef names_match(tokens_a, tokens_b):\n    if not tokens_a or not tokens_b:\n        return False\n\n    name_a = \" \".join(tokens_a)\n    name_b = \" \".join(tokens_b)\n\n    if name_a == name_b:\n        return True\n\n    sorted_a = \" \".join(sorted(tokens_a))\n    sorted_b = \" \".join(sorted(tokens_b))\n\n    direct_ratio = SequenceMatcher(None, name_a, name_b).ratio()\n    sorted_ratio = SequenceMatcher(None, sorted_a, sorted_b).ratio()\n\n    if max(direct_ratio, sorted_ratio) >= 0.84:\n        return True\n\n    if len(tokens_a) >= 2 and len(tokens_b) >= 2:\n        first_ratio = SequenceMatcher(None, tokens_a[0], tokens_b[0]).ratio()\n        last_ratio = SequenceMatcher(None, tokens_a[-1], tokens_b[-1]).ratio()\n        if first_ratio >= 0.75 and last_ratio >= 0.80:\n            return True\n\n    return False\n\ndf[\"_name_tokens\"] = df[\"full_name\"].map(normalize_name)\ndf[\"_normalized_email\"] = df[\"email\"].map(normalize_email)\n\nparent = list(range(len(df)))\n\ndef find(index):\n    while parent[index] != index:\n        parent[index] = parent[parent[index]]\n        index = parent[index]\n    return index\n\ndef union(left, right):\n    left_root = find(left)\n    right_root = find(right)\n    if left_root != right_root:\n        parent[right_root] = left_root\n\nfor _, group in df.groupby(\"_normalized_email\", dropna=False, sort=False):\n    indices = group.index.tolist()\n    for position, left_index in enumerate(indices):\n        for right_index in indices[position + 1:]:\n            if names_match(\n                df.at[left_index, \"_name_tokens\"],\n                df.at[right_index, \"_name_tokens\"],\n            ):\n                union(left_index, right_index)\n\ncomponents = {}\nfor index in df.index:\n    root = find(index)\n    components.setdefault(root, []).append(index)\n\nkeep_indices = []\nfor indices in components.values():\n    keep_index = min(\n        indices,\n        key=lambda index: (df.at[index, \"customer_id\"], df.at[index, \"_original_order\"]),\n    )\n    keep_indices.append(keep_index)\n\nresult = (\n    df.loc[keep_indices]\n    .sort_values(\"_original_order\", kind=\"stable\")\n    .drop(columns=[\"_original_order\", \"_registered_at_sort\", \"_name_tokens\", \"_normalized_email\"])\n    .reset_index(drop=True)\n)\n\nos.makedirs(os.path.dirname(output_path), exist_ok=True)\nresult.to_parquet(output_path, index=False)",
+  "row_actual": 500,
+  "row_expected": 495
+}

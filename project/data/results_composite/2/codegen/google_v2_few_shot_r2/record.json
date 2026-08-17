@@ -1,0 +1,23 @@
+{
+  "timestamp": "2026-08-17T07:27:46.108411+00:00",
+  "provider": "google",
+  "prompt_id": "v2_few_shot",
+  "prompt_strategy": "few_shot",
+  "mode": "codegen",
+  "seed": 2,
+  "repetition": 2,
+  "task": "composite_explicit",
+  "status": "ok",
+  "accuracy": 0.545455,
+  "attempts": 1,
+  "error": null,
+  "cost_usd": 0.046017,
+  "prompt_tokens": 1158,
+  "completion_tokens": 5904,
+  "duration_s": 26.89,
+  "llm_s": 25.94,
+  "generated_code": "import os\nimport pandas as pd\n\nin_dir = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/synthetic/2\"\nout_file = \"C:/Users/geige/Desktop/DHBW/Bachelorarbeit/project/data/results_composite/2/codegen/google_v2_few_shot_r2/output.parquet\"\n\ndf_cust = pd.read_csv(os.path.join(in_dir, \"customers_raw.csv\"))\ndf_prod = pd.read_csv(os.path.join(in_dir, \"products_raw.csv\"))\ndf_orders = pd.read_csv(os.path.join(in_dir, \"orders_raw.csv\"))\n\nfor col in df_cust.select_dtypes(include=\"object\").columns:\n    df_cust[col] = df_cust[col].str.strip()\n\ncountry_map = {\n    \"deutschland\": \"DE\",\n    \"germany\": \"DE\",\n    \"ger\": \"DE\",\n    \"de\": \"DE\",\n    \"deutshcland\": \"DE\",\n    \"deutscland\": \"DE\",\n    \"deu\": \"DE\",\n    \"österreich\": \"AT\",\n    \"oesterreich\": \"AT\",\n    \"austria\": \"AT\",\n    \"aut\": \"AT\",\n    \"at\": \"AT\",\n    \"schweiz\": \"CH\",\n    \"switzerland\": \"CH\",\n    \"che\": \"CH\",\n    \"ch\": \"CH\",\n    \"frankreich\": \"FR\",\n    \"france\": \"FR\",\n    \"fra\": \"FR\",\n    \"fr\": \"FR\",\n    \"italien\": \"IT\",\n    \"italy\": \"IT\",\n    \"ita\": \"IT\",\n    \"it\": \"IT\",\n    \"spanien\": \"ES\",\n    \"spain\": \"ES\",\n    \"esp\": \"ES\",\n    \"es\": \"ES\",\n    \"niederlande\": \"NL\",\n    \"netherlands\": \"NL\",\n    \"nld\": \"NL\",\n    \"nl\": \"NL\",\n    \"uk\": \"GB\",\n    \"gb\": \"GB\",\n    \"gbr\": \"GB\",\n    \"united kingdom\": \"GB\",\n    \"great britain\": \"GB\",\n    \"grossbritannien\": \"GB\",\n    \"großbritannien\": \"GB\",\n    \"usa\": \"US\",\n    \"us\": \"US\",\n    \"united states\": \"US\",\n    \"united states of america\": \"US\",\n    \"polen\": \"PL\",\n    \"poland\": \"PL\",\n    \"pol\": \"PL\",\n    \"pl\": \"PL\",\n}\n\ndf_cust[\"country_code\"] = (\n    df_cust[\"country\"].str.lower().map(country_map).fillna(\"UNKNOWN\")\n)\n\ndf_cust = df_cust.drop_duplicates(subset=[\"customer_id\"], keep=\"first\")\n\ndf_prod[\"price_eur\"] = (\n    df_prod[\"price_eur\"]\n    .astype(str)\n    .str.replace(\"EUR\", \"\", regex=False)\n    .str.replace(\"€\", \"\", regex=False)\n    .str.replace(\",\", \".\", regex=False)\n    .str.strip()\n    .astype(float)\n)\n\nif df_prod[\"in_stock\"].dtype == \"object\":\n    df_prod[\"in_stock\"] = (\n        df_prod[\"in_stock\"]\n        .astype(str)\n        .str.strip()\n        .str.lower()\n        .isin([\"true\", \"ja\", \"1\", \"yes\", \"t\"])\n    )\nelse:\n    df_prod[\"in_stock\"] = df_prod[\"in_stock\"].astype(bool)\n\ndf_merged = df_orders.merge(df_cust, on=\"customer_id\", how=\"left\").merge(\n    df_prod, on=\"product_id\", how=\"left\"\n)\n\ndf_merged[\"country_code\"] = df_merged[\"country_code\"].fillna(\"UNKNOWN\")\ndf_merged[\"category\"] = df_merged[\"category\"].fillna(\"UNKNOWN\")\n\ndf_merged[\"revenue\"] = df_merged[\"quantity\"] * df_merged[\"unit_price_eur\"]\n\nresult = df_merged.groupby(\n    [\"country_code\", \"category\"], as_index=False\n).agg(total_revenue_eur=(\"revenue\", \"sum\"), order_count=(\"revenue\", \"count\"))\n\nresult[\"total_revenue_eur\"] = result[\"total_revenue_eur\"].round(2)\nresult = result.sort_values(by=\"total_revenue_eur\", ascending=False)\n\nos.makedirs(os.path.dirname(out_file), exist_ok=True)\nresult.to_parquet(out_file, index=False)",
+  "row_actual": 60,
+  "row_expected": 66,
+  "n_country_codes": 10
+}

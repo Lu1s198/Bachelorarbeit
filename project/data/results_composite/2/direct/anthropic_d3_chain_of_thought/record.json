@@ -11,7 +11,7 @@
   "accuracy": 0.007576,
   "attempts": 1,
   "error": null,
-  "cost_usd": 0.19947,
+  "cost_usd": 0.13298,
   "prompt_tokens": 62685,
   "completion_tokens": 761,
   "duration_s": 10.16,

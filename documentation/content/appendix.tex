@@ -4,9 +4,14 @@
 \chapter{Anhang}
 \label{ch:anhang}
 
+%% Prompt- und Aufgabentexte enthalten lange, unteilbare \texttt{}-Literale
+%% (z.B. total_revenue_eur = sum(quantity * unit_price_eur)). \sloppy setzt die
+%% betroffenen Zeilen lieber locker, als sie in den Rand laufen zu lassen.
+\sloppy
+
 Der Anhang dokumentiert die Bestandteile der Untersuchung, die für die
 Nachvollziehbarkeit der Ergebnisse erforderlich sind, den Lesefluss des
-Haupttextes jedoch unterbrochen hätten: die wörtlichen Prompt-Vorlagen
+Haupttextes jedoch unterbrochen hätten: die Grundstruktur und ausgewählte Wortlaute der Prompt-Vorlagen
 (Abschnitt~\ref{apx:prompts}), die Aufgabentexte der neun \ac{ETL}-Aufgaben
 (Abschnitt~\ref{apx:aufgaben}), den Aufgabentext der explizit gegliederten
 Variante (Abschnitt~\ref{apx:komposition}) sowie den Verweis auf das
@@ -19,14 +24,13 @@ Repositorium mit Code, Daten und sämtlichen Ergebnisdatensätzen
 Die Vorlagen liegen als versionierte YAML-Dateien vor und bestehen jeweils aus
 einer Systemanweisung und einer Nutzervorlage mit Platzhaltern, die zur Laufzeit
 durch den Aufgabentext, die Eingabeverzeichnisse und den Ausgabepfad ersetzt
-werden. Wiedergegeben ist der Wortlaut ohne die Platzhalterauflösung. Die
-Vorlagen sind auf Englisch formuliert, da die Modelle in dieser Sprache
-durchgehend trainiert und die Anbieter-Dokumentationen darauf ausgelegt sind.
+werden. Die Zero-Shot-Vorlagen werden wörtlich wiedergegeben, die übrigen Vorlagen teilweise zusammengefasst. Die vollständigen versionierten Vorlagen einschließlich Beispielen sind im Repositorium nach Abschnitt~\ref{apx:repo} dokumentiert. Die
+Vorlagen sind auf Englisch formuliert, als einheitliche Festlegung für diese Untersuchung. Ein Vergleich verschiedener Prompt-Sprachen wurde nicht durchgeführt.
 Die Aufgabentexte selbst sind deutsch.
 
 \subsection*{Code-Generierung}
 
-\paragraph{v1 -- Zero-Shot:}
+\paragraph{v1, Zero-Shot:}
 \emph{System:} \enquote{You are an experienced data engineer. Respond only with
 executable Python code that uses pandas. No explanations, no markdown code
 block, no text outside the code.}
@@ -37,19 +41,66 @@ in: \texttt{\{input\_dir\}}. Write the result as a Parquet file to exactly:
 \texttt{\{output\_path\}}. The script must run without any further input and
 must produce the output file at the specified path.}
 
-\paragraph{v2 -- Few-Shot:}
+\paragraph{v2, Few-Shot:}
 Systemanweisung wie v1. Die Nutzervorlage stellt der Aufgabe ein vollständig
-gelöstes Beispiel voran, eingeleitet mit: \enquote{Here is one fully solved ETL
-task as an example of the expected style. It is a different task from the one
-you must solve; use it only to understand the format and quality of the expected
-solution.} Das Beispiel behandelt eine Mitarbeitertabelle mit Leerzeichen in
-Textspalten, fehlenden Abteilungen, als dekorierter Text abgelegten Gehältern
-und den Wahrheitswerten \enquote{ja}/\enquote{nein}. Es umfasst Aufgabentext,
-Eingabetabelle und die vollständige Pandas-Lösung. Die Beispielaufgabe ist
-bewusst keine der neun evaluierten Aufgaben, damit sie keine Musterlösung
-vorwegnimmt.
+gelöstes Beispiel voran, an dem das Modell Format und Lösungsstil ableitet:
 
-\paragraph{v3 -- Chain-of-Thought:}
+\begin{quote}
+\small
+Here is one fully solved ETL task as an example of the expected style. It is a different task from the one you must solve; use it only to understand the format and quality of the expected solution.
+
+\textbf{--- EXAMPLE START ---}\\
+\textbf{Task:} A file \texttt{employees\_raw.csv} contains an employee table with the columns \texttt{employee\_id}, \texttt{full\_name}, \texttt{department}, \texttt{annual\_salary\_eur} and \texttt{active}. The data has the following issues:
+\begin{itemize}
+    \item \texttt{full\_name} and \texttt{department} contain leading/trailing whitespace,
+    \item some \texttt{department} values are missing (empty),
+    \item \texttt{annual\_salary\_eur} is stored as text with currency decoration (e.g.\ ``55000'', ``EUR\,60000'', ``52000 EUR''),
+    \item \texttt{active} is stored as the German text ``ja''/``nein''.
+\end{itemize}
+Clean the table: trim whitespace in text columns, replace missing departments with `UNKNOWN', convert \texttt{annual\_salary\_eur} to a float, and convert \texttt{active} to a boolean. Write the result as Parquet to \texttt{employees\_clean.parquet}.
+
+\textbf{Input (employees\_raw.csv):}\\
+\texttt{employee\_id,full\_name,department,annual\_salary\_eur,active}\\
+\texttt{1,\ \ Anna Schmidt\ ,Sales,55000,ja}\\
+\texttt{2,Ben Krüger,,48500,nein}\\
+\texttt{3,\ Carla Neumann\ ,Engineering,60000,ja}\\
+\texttt{4,David Fischer,Marketing,52000 EUR,ja}\\
+\texttt{5,\ \ Eva Wagner,Engineering,61000,nein}
+
+\textbf{Solution:}
+\begin{lstlisting}[language=Python]
+import pandas as pd
+
+df = pd.read_csv("employees_raw.csv")
+
+for col in ["full_name", "department"]:
+    df[col] = df[col].astype(str).str.strip()
+df["department"] = df["department"].replace("", "UNKNOWN").fillna("UNKNOWN")
+df["annual_salary_eur"] = (
+    df["annual_salary_eur"].astype(str)
+    .str.replace(r"[^\d.,]", "", regex=True)
+    .str.replace(",", ".")
+    .astype(float)
+)
+df["active"] = df["active"].str.strip().eq("ja")
+
+df.to_parquet("employees_clean.parquet", index=False)
+\end{lstlisting}
+\textbf{--- EXAMPLE END ---}
+
+Now solve the following task in the same style:
+
+\texttt{\{task\_description\}}
+
+The input files are located in: \texttt{\{input\_dir\}}.
+Write the result as a Parquet file to exactly: \texttt{\{output\_path\}}.
+
+The script must run without any further input and must produce the output file at the specified path.
+\end{quote}
+
+Die Beispielaufgabe ist bewusst keine der neun evaluierten Aufgaben, damit sie keine Musterlösung vorwegnimmt.
+
+\paragraph{v3, Chain-of-Thought:}
 \emph{System:} \enquote{You are an experienced data engineer. Respond only with
 executable Python code (pandas). Record your reasoning as comments (with \#)
 directly in the code. No text outside the code, no markdown.}
@@ -63,7 +114,7 @@ each step in code. \texttt{\{task\_description\}} \dots}
 Die drei Direkt-Vorlagen entsprechen den vorstehenden in Strategie und Beispiel,
 verlangen jedoch die Ergebnistabelle statt des Codes.
 
-\paragraph{d1 -- Zero-Shot:}
+\paragraph{d1, Zero-Shot:}
 \emph{System:} \enquote{You are a precise data-processing engine. You receive
 one or more input tables and a data transformation task. Apply the task directly
 to the data and return ONLY the resulting table as CSV (comma-separated, with a
@@ -75,24 +126,23 @@ row. No explanations, no prose, no row index column.}
 \texttt{csv} code block. Include ALL result rows, no index column, no
 commentary.}
 
-\paragraph{d2 -- Few-Shot:}
+\paragraph{d2, Few-Shot:}
 Wie d1, ergänzt um dasselbe Beispiel wie v2, jedoch mit der Ergebnistabelle
 statt des Lösungscodes als Vorbild.
 
-\paragraph{d3 -- Chain-of-Thought:}
+\paragraph{d3, Chain-of-Thought:}
 Wie d1, ergänzt um die Aufforderung: \enquote{Work through it step by step:
 first identify the individual sub-steps the task consists of, then apply them to
 the data one after another, so that each sub-step operates on the result of the
 previous one.} Da die Antwort ausschließlich die Ergebnistabelle enthalten darf,
-bleibt die Zerlegung anders als bei v3 modellintern.
+wird kein sichtbarer Begründungstext erhoben. Ob und wie das Modell die angeforderte Zerlegung intern umsetzt, wird nicht beobachtet.
 
 \section{Aufgabentexte der neun ETL-Aufgaben}
 \label{apx:aufgaben}
 
 Wiedergegeben ist der Wortlaut, der als \texttt{task\_description} in die
 Prompt-Vorlage eingesetzt wird. Für die schema-angereicherte Variante tritt
-jeweils eine Beschreibung des Zielschemas hinzu, die hier aus Platzgründen
-entfällt.
+jeweils eine Beschreibung des Zielschemas hinzu. Diese Ergänzungen gehören zur vollständigen Versuchsspezifikation und sind zusammen mit den Vorlagen im Repositorium dokumentiert.
 
 \subsection*{Datenbereinigung}
 
@@ -116,29 +166,6 @@ entfällt.
     den zweistelligen ISO-3166-1-alpha-2-Code (z.\,B. \enquote{DE}). Werte, die
     sich nicht eindeutig zuordnen lassen, sollen den Wert \enquote{UNKNOWN}
     erhalten. Schreibe das Ergebnis als Parquet-Datei.
-\end{description}
-
-\subsection*{Duplikaterkennung}
-
-\begin{description}
-    \item[Einfach (exakte Duplikate):] Lies \texttt{customers\_raw.csv} ein und
-    entferne exakte Duplikate (Zeilen, in denen alle Spaltenwerte identisch
-    sind). Behalte jeweils das erste Vorkommen. Schreibe das Ergebnis als
-    Parquet-Datei.
-
-    \item[Mittel (schlüsselbasiert):] Entferne in \texttt{customers\_raw.csv}
-    Zeilen, in denen die \texttt{email} mehrfach vorkommt. Bei mehreren Zeilen
-    mit gleicher E-Mail soll die Zeile mit dem jüngsten
-    \texttt{registered\_at}-Wert behalten werden. Schreibe das Ergebnis als
-    Parquet-Datei.
-
-    \item[Schwer (unscharfe Duplikate):] In \texttt{customers\_raw.csv} befinden
-    sich Fuzzy-Duplikate: gleiche Person, aber unterschiedliche Schreibweisen
-    des Namens (Tippfehler, unterschiedliche Groß-/Kleinschreibung, mit/ohne
-    Mittelinitial) und unterschiedliche E-Mail-Schreibweisen (Punkte vor dem @,
-    unterschiedliche Groß-/Kleinschreibung). Erkenne diese Duplikate und
-    entferne sie. Behalte jeweils die Zeile mit der vollständigsten Information.
-    Schreibe das Ergebnis als Parquet-Datei.
 \end{description}
 
 \subsection*{Datentransformation}
@@ -169,6 +196,29 @@ entfällt.
     Anzahl Bestellungen (\texttt{order\_count}). Sortiere absteigend nach
     Gesamtumsatz. Schreibe das Ergebnis als Parquet-Datei.
 \end{description}
+\subsection*{Duplikaterkennung}
+
+\begin{description}
+    \item[Einfach (exakte Duplikate):] Lies \texttt{customers\_raw.csv} ein und
+    entferne exakte Duplikate (Zeilen, in denen alle Spaltenwerte identisch
+    sind). Behalte jeweils das erste Vorkommen. Schreibe das Ergebnis als
+    Parquet-Datei.
+
+    \item[Mittel (schlüsselbasiert):] Entferne in \texttt{customers\_raw.csv}
+    Zeilen, in denen die \texttt{email} mehrfach vorkommt. Bei mehreren Zeilen
+    mit gleicher E-Mail soll die Zeile mit dem jüngsten
+    \texttt{registered\_at}-Wert behalten werden. Schreibe das Ergebnis als
+    Parquet-Datei.
+
+    \item[Schwer (unscharfe Duplikate):] In \texttt{customers\_raw.csv} befinden
+    sich Fuzzy-Duplikate: gleiche Person, aber unterschiedliche Schreibweisen
+    des Namens (Tippfehler, unterschiedliche Groß-/Kleinschreibung, mit/ohne
+    Mittelinitial) und unterschiedliche E-Mail-Schreibweisen (Punkte vor dem @,
+    unterschiedliche Groß-/Kleinschreibung). Erkenne diese Duplikate und
+    entferne sie. Behalte jeweils die Zeile mit der vollständigsten Information.
+    Schreibe das Ergebnis als Parquet-Datei.
+\end{description}
+
 
 \section{Aufgabentext der explizit gegliederten Variante}
 \label{apx:komposition}
@@ -209,20 +259,66 @@ benennt die erforderlichen Teilschritte jedoch ausdrücklich. Abschnitt
         sum(quantity * unit\_price\_eur)}, auf zwei Nachkommastellen gerundet,
         sowie die Anzahl Bestellungen \texttt{order\_count}. Die Spalten
         \texttt{quantity} und \texttt{unit\_price\_eur} stammen beide aus
-        \texttt{orders\_raw.csv}; der Preis aus \texttt{products\_raw.csv} wird
+        \texttt{orders\_raw.csv}. Der Preis aus \texttt{products\_raw.csv} wird
         für die Umsatzberechnung nicht verwendet. Sortiere absteigend nach
         \texttt{total\_revenue\_eur}.
     \end{enumerate}
 \end{quote}
 
+\section{Laufzeitumgebung und Modellparameter}
+\label{apx:umgebung}
+
+Tabelle~\ref{tab:apx-software} dokumentiert die für die Ausführung der Versuche eingesetzten Software- und Bibliotheksversionen. Sämtliche Durchläufe erfolgten unter Windows~11 auf einem System mit einer dedizierten Grafikeinheit mit 8\,GB VRAM.
+
+\begin{table}[htbp]
+    \centering
+    \small
+    \caption[Eingesetzte Software- und Bibliotheksversionen]{Software- und Bibliotheksversionen der Versuchsumgebung (abgeleitet aus \texttt{pyproject.toml}).}
+    \label{tab:apx-software}
+    \begin{tabularx}{\textwidth}{@{}lXl@{}}
+        \toprule
+        \textbf{Komponente / Bibliothek} & \textbf{Einsatzzweck} & \textbf{Version} \\
+        \midrule
+        Python & Laufzeitumgebung der Versuche und Skripte & 3.12 \\
+        pandas & Datenverarbeitung in Referenz und generiertem Code & 2.2 \\
+        pyarrow & Parquet-E/A und typgetreue Datenspeicherung & 18.0 \\
+        faker & Deterministische Basisdatengenerierung & 30.0 \\
+        anthropic & Offizielles SDK zur Anbindung von Claude & 0.39 \\
+        openai & Offizielles SDK zur Anbindung von GPT & 1.54 \\
+        google-genai & Offizielles SDK zur Anbindung von Gemini & 0.8 \\
+        ollama & Lokale Modellausführung (Llama) & 0.4 \\
+        pydantic / pydantic-settings & Typsichere Versuchskonfiguration & 2.9 / 2.6 \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+Tabelle~\ref{tab:apx-parameter} fasst die für die vier Modelle wirksamen Sampling- und Reasoning-Einstellungen zusammen. Sie macht anbieterspezifische Einschränkungen transparent, die das Verhalten bei wiederholten Aufrufen beeinflussen.
+
+\begin{table}[htbp]
+    \centering
+    \small
+    \caption[Sampling- und Reasoning-Parameter der Modelle]{Wirksame Sampling- und Reasoning-Konfiguration der vier Modelle über die Ausführungsmodi.}
+    \label{tab:apx-parameter}
+    \begin{tabularx}{\textwidth}{@{}llXp{3.2cm}@{}}
+        \toprule
+        \textbf{Modell} & \textbf{Temperatur} & \textbf{Reasoning im Direkt-Modus} & \textbf{Besonderheiten} \\
+        \midrule
+        \texttt{claude-sonnet-5} & 0,0 & deaktiviert (\texttt{type: "disabled"}) & Fallback bei Ablehnung von $T$ \\
+        \texttt{gpt-5.6-terra} & 1,0 (Fallback) & aktiv (nicht deaktivierbar) & $T=0$ vom Server abgelehnt \\
+        \texttt{gemini-3.6-flash} & 0,0 & gedrosselt (\texttt{thinking\_budget=128}) & Budget 0 nicht zulässig \\
+        \texttt{llama3.1:8b} & 0,0 & nicht vorhanden & \texttt{num\_ctx} auf 8.192 gedeckelt (VRAM) \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
 \section{Repositorium}
 \label{apx:repo}
 
-Sämtlicher Code, die Erzeugungsvorschrift des Datensatzes, die regelbasierte
-Vergleichspipeline, die Prompt-Vorlagen sowie alle Ergebnisdatensätze der 711
+Das Repositorium ist die ergänzende elektronische Dokumentation dieser Arbeit. Es enthält die vollständigen Versuchsvorlagen und Auswertungsartefakte, die folgenden Verweise benennen deren Ablageorte.
+
+Sämtlicher Code, die Erzeugungsvorschrift des Datensatzes, die regelbasierte Vergleichspipeline, die Prompt-Vorlagen sowie alle Ergebnisdatensätze der 711
 Modellaufrufe stehen unter
-\url{https://github.com/Lu1s198/Bachelorarbeit} zur Verfügung. Die Struktur
-folgt den Kapiteln dieser Arbeit:
+\url{https://github.com/Lu1s198/Bachelorarbeit} zur Verfügung. Die Struktur folgt den Kapiteln dieser Arbeit:
 
 \begin{description}
     \item[\texttt{project/src/dataset/}] Erzeugung des synthetischen Datensatzes
@@ -235,8 +331,7 @@ folgt den Kapiteln dieser Arbeit:
     einzelnen Untersuchungsebenen (Kapitel~\ref{ch:durchfuehrung}).
     \item[\texttt{project/src/evaluation/}] Umsetzung der Evaluationskriterien
     aus Abschnitt~\ref{sec:evaluationskriterien}.
-    \item[\texttt{project/results/}] Die Ergebnisdatensätze je Lauf sowie die
-    erzeugten Skripte und Ergebnistabellen.
+    \item[\texttt{project/data/results\_*/}] Die Ergebnisdatensätze je Lauf sowie die erzeugten Skripte und Ergebnistabellen, getrennt nach Startwert des Datensatzes.
 \end{description}
 
 Die berichteten Ergebnisse stammen sämtlich aus dem Datensatz mit dem Startwert

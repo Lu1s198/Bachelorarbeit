@@ -11,7 +11,7 @@
   "accuracy": null,
   "attempts": 3,
   "error": "e\n    return self.to_numpy(dtype=dtype, na_value=np.nan)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"C:\\Users\\geige\\Desktop\\DHBW\\Bachelorarbeit\\project\\.venv\\Lib\\site-packages\\pandas\\core\\arrays\\arrow\\array.py\", line 1729, in to_numpy\n    result = result.astype(dtype, copy=False)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nValueError: could not convert string to float: '€6.53'",
-  "cost_usd": 0.109023,
+  "cost_usd": 0.072682,
   "prompt_tokens": 5181,
   "completion_tokens": 6232,
   "duration_s": 51.69,

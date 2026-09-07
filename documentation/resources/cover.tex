@@ -23,7 +23,7 @@
 	\vspace*{12mm}
 	\vspace*{12mm}	{\large\textbf{\documentTypePhrase}}\\
 
-	\ifDocType{T3\_3300}{
+	\ifDocType{T3\_3300}{%
 		\vspace*{12mm}	{zur Erlangung des Grades}\\
 		\vspace*{3mm}	{\degree}\\
 	}
@@ -41,8 +41,9 @@
 \begin{center}
 \begin{tabular}{@{}l l@{}}
     \textbf{Matrikelnummer:} & \matriculationNumber \\
-	\textbf{Kurs:} & \course \\
-    \ifDocType{T3\_3300}{
+    \textbf{Kurs:} & \course \\
+    \textbf{Betreuer im Unternehmen:} & \tutor \\
+    \ifDocType{T3\_3300}{%
         \textbf{Gutachter an der DHBW \locationUniversity:} & \evaluator \\
     }{}
 \end{tabular}

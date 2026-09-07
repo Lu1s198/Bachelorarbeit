@@ -27,7 +27,7 @@
       "budget_erschoepft": false,
       "denk_tokens": null,
       "finish_reason": null,
-      "cost_usd": 0.180837,
+      "cost_usd": 0.120558,
       "prompt_tokens": 10294,
       "completion_tokens": 9997,
       "model": "claude-sonnet-5"
@@ -49,7 +49,7 @@
       "budget_erschoepft": false,
       "denk_tokens": null,
       "finish_reason": null,
-      "cost_usd": 0.182799,
+      "cost_usd": 0.121866,
       "prompt_tokens": 10348,
       "completion_tokens": 10117,
       "model": "claude-sonnet-5"
@@ -71,7 +71,7 @@
       "budget_erschoepft": false,
       "denk_tokens": null,
       "finish_reason": null,
-      "cost_usd": 0.178308,
+      "cost_usd": 0.118872,
       "prompt_tokens": 10506,
       "completion_tokens": 9786,
       "model": "claude-sonnet-5"
@@ -93,7 +93,7 @@
       "budget_erschoepft": false,
       "denk_tokens": null,
       "finish_reason": null,
-      "cost_usd": 0.171684,
+      "cost_usd": 0.114456,
       "prompt_tokens": 10073,
       "completion_tokens": 9431,
       "model": "claude-sonnet-5"
@@ -115,7 +115,7 @@
       "budget_erschoepft": false,
       "denk_tokens": null,
       "finish_reason": null,
-      "cost_usd": 0.175641,
+      "cost_usd": 0.117094,
       "prompt_tokens": 9757,
       "completion_tokens": 9758,
       "model": "claude-sonnet-5"
@@ -137,7 +137,7 @@
       "budget_erschoepft": false,
       "denk_tokens": null,
       "finish_reason": null,
-      "cost_usd": 0.170238,
+      "cost_usd": 0.113492,
       "prompt_tokens": 9681,
       "completion_tokens": 9413,
       "model": "claude-sonnet-5"
@@ -159,7 +159,7 @@
       "budget_erschoepft": false,
       "denk_tokens": null,
       "finish_reason": null,
-      "cost_usd": 0.046653,
+      "cost_usd": 0.031102,
       "prompt_tokens": 3016,
       "completion_tokens": 2507,
       "model": "claude-sonnet-5"
@@ -181,7 +181,7 @@
       "budget_erschoepft": false,
       "denk_tokens": null,
       "finish_reason": null,
-      "cost_usd": 0.478815,
+      "cost_usd": 0.31921,
       "prompt_tokens": 19200,
       "completion_tokens": 28081,
       "model": "claude-sonnet-5"
@@ -203,7 +203,7 @@
       "budget_erschoepft": false,
       "denk_tokens": null,
       "finish_reason": null,
-      "cost_usd": 0.132813,
+      "cost_usd": 0.088542,
       "prompt_tokens": 40171,
       "completion_tokens": 820,
       "model": "claude-sonnet-5"

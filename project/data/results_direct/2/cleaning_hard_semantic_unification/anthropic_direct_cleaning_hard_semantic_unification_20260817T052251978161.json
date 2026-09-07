@@ -15,7 +15,7 @@
   "model": "claude-sonnet-5",
   "prompt_tokens": 20345,
   "completion_tokens": 19478,
-  "cost_usd": 0.353205,
+  "cost_usd": 0.23547,
   "llm_latency_seconds": 214.97298020000017,
   "correctness": {
     "schema_match": true,

@@ -28,11 +28,12 @@
 \usepackage[
     left=2.5cm,
     right=2.5cm,
-    bottom=3cm,
-    top=3cm
+    bottom=2.5cm,
+    top=2.5cm
 ]{geometry}
 
-\usepackage[onehalfspacing]{setspace}   % Zeilenabstand
+\usepackage{setspace}
+\setstretch{1.2}                       % Zeilenabstand (DHBW: 1,2 bis 1,5-zeilig)
 
 % Schriftart
 \usepackage{helvet}     % Arial like
@@ -75,7 +76,7 @@
 
 \ifoot{DHBW}
 \cfoot{\documentAuthor}
-\ofoot{Page | \thepage}
+\ofoot{Seite \thepage}
 \setlength{\marginparwidth}{2cm}
 
 \usepackage{scrhack}    % KOMA Skript Fehlermeldung
@@ -110,6 +111,10 @@
 	sorting=none,			% Nummerierung in Reihenfolge des Auftretens im Text
 	style=\quoteStyle,
 ]{biblatex}
+\DefineBibliographyStrings{ngerman}{%
+    page = {S\adddot},
+    pages = {S\adddot},
+}
 \loadbibresources			% Lädt die Resourcen aus der config Datei
 \newcommand{\mkbibnodate}{o\adddot J\adddot}        % o. J.
 \AtEveryBibitem{\iffieldundef{year}{\restorefield{year}{\mkbibnodate}}{}}
@@ -185,6 +190,16 @@
 \RedeclareSectionCommand[beforeskip=0pt,afterindent=false,afterskip=0.1em]{section}
 \RedeclareSectionCommand[beforeskip=0pt,afterindent=false,afterskip=0.1em]{subsection}
 \RedeclareSectionCommand[beforeskip=0pt,afterindent=false,afterskip=0.1em]{subsubsection}
+
+%% Zeilenumbruch: verhindert, dass lange Bindestrich-Komposita
+%% (z.B. In-Context-Verarbeitung, Code-Generierungs-Modus) in den Rand ragen.
+%% TeX darf die betroffenen Zeilen stattdessen etwas lockerer setzen.
+\setlength{\emergencystretch}{3em}
+
+%% Umbrueche in URLs und DOIs des Literaturverzeichnisses erlauben
+\setcounter{biburlnumpenalty}{9000}
+\setcounter{biburlucpenalty}{9000}
+\setcounter{biburllcpenalty}{9000}
 
 %% Caption Style (Bsp.: Bilderunterschrift)
 \addtokomafont{caption}{\small}

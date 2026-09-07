@@ -23,7 +23,7 @@
       "truncated": false,
       "row_actual": 270,
       "row_expected": 270,
-      "cost_usd": 0.182076,
+      "cost_usd": 0.121384,
       "prompt_tokens": 10382,
       "completion_tokens": 10062,
       "model": "claude-sonnet-5"
@@ -42,7 +42,7 @@
       "truncated": false,
       "row_actual": 270,
       "row_expected": 270,
-      "cost_usd": 0.184179,
+      "cost_usd": 0.122786,
       "prompt_tokens": 10413,
       "completion_tokens": 10196,
       "model": "claude-sonnet-5"
@@ -61,7 +61,7 @@
       "truncated": false,
       "row_actual": 270,
       "row_expected": 270,
-      "cost_usd": 0.17994,
+      "cost_usd": 0.11996,
       "prompt_tokens": 10585,
       "completion_tokens": 9879,
       "model": "claude-sonnet-5"
@@ -80,7 +80,7 @@
       "truncated": false,
       "row_actual": 260,
       "row_expected": 260,
-      "cost_usd": 0.173133,
+      "cost_usd": 0.115422,
       "prompt_tokens": 10166,
       "completion_tokens": 9509,
       "model": "claude-sonnet-5"
@@ -99,7 +99,7 @@
       "truncated": false,
       "row_actual": 253,
       "row_expected": 256,
-      "cost_usd": 0.17517,
+      "cost_usd": 0.11678,
       "prompt_tokens": 9835,
       "completion_tokens": 9711,
       "model": "claude-sonnet-5"
@@ -118,7 +118,7 @@
       "truncated": false,
       "row_actual": 250,
       "row_expected": 248,
-      "cost_usd": 0.171759,
+      "cost_usd": 0.114506,
       "prompt_tokens": 9793,
       "completion_tokens": 9492,
       "model": "claude-sonnet-5"
@@ -137,7 +137,7 @@
       "truncated": false,
       "row_actual": 100,
       "row_expected": 100,
-      "cost_usd": 0.046332,
+      "cost_usd": 0.030888,
       "prompt_tokens": 2999,
       "completion_tokens": 2489,
       "model": "claude-sonnet-5"
@@ -156,7 +156,7 @@
       "truncated": false,
       "row_actual": 1013,
       "row_expected": 1013,
-      "cost_usd": 0.490251,
+      "cost_usd": 0.326834,
       "prompt_tokens": 19632,
       "completion_tokens": 28757,
       "model": "claude-sonnet-5"
@@ -175,7 +175,7 @@
       "truncated": false,
       "row_actual": 54,
       "row_expected": 66,
-      "cost_usd": 0.136311,
+      "cost_usd": 0.090874,
       "prompt_tokens": 41222,
       "completion_tokens": 843,
       "model": "claude-sonnet-5"

@@ -14,12 +14,11 @@ from __future__ import annotations
 # (input_per_1M, output_per_1M)
 PRICES: dict[str, tuple[float, float]] = {
     # --- Anthropic (Claude) ---
-    # Sonnet 5: Listenpreis 3.00/15.00; Einführungspreis 2.00/10.00 noch bis
-    # 2026-08-31. Hier bewusst der stabile Listenpreis (konservativ, zitierbar).
-    "claude-sonnet-5": (3.00, 15.00),
+    # Sonnet 5: verwendeter Tarif 2.00/10.00.
+    "claude-sonnet-5": (2.00, 10.00),
     "claude-opus-4-8": (5.00, 25.00),
     "claude-haiku-4-5": (1.00, 5.00),
-    "claude-sonnet-4-6": (3.00, 15.00),  # Vorgänger, falls noch referenziert
+    "claude-sonnet-4-6": (2.00, 10.00),
     # --- OpenAI (GPT) ---
     "gpt-5.6-sol": (5.00, 30.00),
     "gpt-5.6-terra": (2.50, 15.00),

@@ -57,11 +57,19 @@
     %% Haupttext
     \clearpage
     \pagenumbering{arabic}
+    % Abkuerzungen zuruecksetzen: das Abstract steht vor dem Haupttext und wuerde
+    % sonst die Langform aufbrauchen, sodass Kapitel 1 nur noch das Kuerzel zeigt
+    \acresetall
     \input{content/chapters}
 
     %% Literaturverzeichnis
     \clearpage
     \printbibliography
+
+    %% Anmerkung zur Nutzung von Künstlicher Intelligenz
+    %% Position nach Leitlinie 4.1: hinter dem Quellenverzeichnis, vor dem Anhang
+    \clearpage
+    \input{resources/ai_notice}
 
     %% Anhang
     \clearpage

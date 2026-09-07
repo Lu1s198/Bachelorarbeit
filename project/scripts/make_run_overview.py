@@ -1,7 +1,7 @@
 """Übersicht aller Läufe des ausgewerteten Datensatzes (Startwert 2).
 
 Stellt die sechs Untersuchungsebenen mit ihren Laufzahlen dar, aufgeschlüsselt
-nach Modell. Sichtbar wird dabei zweierlei: wie sich die 711 Modellaufrufe auf
+nach Modell. Sichtbar wird dabei zweierlei: wie sich die 711 geplanten Laeufe auf
 die Ebenen verteilen und dass das lokal betriebene Modell ausschließlich in der
 Faktormatrix geführt wird.
 
@@ -67,9 +67,9 @@ def build() -> Path:
     ax.set_yticks(list(y))
     ax.set_yticklabels(labels, fontsize=9)
     ax.invert_yaxis()
-    ax.set_xlabel("Anzahl Modellaufrufe", fontsize=10)
+    ax.set_xlabel("Anzahl geplanter Läufe", fontsize=10)
     ax.set_xlim(0, 430)
-    ax.set_title("Alle Läufe des ausgewerteten Datensatzes (Startwert 2): 711 Modellaufrufe",
+    ax.set_title("Alle Läufe des ausgewerteten Datensatzes (Startwert 2): 711 geplante Läufe",
                  fontsize=12, fontweight="bold", pad=14)
 
     ax.spines[["top", "right", "left"]].set_visible(False)
@@ -99,7 +99,7 @@ def main() -> int:
         print(f"FEHLER: Summe {gesamt}, erwartet 711")
         return 1
     out = build()
-    print(f"Summe geprueft: {gesamt} Modellaufrufe")
+    print(f"Summe geprueft: {gesamt} geplante Laeufe")
     print(f"geschrieben: {out}")
     return 0
 

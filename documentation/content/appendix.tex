@@ -316,8 +316,7 @@ Tabelle~\ref{tab:apx-parameter} fasst die für die vier Modelle wirksamen Sampli
 
 Das Repositorium ist die ergänzende elektronische Dokumentation dieser Arbeit. Es enthält die vollständigen Versuchsvorlagen und Auswertungsartefakte, die folgenden Verweise benennen deren Ablageorte.
 
-Sämtlicher Code, die Erzeugungsvorschrift des Datensatzes, die regelbasierte Vergleichspipeline, die Prompt-Vorlagen sowie alle Ergebnisdatensätze der 711
-Modellaufrufe stehen unter
+Sämtlicher Code, die Erzeugungsvorschrift des Datensatzes, die regelbasierte Vergleichspipeline, die Prompt-Vorlagen sowie die Ergebnisdatensätze der Versuchsläufe stehen unter
 \url{https://github.com/Lu1s198/Bachelorarbeit} zur Verfügung. Die Struktur folgt den Kapiteln dieser Arbeit:
 
 \begin{description}
@@ -331,8 +330,10 @@ Modellaufrufe stehen unter
     einzelnen Untersuchungsebenen (Kapitel~\ref{ch:durchfuehrung}).
     \item[\texttt{project/src/evaluation/}] Umsetzung der Evaluationskriterien
     aus Abschnitt~\ref{sec:evaluationskriterien}.
-    \item[\texttt{project/data/results\_*/}] Die Ergebnisdatensätze je Lauf sowie die erzeugten Skripte und Ergebnistabellen, getrennt nach Startwert des Datensatzes.
+    \item[\texttt{project/data/results\_*/}] Die Ergebnisdatensätze je Lauf sowie die erzeugten Skripte und Ergebnistabellen, getrennt nach Startwert des Datensatzes. Hinterlegt sind die verkettete und die isolierte Pipeline (\texttt{results\_pipeline}), der Direkt-Modus (\texttt{results\_direct}), die gruppierte Strecke (\texttt{results\_group}) und die explizit gegliederte Aufgabe (\texttt{results\_composite}).
 \end{description}
+
+Die Einzeldateien der Faktormatrix (\texttt{project/data/results/}) sind nicht Bestandteil des Repositoriums; hinterlegt sind dort der Ausführungscode und die Auswertungsskripte, mit denen sie erneut erzeugt werden können. Die aus ihnen berechneten Kennzahlen sind in Kapitel~\ref{ch:ergebnisse} vollständig ausgewiesen.
 
 Die berichteten Ergebnisse stammen sämtlich aus dem Datensatz mit dem Startwert
 2 beziehungsweise dessen halbierter Fassung mit dem Startwert 102.
